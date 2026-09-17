@@ -266,6 +266,16 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "status",
                 "--dataset",
                 "[mocked_dir]",
+                "--datatype",
+                "anat",
+            ],
+            "nipoppy.workflows.dataset_status.StatusWorkflow",
+        ),
+        (
+            [
+                "status",
+                "--dataset",
+                "[mocked_dir]",
             ],
             "nipoppy.workflows.dataset_status.StatusWorkflow",
         ),
@@ -380,6 +390,7 @@ def test_context_manager_no_exception(mocker):
 @pytest.mark.parametrize(
     "return_code, expected_return_code",
     [
+        (0, 0),
         (None, ReturnCode.UNKNOWN_FAILURE),
         (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
         (ReturnCode.INVALID_COMMAND, ReturnCode.INVALID_COMMAND),

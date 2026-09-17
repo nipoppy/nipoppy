@@ -61,6 +61,7 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--participant-id",
                 "--session-id",
+                "--datatype",
                 "--use-subcohort",
             ],
         },
@@ -285,6 +286,15 @@ def extract(**params):
 
 @cli.command()
 @dataset_option
+@click.option(
+    "--datatype",
+    type=str,
+    help=(
+        "Only include imaging manifest rows whose datatype list contains this exact "
+        "BIDS datatype. Curation and processing counts use the selected "
+        "participant-session pairs."
+    ),
+)
 @global_options
 @layout_option
 def status(**params):
