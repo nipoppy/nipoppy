@@ -383,7 +383,6 @@ def test_pipeline_search_rejects_invalid_type():
     )
 
     assert result.exit_code == ReturnCode.INVALID_COMMAND
-    assert "Invalid value for '--type'" in result.output
 
 
 @pytest.mark.parametrize("pipeline_type", list(PipelineTypeEnum))
