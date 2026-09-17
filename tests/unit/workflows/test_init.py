@@ -523,7 +523,6 @@ def test_init_manifest_from_empty_bids_fails(
 ):
     bids_source = dpath_root / "bids" / nested
     bids_source.mkdir(parents=True)
-    # workflow.study.layout.dpath_bids = bids_source
     workflow.bids_source = bids_source
 
     with pytest.raises(
