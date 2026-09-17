@@ -220,7 +220,7 @@ When running `nipoppy pipeline install`, if using a container engine, you will b
     },
 ```
 
-We need to replace the `null` next to the `DCM2BIDS_CONFIG_FILE` field with file path to the `dcm2bids_config.json` file that we will create in the next step. We recommend to keep this file in the `code` directory in your nipoppy study, like so:
+We need to replace the `null` next to the `DCM2BIDS_CONFIG_FILE` field with file path to the `dcm2bids_config.json` file that we will create in the next step. We recommend to keep this file in the `code` directory in your Nipoppy study, like so:
 
 ```{code-block} json
 :emphasize-lines: 5

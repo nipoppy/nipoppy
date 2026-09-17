@@ -11,7 +11,7 @@
 
 <img alt="Nipoppy logo" src="https://raw.githubusercontent.com/nipoppy/nipoppy/refs/heads/main/logo/logo_square.svg" width=100px style="float:right">
 
-Nipoppy is a lightweight framework for standardized organization and processing of neuroimaging-clinical studies. Its goal is to help users adopt the
+Nipoppy is a lightweight framework for standardized organization and processing of neuroimaging-clinical data. Its goal is to help users adopt the
 [FAIR](https://www.go-fair.org/fair-principles/) principles
 and improve the reproducibility of studies.
 
