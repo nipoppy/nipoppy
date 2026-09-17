@@ -73,7 +73,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
             community_names = "\n".join(
                 rv for c in communities if (rv := c.get("id")) is not None
             )
-            keywords = hit.get("metadata", {}).get("keywords", []) or []
+            keywords = hit.get("metadata", {}).get("keywords", [])
             pipeline_type = next(
                 (
                     keyword.removeprefix("pipeline_type:")
