@@ -187,7 +187,7 @@ def test_study_and_dataset_mutually_exclusive(tmp_path: Path):
         catch_exceptions=False,
     )
     assert result.exit_code != ReturnCode.SUCCESS
-    assert "Cannot specify both --study and --dataset" in result.output
+    assert "Cannot specify both --study and --dataset" in result.stderr
 
 
 @pytest.mark.no_xdist
