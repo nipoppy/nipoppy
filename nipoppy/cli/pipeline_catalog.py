@@ -127,7 +127,10 @@ def pipeline_create(**params):
 @click.option(
     "--skip-container",
     is_flag=True,
-    help="Skip downloading the pipeline container.",
+    help=(
+        "Skip downloading the pipeline container "
+        "(mutually exclusive with --container-store)."
+    ),
 )
 @global_options
 @layout_option
