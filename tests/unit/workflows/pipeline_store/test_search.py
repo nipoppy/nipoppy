@@ -69,7 +69,7 @@ def test_hits_to_df(workflow: PipelineSearchWorkflow, hits: list[dict]):
 
 
 @pytest.mark.parametrize(
-    "keywords, expected_pipeline_type",
+    "keywords,expected_pipeline_type",
     [
         (["pipeline_type:processing"], "processing"),
         (["pipeline_type:extraction"], "extraction"),
@@ -100,7 +100,7 @@ def test_hits_to_df_extracts_pipeline_type_from_keywords(
 
 
 @pytest.mark.parametrize(
-    "console_width, pipeline_type, is_description_hidden",
+    "console_width,pipeline_type,is_description_hidden",
     [
         (80, None, True),
         (120, None, False),
