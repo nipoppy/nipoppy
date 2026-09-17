@@ -61,11 +61,7 @@ def zenodo_options(func):
     "-t",
     "pipeline_type",
     type=click.Choice(
-        [
-            PipelineTypeEnum.BIDSIFICATION,
-            PipelineTypeEnum.PROCESSING,
-            PipelineTypeEnum.EXTRACTION,
-        ],
+        PipelineTypeEnum,
         case_sensitive=False,
     ),
     help="Filter search results by pipeline type.",
