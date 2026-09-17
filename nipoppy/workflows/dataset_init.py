@@ -303,8 +303,9 @@ class InitWorkflow(BaseDatasetWorkflow):
                 )
 
                 if len(datatypes) == 0:
-                    # Skip datatype folder without any files in it.
-                    # e.g. empty anat folder
+                    logger.warning(
+                        f"No files found in datatype folder {dpath_participant_session}. Skipping this folder."  # noqa: E501
+                    )
                     continue
 
                 df[Manifest.col_participant_id].append(
