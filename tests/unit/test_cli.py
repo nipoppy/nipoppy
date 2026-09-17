@@ -108,8 +108,20 @@ def test_cli_invalid(args):
     [
         (
             [
-                "process",
+                "init",
                 "--dataset",
+                "[tmp_path]/nipoppy_study",
+            ],
+            "nipoppy.workflows.dataset_init.InitWorkflow",
+            (
+                "The --dataset flag will be deprecated in a future version of Nipoppy. "
+                "Use the --study flag instead."
+            ),
+        ),
+        (
+            [
+                "process",
+                "--study",
                 "[tmp_path]/nipoppy_study",
                 "--pipeline",
                 "fake_pipeline",
@@ -144,6 +156,38 @@ def test_dep_params(
         ]
     )
     assert result.exit_code == ReturnCode.SUCCESS
+
+
+@pytest.mark.no_xdist
+def test_study_option_no_warning(
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test that using --study does not emit a deprecation warning."""
+    mocker.patch("nipoppy.workflows.dataset_init.InitWorkflow.run")
+    result = runner.invoke(
+        cli,
+        ["init", "--study", f"{tmp_path}/nipoppy_study"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
+    assert not any(
+        "The --dataset flag will be deprecated" in record.message
+        for record in caplog.records
+    )
+
+
+@pytest.mark.no_xdist
+def test_study_and_dataset_mutually_exclusive(tmp_path: Path):
+    """Test that providing both --study and --dataset raises an error."""
+    result = runner.invoke(
+        cli,
+        ["init", "--study", f"{tmp_path}/study1", "--dataset", f"{tmp_path}/study2"],
+        catch_exceptions=False,
+    )
+    assert result.exit_code != ReturnCode.SUCCESS
+    assert "Cannot specify both --study and --dataset" in result.output
 
 
 @pytest.mark.no_xdist
@@ -189,7 +233,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "init",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.dataset_init.InitWorkflow",
@@ -197,7 +241,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "track-curation",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.track_curation.TrackCurationWorkflow",
@@ -205,7 +249,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "reorg",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.dicom_reorg.DicomReorgWorkflow",
@@ -213,7 +257,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "bidsify",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "--pipeline",
                 "my_pipeline",
@@ -227,7 +271,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "process",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "--pipeline",
                 "my_pipeline",
@@ -239,7 +283,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "track-processing",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "--pipeline",
                 "my_pipeline",
@@ -251,7 +295,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "extract",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "--pipeline",
                 "my_pipeline",
@@ -263,7 +307,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "status",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.dataset_status.StatusWorkflow",
@@ -299,7 +343,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "install",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "zenodo.123456",
             ],
@@ -309,7 +353,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "install",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
                 "zenodo.123456",
                 "--password-file",
@@ -321,7 +365,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "list",
-                "--dataset",
+                "--study",
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.pipeline_store.list.PipelineListWorkflow",
@@ -687,7 +731,7 @@ def test_param_source_priority(
     monkeypatch.setenv("HOME", str(dpath_home))
 
     if subcommand == "subcommand-with-dataset":
-        cli_args += ["--dataset", str(dpath_root)]
+        cli_args += ["--study", str(dpath_root)]
 
     results = runner.invoke(
         dummy_cli, [subcommand] + cli_args, env=env_vars, catch_exceptions=False
@@ -697,6 +741,25 @@ def test_param_source_priority(
     parsed_param = results.stdout.split()[-1].strip()
 
     assert parsed_param == expected_parsed_param
+
+
+def test_param_source_priority_deprecated_dataset(
+    dummy_cli: click.Group,
+    tmp_path: Path,
+):
+    """Test that study-level .env is still loaded when using deprecated --dataset."""
+    dpath_root = tmp_path / "nipoppy_root"
+    fpath_study_dotenv = dpath_root / ".env"
+    fpath_study_dotenv.parent.mkdir(parents=True, exist_ok=True)
+    fpath_study_dotenv.write_text("TEST_PARAM='study_dotenv'")
+
+    results = runner.invoke(
+        dummy_cli,
+        ["subcommand-with-dataset", "--dataset", str(dpath_root)],
+        catch_exceptions=False,
+    )
+    parsed_param = results.stdout.split()[-1].strip()
+    assert parsed_param == "study_dotenv"
 
 
 @pytest.mark.parametrize(

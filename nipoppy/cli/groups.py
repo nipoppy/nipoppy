@@ -6,7 +6,7 @@ from pathlib import Path
 import rich_click as click
 from dotenv import load_dotenv
 
-from nipoppy.cli.options import dataset_option
+from nipoppy.cli.options import study_option
 from nipoppy.env import DEFAULT_DOTENV_PATHS
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import is_nipoppy_project, process_template_str
@@ -78,7 +78,7 @@ class OrderedAliasedGroupWithDotenv(OrderedAliasedGroup):
     """OrderedAliasedGroup that also loads .env files before executing any command."""
 
     @click.command()
-    @dataset_option
+    @study_option
     def _dummy_cli(**params):
         """Define a dummy CLI for dataset path retrieval."""
         pass
@@ -90,7 +90,9 @@ class OrderedAliasedGroupWithDotenv(OrderedAliasedGroup):
             args[:],
             resilient_parsing=True,
         )
-        dpath_root = dummy_ctx.params.get("dpath_root")
+        dpath_root = dummy_ctx.params.get("dataset") or dummy_ctx.params.get(
+            "dpath_root"
+        )
 
         _load_dotenv_files(dpath_root)
 

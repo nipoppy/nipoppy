@@ -5,7 +5,7 @@ This guide shows how to initialize a new Nipoppy dataset for a study with raw {t
 We can use the [`nipoppy init`](../../reference/cli_reference/init) command with the `--bids-source` option to directly add the raw BIDS directory to the Nipoppy dataset:
 
 ```console
-$ nipoppy init --dataset <PATH_TO_NEW_DATASET> --bids-source <PATH_TO_EXISTING_BIDS_DATA>
+$ nipoppy init --study <PATH_TO_NEW_DATASET> --bids-source <PATH_TO_EXISTING_BIDS_DATA>
 ```
 
 This will add the existing raw BIDS dataset to the {{dpath_bids}} directory and automatically generate a {term}`manifest file` based on the participant IDs, session IDs and datatypes available in the raw BIDS data (based on directory names, not on any `participants.tsv` or `*_sessions.tsv` files).
