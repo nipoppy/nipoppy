@@ -8,11 +8,12 @@ import pytest
 import pytest_mock
 
 from nipoppy.integrations.boutiques import (
+    BOUTIQUES_API,
     BoutiquesAPI,
     BoutiquesLegacyAPI,
     DescriptorValidationError,
     InvocationValidationError,
-    get_boutiques_api,
+    _create_boutiques_api,
 )
 
 
@@ -56,20 +57,24 @@ def test_boutiques_api_abstract():
 
 
 @pytest.mark.parametrize("version", ["0.5.31", "0.5.33"])
-def test_get_boutiques_api(version: str, mocker: pytest_mock.MockerFixture):
+def test_create_boutiques_api(version: str, mocker: pytest_mock.MockerFixture):
     mocker.patch.object(importlib.metadata, "version", return_value=version)
 
-    api = get_boutiques_api()
+    api = _create_boutiques_api()
 
     assert isinstance(api, BoutiquesLegacyAPI)
     assert isinstance(api, BoutiquesAPI)
 
 
-def test_get_boutiques_api_unsupported(mocker: pytest_mock.MockerFixture):
+def test_create_boutiques_api_unsupported(mocker: pytest_mock.MockerFixture):
     mocker.patch.object(importlib.metadata, "version", return_value="0.6.0")
 
     with pytest.raises(NotImplementedError, match="not supported"):
-        get_boutiques_api()
+        _create_boutiques_api()
+
+
+def test_boutiques_api_global_is_instance():
+    assert isinstance(BOUTIQUES_API, BoutiquesAPI)
 
 
 def test_validate_descriptor(boutiques_api: BoutiquesLegacyAPI, descriptor_str: str):
