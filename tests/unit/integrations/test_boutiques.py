@@ -9,7 +9,7 @@ import pytest_mock
 
 from nipoppy.integrations.boutiques import (
     BoutiquesAPI,
-    BoutiquesAPILegacy,
+    BoutiquesLegacyAPI,
     DescriptorValidationError,
     InvocationValidationError,
     get_boutiques_api,
@@ -17,9 +17,9 @@ from nipoppy.integrations.boutiques import (
 
 
 @pytest.fixture
-def boutiques_api() -> BoutiquesAPILegacy:
+def boutiques_api() -> BoutiquesLegacyAPI:
     """Return a Boutiques API object for testing."""
-    return BoutiquesAPILegacy()
+    return BoutiquesLegacyAPI()
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def test_get_boutiques_api(version: str, mocker: pytest_mock.MockerFixture):
 
     api = get_boutiques_api()
 
-    assert isinstance(api, BoutiquesAPILegacy)
+    assert isinstance(api, BoutiquesLegacyAPI)
     assert isinstance(api, BoutiquesAPI)
 
 
@@ -72,11 +72,11 @@ def test_get_boutiques_api_unsupported(mocker: pytest_mock.MockerFixture):
         get_boutiques_api()
 
 
-def test_validate_descriptor(boutiques_api: BoutiquesAPILegacy, descriptor_str: str):
+def test_validate_descriptor(boutiques_api: BoutiquesLegacyAPI, descriptor_str: str):
     assert boutiques_api.validate_descriptor(descriptor_str) == descriptor_str
 
 
-def test_validate_descriptor_error(boutiques_api: BoutiquesAPILegacy):
+def test_validate_descriptor_error(boutiques_api: BoutiquesLegacyAPI):
     invalid_descriptor_str = json.dumps({"name": "test_app"})
 
     with pytest.raises(DescriptorValidationError):
@@ -84,7 +84,7 @@ def test_validate_descriptor_error(boutiques_api: BoutiquesAPILegacy):
 
 
 def test_validate_invocation(
-    boutiques_api: BoutiquesAPILegacy,
+    boutiques_api: BoutiquesLegacyAPI,
     descriptor_str: str,
     invocation_str: str,
 ):
@@ -92,7 +92,7 @@ def test_validate_invocation(
 
 
 def test_validate_invocation_error(
-    boutiques_api: BoutiquesAPILegacy, descriptor_str: str
+    boutiques_api: BoutiquesLegacyAPI, descriptor_str: str
 ):
     invalid_invocation_str = json.dumps({"invalid_key": "value"})
 
@@ -100,7 +100,7 @@ def test_validate_invocation_error(
         boutiques_api.validate_invocation(descriptor_str, invalid_invocation_str)
 
 
-def test_create_descriptor(boutiques_api: BoutiquesAPILegacy, tmp_path: Path):
+def test_create_descriptor(boutiques_api: BoutiquesLegacyAPI, tmp_path: Path):
     output_path = tmp_path / "descriptor.json"
 
     boutiques_api.create_descriptor(output_path)
@@ -109,7 +109,7 @@ def test_create_descriptor(boutiques_api: BoutiquesAPILegacy, tmp_path: Path):
 
 
 def test_get_example_invocation(
-    boutiques_api: BoutiquesAPILegacy,
+    boutiques_api: BoutiquesLegacyAPI,
     descriptor_str: str,
     tmp_path: Path,
 ):

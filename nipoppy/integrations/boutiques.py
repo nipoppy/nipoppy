@@ -92,7 +92,7 @@ class BoutiquesAPI(ABC):
         ...
 
 
-class BoutiquesAPILegacy(BoutiquesAPI):
+class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
     def validate_descriptor(self, descriptor_str: str) -> str:
@@ -179,5 +179,5 @@ def get_boutiques_api() -> BoutiquesAPI:
     """
     version = importlib.metadata.version("boutiques")
     if Version(version) < Version("0.6"):
-        return BoutiquesAPILegacy()
+        return BoutiquesLegacyAPI()
     raise NotImplementedError(f"boutiques version {version} is not supported yet.")
