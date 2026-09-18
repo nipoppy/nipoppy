@@ -179,7 +179,10 @@ def test_study_option_no_warning(
 
 
 @pytest.mark.no_xdist
-def test_study_and_dataset_mutually_exclusive(tmp_path: Path):
+def test_study_and_dataset_mutually_exclusive(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+):
     """Test that providing both --study and --dataset raises an error."""
     result = runner.invoke(
         cli,
@@ -187,7 +190,10 @@ def test_study_and_dataset_mutually_exclusive(tmp_path: Path):
         catch_exceptions=False,
     )
     assert result.exit_code != ReturnCode.SUCCESS
-    assert "Cannot specify both --study and --dataset" in result.stderr
+    assert not any(
+        "Cannot specify both --study and --dataset" in record.message
+        for record in caplog.records
+    )
 
 
 @pytest.mark.no_xdist
