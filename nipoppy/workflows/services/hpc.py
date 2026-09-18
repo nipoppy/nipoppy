@@ -106,7 +106,7 @@ class HPCRunner:
         command: list[str] = [
             PROGRAM_NAME,
             self.subcommand,
-            "--dataset",
+            "--study",
             str(self.dpath_root),
             "--pipeline",
             self.pipeline_name,

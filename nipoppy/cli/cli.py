@@ -21,12 +21,12 @@ except ImportError:
 from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
-    dataset_option,
     dep_params,
     global_options,
     layout_option,
     pipeline_options,
     runners_options,
+    study_option,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
 from nipoppy.env import FPATH_USER_CONFIG, PROGRAM_VERSION
@@ -36,7 +36,7 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Command-specific",
             "options": [
-                "--dataset",
+                "--study",
                 "--pipeline",
                 "--pipeline-version",
                 "--pipeline-step",
@@ -113,7 +113,7 @@ if cli.commands.get("gui") is not None:
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
     "--bids-source",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
@@ -160,7 +160,7 @@ def init(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
     "--regenerate",
     is_flag=True,
@@ -182,7 +182,7 @@ def track_curation(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
     "--copy-files",
     is_flag=True,
@@ -213,7 +213,7 @@ def reorg(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @global_options
 @layout_option
@@ -227,7 +227,7 @@ def bidsify(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @click.option(
     "--tar",
@@ -250,7 +250,7 @@ def process(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @pipeline_options
 @click.option(
     "--n-jobs",
@@ -270,7 +270,7 @@ def track_processing(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @global_options
 @layout_option
@@ -284,7 +284,7 @@ def extract(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @global_options
 @layout_option
 def status(**params):
