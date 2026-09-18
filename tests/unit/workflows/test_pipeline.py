@@ -985,6 +985,18 @@ def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool)
     workflow.run_setup()
 
 
+def test_run_setup_check_filter_args_compatibility_called(
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+):
+    create_empty_dataset(workflow.study.layout.dpath_root)
+    mocked_check = mocker.patch.object(workflow, "_check_filter_args_compatibility")
+
+    workflow.run_setup()
+
+    mocked_check.assert_called_once_with()
+
+
 @pytest.mark.parametrize("show_progress", [True, False])
 def test_get_results_generator_no_joblib(
     workflow: PipelineWorkflow,
@@ -1364,8 +1376,8 @@ def test_log_summary_message_hpc(
             AnalysisLevelType.group,
             "01",
             "1",
-            "The --participant-id and --session-id flag(s) will be "
-            "ignored since the pipeline is run at the group level",
+            "The --participant-id and --session-id flag(s) will be ignored "
+            "since the pipeline is run at the group level",
         ),
         (
             AnalysisLevelType.session,

@@ -600,6 +600,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.check_pipeline_version()
         self._check_pipeline_variables()
         self.check_pipeline_step()
+        self._check_filter_args_compatibility()
 
         for dpath in self.dpaths_to_check:
             fileops.mkdir(dpath, dry_run=self.dry_run)
@@ -704,7 +705,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         if len(ignored_flags) > 0:
             logger.warning(
-                f"The {', '.join(ignored_flags)} flag(s) will be ignored "
+                f"The {' and '.join(ignored_flags)} flag(s) will be ignored "
                 f"since the pipeline is run at the {analysis_level.value} level"
             )
 
