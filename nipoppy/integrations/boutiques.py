@@ -165,8 +165,8 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
         return boutiques.example(str(descriptor_path))
 
 
-def get_boutiques_api() -> BoutiquesAPI:
-    """Return the :class:`BoutiquesAPI` matching the installed ``boutiques`` version.
+def _create_boutiques_api() -> BoutiquesAPI:
+    """Return a :class:`BoutiquesAPI` matching the installed ``boutiques`` version.
 
     Returns
     -------
@@ -181,3 +181,6 @@ def get_boutiques_api() -> BoutiquesAPI:
     if Version(version) < Version("0.6"):
         return BoutiquesLegacyAPI()
     raise NotImplementedError(f"boutiques version {version} is not supported yet.")
+
+
+BOUTIQUES_API = _create_boutiques_api()
