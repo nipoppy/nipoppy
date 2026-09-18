@@ -1343,6 +1343,95 @@ def test_log_summary_message_hpc(
     assert expected_message in caplog.text
 
 
+@pytest.mark.parametrize(
+    "analysis_level,participant_id,session_id,expected_message",
+    [
+        (
+            AnalysisLevelType.group,
+            "01",
+            None,
+            "The --participant-id flag(s) will be ignored "
+            "since the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.group,
+            None,
+            "1",
+            "The --session-id flag(s) will be ignored "
+            "since the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.group,
+            "01",
+            "1",
+            "The --participant-id and --session-id flag(s) will be "
+            "ignored since the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.session,
+            "01",
+            None,
+            "The --participant-id flag(s) will be ignored "
+            "since the pipeline is run at the session level",
+        ),
+        (
+            AnalysisLevelType.participant,
+            None,
+            "1",
+            "The --session-id flag(s) will be ignored "
+            "since the pipeline is run at the participant level",
+        ),
+    ],
+)
+def test_check_filter_args_compatibility_warns(
+    analysis_level,
+    participant_id,
+    session_id,
+    expected_message,
+    workflow: PipelineWorkflow,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow.pipeline_step_config.ANALYSIS_LEVEL = analysis_level
+    workflow.participant_id = participant_id
+    workflow.session_id = session_id
+
+    workflow._check_filter_args_compatibility()
+
+    assert any(
+        record.levelname == "WARNING" and expected_message in record.message
+        for record in caplog.records
+    ), f"Expected warning containing: {expected_message}"
+
+
+@pytest.mark.parametrize(
+    "analysis_level,participant_id,session_id",
+    [
+        (AnalysisLevelType.participant_session, "01", "1"),
+        (AnalysisLevelType.participant_session, None, None),
+        (AnalysisLevelType.participant, "01", None),
+        (AnalysisLevelType.session, None, "1"),
+        (AnalysisLevelType.group, None, None),
+    ],
+)
+def test_check_filter_args_compatibility_no_warning(
+    analysis_level,
+    participant_id,
+    session_id,
+    workflow: PipelineWorkflow,
+    caplog: pytest.LogCaptureFixture,
+):
+    workflow.pipeline_step_config.ANALYSIS_LEVEL = analysis_level
+    workflow.participant_id = participant_id
+    workflow.session_id = session_id
+
+    workflow._check_filter_args_compatibility()
+
+    assert not any(
+        record.levelname == "WARNING" and "will be ignored" in record.message
+        for record in caplog.records
+    ), "Expected no warning about unused participant/session ID filters"
+
+
 @pytest.mark.no_xdist
 def test_log_summary_message_write_subcohort(
     workflow: PipelineWorkflow, tmp_path: Path, caplog: pytest.LogCaptureFixture

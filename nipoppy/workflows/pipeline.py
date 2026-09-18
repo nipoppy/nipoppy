@@ -688,6 +688,26 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         else:
             self._run_locally(participants_sessions)
 
+    def _check_filter_args_compatibility(self):
+        """Warn if participant/session ID filters cannot be applied."""
+        analysis_level = self.pipeline_step_config.ANALYSIS_LEVEL
+        ignored_flags = []
+        if self.participant_id is not None:
+            if analysis_level in (AnalysisLevelType.group, AnalysisLevelType.session):
+                ignored_flags.append("--participant-id")
+        if self.session_id is not None:
+            if analysis_level in (
+                AnalysisLevelType.group,
+                AnalysisLevelType.participant,
+            ):
+                ignored_flags.append("--session-id")
+
+        if len(ignored_flags) > 0:
+            logger.warning(
+                f"The {', '.join(ignored_flags)} flag(s) will be ignored "
+                f"since the pipeline is run at the {analysis_level.value} level"
+            )
+
     def run_main(self):
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
