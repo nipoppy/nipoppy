@@ -9,11 +9,12 @@ import logging
 import os
 import signal
 import sys
+import threading
 from dataclasses import dataclass
 
 import httpx
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.metrics import Counter
+from opentelemetry.metrics import Counter, NoOpMeter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     MetricReader,
@@ -21,25 +22,27 @@ from opentelemetry.sdk.metrics.export import (
 )
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 
-from nipoppy.env import PROGRAM_NAME, TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
+from nipoppy.env import (
+    PROGRAM_NAME,
+    TELEMETRY_DEFAULT_OTLP_ENDPOINT,
+    TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
+)
 from nipoppy.exceptions import ReturnCode
 from nipoppy.logger import get_logger
 
 logger = get_logger()
 
+_GEOIP_TIMEOUT = 1
 
-def _get_user_country(timeout: float = 5) -> str:
+
+def _get_user_country(timeout: float = 1) -> str:
     """
     Get the user's country code from their public IP address.
 
-    Returns a two-letter ISO country code (e.g. "US", "CA", "IN") or
-    "UNKNOWN" on any failure.
+    Returns a two-letter ISO country code (e.g. "US", "CA", "IN").
     """
-    ip_response = httpx.get("https://api.ipify.org", timeout=timeout)
-    ip_response.raise_for_status()
-    public_ip = ip_response.text.strip()
+    response = httpx.get("https://api.db-ip.com/v2/free/self", timeout=timeout)
 
-    response = httpx.get(f"https://api.db-ip.com/v2/free/{public_ip}", timeout=timeout)
     response.raise_for_status()
     data = response.json()
 
@@ -77,7 +80,8 @@ class TelemetryHandler:
         service_version : str, optional
             Version tag (default: None).
         otlp_endpoint : str, optional
-            Collector endpoint (default: https://telemetry.nipoppy.org).
+            Collector endpoint (default:
+            `nipoppy.env.TELEMETRY_DEFAULT_OTLP_ENDPOINT`).
         export_interval_millis : int
             Export frequency in milliseconds, capped at
             `nipoppy.env.TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS`
@@ -95,9 +99,10 @@ class TelemetryHandler:
         self.provider: MeterProvider | None = None
         self.metrics: MetricInstruments | None = None
         self.shutdown_called = False
+        self._location_thread: threading.Thread | None = None
 
     @property
-    def is_enabled(self) -> bool:
+    def is_initialized(self) -> bool:
         """True if telemetry is initialized and active."""
         return self.metrics is not None
 
@@ -110,9 +115,6 @@ class TelemetryHandler:
         """
         if self.provider is not None:
             return True
-
-        if os.getenv("OTEL_SDK_DISABLED", "false").lower() == "true":
-            return False
 
         try:
             # OTLP/HTTP exporter uses requests/urllib3 internally; silence both loggers.
@@ -141,6 +143,9 @@ class TelemetryHandler:
                 metric_readers=[reader],
             )
             meter = self.provider.get_meter(__name__)
+            if isinstance(meter, NoOpMeter):
+                self.provider = None
+                return False
             self.metrics = self.create_metric_instruments(meter)
 
             # Flush and export pending metrics on normal exit and Ctrl+C (SIGINT
@@ -173,7 +178,7 @@ class TelemetryHandler:
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
-                "https://telemetry.nipoppy.org",
+                TELEMETRY_DEFAULT_OTLP_ENDPOINT,
             )
 
         # OTLP/HTTP keeps the scheme in the URL (https:// implies TLS). When an
@@ -229,23 +234,32 @@ class TelemetryHandler:
         except Exception as e:
             logger.debug(f"Failed to record command completion: {e}")
 
-    def record_location(self) -> None:
-        """Perform a country code lookup and record the country metric."""
-        try:
-            if self.metrics is None:
-                return
-            country_code = _get_user_country()
-            self.metrics.location_by_country.add(
-                1,
-                attributes={"country": country_code},
-            )
-        except Exception as e:
-            logger.debug(f"Country lookup failed: {e}")
+    def record_location_async(self) -> None:
+        """Look up the country in a background thread and record the metric."""
+        if self.metrics is None:
+            return
+
+        def _worker() -> None:
+            try:
+                country_code = _get_user_country(timeout=_GEOIP_TIMEOUT)
+                self.metrics.location_by_country.add(
+                    1,
+                    attributes={"country": country_code},
+                )
+            except Exception as e:
+                logger.debug(f"Country lookup failed: {e}")
+
+        self._location_thread = threading.Thread(
+            target=_worker, daemon=True, name=f"{PROGRAM_NAME}-geoip"
+        )
+        self._location_thread.start()
 
     def shutdown(self) -> None:
         """Flush and shut down the meter provider."""
         if self.shutdown_called:
             return
         self.shutdown_called = True
+        if self._location_thread is not None:
+            self._location_thread.join(timeout=2 * _GEOIP_TIMEOUT)
         if self.provider is not None:
             self.provider.shutdown()

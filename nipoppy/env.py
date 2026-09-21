@@ -58,6 +58,7 @@ EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
 # telemetry
+TELEMETRY_DEFAULT_OTLP_ENDPOINT = "https://telemetry.nipoppy.org"
 TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 2000
 
 # dotenv files
