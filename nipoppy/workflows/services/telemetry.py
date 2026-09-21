@@ -33,8 +33,7 @@ def _get_user_country(timeout: float = 5) -> str:
     Get the user's country code from their public IP address.
 
     Returns a two-letter ISO country code (e.g. "US", "CA", "IN") or
-    "UNKNOWN" on any failure. Not fail-safe on its own — callers are
-    responsible for exception handling (see `record_location`).
+    "UNKNOWN" on any failure.
     """
     ip_response = httpx.get("https://api.ipify.org", timeout=timeout)
     ip_response.raise_for_status()
@@ -45,10 +44,7 @@ def _get_user_country(timeout: float = 5) -> str:
     data = response.json()
 
     country_code = data.get("countryCode")
-    if country_code is not None and isinstance(country_code, str):
-        return country_code.upper()
-
-    return "UNKNOWN"
+    return country_code.upper()
 
 
 @dataclass
@@ -62,13 +58,7 @@ class MetricInstruments:
 
 
 class TelemetryHandler:
-    """
-    Self-contained OpenTelemetry metrics handler.
-
-    Each instance owns its own MeterProvider, so it does not touch the global
-    OpenTelemetry state and multiple instances can coexist safely. All public
-    methods are fail-safe and never raise.
-    """
+    """Self-contained OpenTelemetry metrics handler."""
 
     def __init__(
         self,
@@ -78,14 +68,14 @@ class TelemetryHandler:
         export_interval_millis: int = TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
         metric_reader: MetricReader | None = None,
     ) -> None:
-        """Create a telemetry handler (does not initialize OpenTelemetry yet).
+        """Create a telemetry handler.
 
         Parameters
         ----------
         service_name : str
             Service name for metrics (default: `nipoppy.env.PROGRAM_NAME`).
         service_version : str, optional
-            Version tag, supplied by the base workflow (default: None).
+            Version tag (default: None).
         otlp_endpoint : str, optional
             Collector endpoint (default: https://telemetry.nipoppy.org).
         export_interval_millis : int
@@ -116,7 +106,7 @@ class TelemetryHandler:
         Initialize the meter provider and metric instruments.
 
         Safe to call multiple times (only initializes once). Returns False if
-        initialization is disabled or fails; never raises.
+        initialization is disabled or fails.
         """
         if self.provider is not None:
             return True
@@ -199,9 +189,6 @@ class TelemetryHandler:
         otlp_exporter = OTLPMetricExporter(endpoint=otlp_endpoint)
 
         # Short export interval so the HTTP session is established before shutdown.
-        # For CLI tools the periodic export rarely fires, but the shutdown flush
-        # reuses the already-open connection — making export reliable even for
-        # 2s commands.
         return PeriodicExportingMetricReader(
             otlp_exporter,
             export_interval_millis=min(
@@ -256,7 +243,7 @@ class TelemetryHandler:
             logger.debug(f"Country lookup failed: {e}")
 
     def shutdown(self) -> None:
-        """Flush and shut down the meter provider. Safe to call multiple times."""
+        """Flush and shut down the meter provider."""
         if self.shutdown_called:
             return
         self.shutdown_called = True
