@@ -12,7 +12,6 @@ from functools import cached_property
 from pathlib import Path
 from typing import Protocol
 
-from nipoppy._version import __version__
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import FileOperationError, ReturnCode
@@ -181,7 +180,7 @@ class BaseWorkflow(Base, ABC):
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
-        self.telemetry = TelemetryHandler(service_version=__version__)
+        self.telemetry = TelemetryHandler()
 
         logger.set_verbose(self.verbose)
 

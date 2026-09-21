@@ -5,7 +5,6 @@ from __future__ import annotations
 # Shutdown pattern reference:
 # https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
 import atexit
-import logging
 import os
 import signal
 import sys
@@ -24,6 +23,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 
 from nipoppy.env import (
     PROGRAM_NAME,
+    PROGRAM_VERSION,
     TELEMETRY_DEFAULT_OTLP_ENDPOINT,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
 )
@@ -66,7 +66,7 @@ class TelemetryHandler:
     def __init__(
         self,
         service_name: str = PROGRAM_NAME,
-        service_version: str | None = None,
+        service_version: str | None = PROGRAM_VERSION,
         otlp_endpoint: str | None = None,
         export_interval_millis: int = TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
         metric_reader: MetricReader | None = None,
@@ -78,7 +78,7 @@ class TelemetryHandler:
         service_name : str
             Service name for metrics (default: `nipoppy.env.PROGRAM_NAME`).
         service_version : str, optional
-            Version tag (default: None).
+            Version tag (default: `nipoppy.env.PROGRAM_VERSION`).
         otlp_endpoint : str, optional
             Collector endpoint (default:
             `nipoppy.env.TELEMETRY_DEFAULT_OTLP_ENDPOINT`).
@@ -98,13 +98,14 @@ class TelemetryHandler:
 
         self.provider: MeterProvider | None = None
         self.metrics: MetricInstruments | None = None
+        self._initialized = False
         self.shutdown_called = False
         self._location_thread: threading.Thread | None = None
 
     @property
     def is_initialized(self) -> bool:
         """True if telemetry is initialized and active."""
-        return self.metrics is not None
+        return self._initialized
 
     def initialize(self) -> bool:
         """
@@ -113,26 +114,25 @@ class TelemetryHandler:
         Safe to call multiple times (only initializes once). Returns False if
         initialization is disabled or fails.
         """
-        if self.provider is not None:
+        if self.is_initialized:
             return True
+        if self.shutdown_called:
+            return False
+
+        original_sigterm = signal.getsignal(signal.SIGTERM)
+
+        def _sigterm_handler(signum, frame):
+            self.shutdown()
+            if callable(original_sigterm):
+                original_sigterm(signum, frame)
+            else:
+                sys.exit(0)
 
         try:
-            # OTLP/HTTP exporter uses requests/urllib3 internally; silence both loggers.
-            logging.getLogger("opentelemetry").setLevel(logging.CRITICAL)
-            logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-
-            if self.service_version is not None and ".dev" not in self.service_version:
-                default_environment = "production"
-            else:
-                default_environment = "development"
-
             resource = Resource(
                 attributes={
                     SERVICE_NAME: self.service_name,
                     SERVICE_VERSION: self.service_version or "unknown",
-                    "deployment.environment": os.getenv(
-                        "ENVIRONMENT", default_environment
-                    ),
                 }
             )
 
@@ -152,21 +152,17 @@ class TelemetryHandler:
             # raises KeyboardInterrupt, which unwinds normally). atexit does not
             # fire on SIGTERM, so that signal gets its own handler below.
             atexit.register(self.shutdown)
-
-            original_sigterm = signal.getsignal(signal.SIGTERM)
-
-            def _sigterm_handler(signum, frame):
-                self.shutdown()
-                if callable(original_sigterm):
-                    original_sigterm(signum, frame)
-                else:
-                    sys.exit(0)
-
             signal.signal(signal.SIGTERM, _sigterm_handler)
+            self._initialized = True
 
             return True
 
         except Exception as e:
+            if self.provider is not None:
+                self.provider.shutdown()
+            self.provider = None
+            self.metrics = None
+            self._initialized = False
             logger.debug(
                 f"Telemetry initialization failed: {e}. Continuing without telemetry."
             )
@@ -221,7 +217,7 @@ class TelemetryHandler:
     ) -> None:
         """Emit a commands_completed metric."""
         try:
-            if self.metrics is None:
+            if not self.is_initialized:
                 return
             self.metrics.commands_completed.add(
                 1,
@@ -236,7 +232,7 @@ class TelemetryHandler:
 
     def record_location_async(self) -> None:
         """Look up the country in a background thread and record the metric."""
-        if self.metrics is None:
+        if not self.is_initialized:
             return
 
         def _worker() -> None:
@@ -263,3 +259,6 @@ class TelemetryHandler:
             self._location_thread.join(timeout=2 * _GEOIP_TIMEOUT)
         if self.provider is not None:
             self.provider.shutdown()
+        self.provider = None
+        self.metrics = None
+        self._initialized = False

@@ -8,6 +8,7 @@ import threading
 
 import pytest
 import pytest_httpx
+import pytest_mock
 from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
 from nipoppy.env import TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
@@ -119,34 +120,21 @@ class TestInitialize:
         assert handler.is_initialized is False
         assert handler.provider is None
 
-    @pytest.mark.parametrize(
-        "service_version,expected_environment",
-        [
-            (None, "development"),
-            ("1.2.3", "production"),
-            ("1.2.3.dev0", "development"),
-        ],
-    )
-    def test_default_deployment_environment_from_version(
-        self, service_version, expected_environment
+    def test_initialize_cleans_up_after_provider_creation_fails(
+        self, mocker: pytest_mock.MockerFixture
     ):
-        """Version string decides development vs production environment."""
-        handler = TelemetryHandler(
-            service_version=service_version, metric_reader=InMemoryMetricReader()
+        """A failure after provider creation does not leave partial state."""
+        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        mocker.patch.object(
+            handler,
+            "create_metric_instruments",
+            side_effect=RuntimeError("instrument creation failed"),
         )
-        handler.initialize()
-        resource_attrs = handler.provider._sdk_config.resource.attributes
-        assert resource_attrs["deployment.environment"] == expected_environment
 
-    def test_environment_variable_overrides_default(self, monkeypatch):
-        """ENVIRONMENT overrides the version-derived deployment environment."""
-        monkeypatch.setenv("ENVIRONMENT", "staging")
-        handler = TelemetryHandler(
-            service_version="1.2.3", metric_reader=InMemoryMetricReader()
-        )
-        handler.initialize()
-        resource_attrs = handler.provider._sdk_config.resource.attributes
-        assert resource_attrs["deployment.environment"] == "staging"
+        assert handler.initialize() is False
+        assert handler.provider is None
+        assert handler.metrics is None
+        assert handler.is_initialized is False
 
     def test_service_version_defaults_to_unknown(self):
         """An absent service version is reported as unknown."""
@@ -351,6 +339,25 @@ class TestShutdown:
 
         spy.assert_called_once()
         assert handler.shutdown_called is True
+        assert handler.is_initialized is False
+
+    def test_initialize_returns_false_after_shutdown(self):
+        """A shut-down handler cannot be initialized again."""
+        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler.initialize()
+        handler.shutdown()
+
+        assert handler.initialize() is False
+
+    def test_recording_after_shutdown_is_a_no_op(self):
+        """Recording after shutdown does not use the closed provider."""
+        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler.initialize()
+        handler.shutdown()
+
+        handler.record_command_completion("init", ReturnCode.SUCCESS)
+        handler.record_location_async()
+        assert handler._location_thread is None
 
     def test_shutdown_is_idempotent(self, mocker):
         """Calling shutdown() twice shuts the provider down only once."""
