@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, JSONError
 from nipoppy.integrations.boutiques import (
     BOUTIQUES_API,
     BoutiquesAPI,
@@ -117,13 +117,21 @@ def test_validate_descriptor_file(
     assert boutiques_api.validate_descriptor_file(fpath_descriptor) == descriptor_str
 
 
+@pytest.mark.parametrize(
+    "descriptor_str,error_class",
+    [
+        (json.dumps({"name": "test_app"}), DescriptorValidationError),
+        ('{"name": "x",}', JSONError),
+    ],
+    ids=["missing_fields", "json5"],
+)
 def test_validate_descriptor_file_error(
-    boutiques_api: BoutiquesLegacyAPI, tmp_path: Path
+    descriptor_str, error_class, boutiques_api: BoutiquesLegacyAPI, tmp_path: Path
 ):
     fpath_descriptor = tmp_path / "bad_descriptor.json"
-    fpath_descriptor.write_text(json.dumps({"name": "test_app"}))
+    fpath_descriptor.write_text(descriptor_str)
 
-    with pytest.raises(DescriptorValidationError):
+    with pytest.raises(error_class):
         boutiques_api.validate_descriptor_file(fpath_descriptor)
 
 
