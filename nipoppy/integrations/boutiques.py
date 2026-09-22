@@ -95,73 +95,23 @@ class BoutiquesAPI(ABC):
 class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
-    def validate_descriptor(self, descriptor_str: str) -> str:
-        """Validate a descriptor and return the validated descriptor string.
-
-        Parameters
-        ----------
-        descriptor_str : str
-            The Boutiques descriptor as a JSON string.
-
-        Returns
-        -------
-        str
-            The validated descriptor as a JSON string.
-
-        Raises
-        ------
-        DescriptorValidationError
-            If the descriptor is invalid.
-        """
+    def validate_descriptor(self, descriptor_str: str) -> str:  # noqa: D102
         try:
             boutiques.validate(descriptor_str)
         except boutiques.DescriptorValidationError as exception:
             raise DescriptorValidationError(str(exception)) from exception
         return descriptor_str
 
-    def validate_invocation(self, descriptor_str: str, invocation_str: str) -> None:
-        """Validate an invocation against a descriptor.
-
-        Parameters
-        ----------
-        descriptor_str : str
-            The Boutiques descriptor as a JSON string.
-        invocation_str : str
-            The Boutiques invocation as a JSON string.
-
-        Raises
-        ------
-        InvocationValidationError
-            If the invocation is invalid.
-        """
+    def validate_invocation(self, descriptor_str: str, invocation_str: str) -> None:  # noqa: D102
         try:
             boutiques.invocation("--invocation", invocation_str, descriptor_str)
         except boutiques.InvocationValidationError as exception:
             raise InvocationValidationError(str(exception)) from exception
 
-    def create_descriptor(self, output_path: Path) -> None:
-        """Create a starter descriptor template.
-
-        Parameters
-        ----------
-        output_path : Path
-            Path where the starter descriptor should be written.
-        """
+    def create_descriptor(self, output_path: Path) -> None:  # noqa: D102
         boutiques.create(str(output_path))
 
-    def generate_example_invocation(self, descriptor_path: Path) -> str:
-        """Generate an example invocation for a descriptor.
-
-        Parameters
-        ----------
-        descriptor_path : Path
-            Path to the descriptor file.
-
-        Returns
-        -------
-        str
-            The example invocation as a JSON string.
-        """
+    def generate_example_invocation(self, descriptor_path: Path) -> str:  # noqa: D102
         return boutiques.example(str(descriptor_path))
 
 
