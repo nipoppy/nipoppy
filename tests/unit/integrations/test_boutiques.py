@@ -113,7 +113,7 @@ def test_create_descriptor(boutiques_api: BoutiquesLegacyAPI, tmp_path: Path):
     boutiques_api.validate_descriptor(output_path.read_text())
 
 
-def test_get_example_invocation(
+def test_generate_example_invocation(
     boutiques_api: BoutiquesLegacyAPI,
     descriptor_str: str,
     tmp_path: Path,
@@ -121,6 +121,6 @@ def test_get_example_invocation(
     descriptor_path = tmp_path / "descriptor.json"
     descriptor_path.write_text(descriptor_str)
 
-    example_invocation = boutiques_api.get_example_invocation(descriptor_path)
+    example_invocation = boutiques_api.generate_example_invocation(descriptor_path)
 
     assert isinstance(json.loads(example_invocation), dict)

@@ -76,7 +76,7 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def get_example_invocation(self, descriptor_path: Path) -> str:
+    def generate_example_invocation(self, descriptor_path: Path) -> str:
         """Generate an example invocation for a descriptor.
 
         Parameters
@@ -149,7 +149,7 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
         """
         boutiques.create(str(output_path))
 
-    def get_example_invocation(self, descriptor_path: Path) -> str:
+    def generate_example_invocation(self, descriptor_path: Path) -> str:
         """Generate an example invocation for a descriptor.
 
         Parameters
