@@ -126,10 +126,13 @@ def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     **kwargs :
         Keyword arguments to pass to json.dump
     """
+    # inline to prevent circular import
+    from nipoppy.utils import fileops
+
     if "indent" not in kwargs:
         kwargs["indent"] = 4
     fpath = Path(fpath)
-    fpath.parent.mkdir(parents=True, exist_ok=True)
+    fileops.mkdir(fpath.parent)
     with open(fpath, "w") as file:
         json.dump(obj, file, **kwargs)
 
@@ -199,7 +202,7 @@ def save_df_with_backup(
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 
     if not dry_run:
-        fpath_backup_full.parent.mkdir(parents=True, exist_ok=True)
+        fileops.mkdir(fpath_backup_full.parent)
         df.to_csv(fpath_backup_full, **kwargs)
 
         if use_relative_path:
@@ -212,7 +215,7 @@ def save_df_with_backup(
         if fpath_symlink.is_symlink() or fpath_symlink.exists():
             fileops.rm(fpath_symlink, missing_ok=True)
 
-        fpath_symlink.symlink_to(fpath_backup_to_link)
+        fileops.symlink(source=fpath_backup_to_link, target=fpath_symlink)
 
     return Path(fpath_backup_full)
 

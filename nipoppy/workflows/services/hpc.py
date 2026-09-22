@@ -256,7 +256,7 @@ class HPCRunner:
         fpath_hpc_error = dpath_work / fname_hpc_error
         fileops.rm(fpath_hpc_error, missing_ok=True)
 
-        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+        fileops.mkdir(dpath_hpc_logs)
 
         # user-defined args
         job_args = self._check_hpc_config()
