@@ -61,14 +61,18 @@ def get_pipeline_tag(
     sep="-",
 ):
     """Generate a tag for a pipeline."""
-    components = [pipeline_name, pipeline_version]
-    if pipeline_step is not None:
-        components.append(pipeline_step)
-    if participant_id is not None:
-        components.append(participant_id)
-    if session_id is not None:
-        components.append(session_id)
-    return sep.join(components)
+    return sep.join(
+        filter(
+            None,
+            [
+                pipeline_name,
+                pipeline_version,
+                pipeline_step,
+                participant_id,
+                session_id,
+            ],
+        )
+    )
 
 
 def load_json(
