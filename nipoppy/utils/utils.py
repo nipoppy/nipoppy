@@ -177,6 +177,8 @@ def save_df_with_backup(
     Path
         The path to the backup file
     """
+    from nipoppy.utils import fileops  # to avoid circular import
+
     if "index" not in kwargs:
         kwargs["index"] = False
     if "sep" not in kwargs:
@@ -207,8 +209,7 @@ def save_df_with_backup(
         else:
             fpath_backup_to_link = fpath_backup_full
 
-        if fpath_symlink.is_symlink() or fpath_symlink.exists():
-            fpath_symlink.unlink()
+        fileops.rm(fpath_symlink, missing_ok=True)
         fpath_symlink.symlink_to(fpath_backup_to_link)
 
     return Path(fpath_backup_full)
