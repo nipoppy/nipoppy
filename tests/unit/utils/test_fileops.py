@@ -133,6 +133,39 @@ class TestRemovePath:
 
         assert not test_dir.exists()
 
+    def test_rm_missing_ok(self, tmp_path: Path):
+        """Test that rm does not raise for non-existent paths with missing_ok."""
+        fileops.rm(tmp_path / "does_not_exist.txt", missing_ok=True)
+
+    def test_rm_missing_raises(self, tmp_path: Path):
+        """Test that rm raises for non-existent paths without missing_ok."""
+        with pytest.raises(FileNotFoundError):
+            fileops.rm(tmp_path / "does_not_exist.txt")
+
+    def test_rm_missing_ok_broken_symlink(self, tmp_path: Path):
+        """Test that a broken symlink is removed even with missing_ok."""
+        broken_symlink = tmp_path / "broken_link"
+        broken_symlink.symlink_to(tmp_path / "does_not_exist.txt")
+
+        assert broken_symlink.is_symlink()
+        assert not broken_symlink.exists()
+
+        fileops.rm(broken_symlink, missing_ok=True)
+
+        assert not broken_symlink.is_symlink()
+        assert not broken_symlink.exists()
+
+    def test_rm_missing_ok_dry_run(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that dry_run with missing_ok does not raise or remove anything."""
+        nonexistent_path = tmp_path / "does_not_exist.txt"
+
+        fileops.rm(nonexistent_path, missing_ok=True, dry_run=True)
+
+        assert not nonexistent_path.exists()
+        assert f"Removing {nonexistent_path}" in caplog.text
+
 
 class TestMakeDir:
     def test_mkdir_creates_directory(self, tmp_path: Path):
