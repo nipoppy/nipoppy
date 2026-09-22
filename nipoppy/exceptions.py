@@ -11,7 +11,7 @@ class ReturnCode(IntEnum):
 
     SUCCESS = 0
     FAILURE = 1  # Generic or unspecified failure
-    INVALID_COMMAND = 2  # Invalid or excess argument(s)
+    INVALID_ARGUMENT = 2  # Invalid or excess argument(s)
 
     # 64-78: OS specified return codes
     # Reference: https://docs.python.org/3/library/os.html#os._exit
@@ -129,6 +129,15 @@ class WorkflowError(NipoppyError, RuntimeError):
 
     code = ReturnCode.WORKFLOW_FAILURE
     default_hint = "Rerun with --verbose for additional context."
+
+
+class InvalidArgumentError(NipoppyError, ValueError):
+    """Exception raised for invalid arguments."""
+
+    code = ReturnCode.INVALID_ARGUMENT
+    default_hint = (
+        "Invalid argument(s) provided. Use check the documentation for valid options."
+    )
 
 
 ####################

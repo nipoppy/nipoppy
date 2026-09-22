@@ -23,6 +23,7 @@ from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
+from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -335,11 +336,12 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "upload",
-                "mocked.zip",
+                "[mocked_dir]",
                 "--zenodo-id",
                 "zenodo.123456",
                 "--password-file",
                 str(PASSWORD_FILE),
+                "--community",
             ],
             "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
         ),
@@ -359,7 +361,7 @@ def test_cli_command(
     # Hack to inject the mocked directory into the command
     command = [arg.replace("[mocked_dir]", str(mocked_dir)) for arg in command]
 
-    if workflow:
+    if workflow is not None:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
 
@@ -381,7 +383,7 @@ def test_context_manager_no_exception(mocker):
     [
         (None, ReturnCode.UNKNOWN_FAILURE),
         (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.INVALID_COMMAND, ReturnCode.INVALID_COMMAND),
+        (ReturnCode.INVALID_ARGUMENT, ReturnCode.INVALID_ARGUMENT),
     ],
 )
 def test_context_manager_system_exit_exception(
@@ -411,14 +413,15 @@ class MyCustomException(NipoppyError):
 
 
 @pytest.mark.parametrize(
-    "exception",
+    "exception,return_code",
     [
-        NipoppyError,
-        MyCustomException,
+        (NipoppyError, NipoppyError.code),
+        (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
+        (MyCustomException, MyCustomException.code),
     ],
 )
 def test_context_manager_nipoppy_exception(
-    mocker: pytest_mock.MockerFixture, exception
+    mocker: pytest_mock.MockerFixture, exception: Exception, return_code: int
 ):
     """Test that the context manager handles exceptions correctly.
 
@@ -432,8 +435,8 @@ def test_context_manager_nipoppy_exception(
     with exception_handler(workflow):
         raise exception
 
-    assert workflow.return_code == exception.code
-    mock_exit.assert_called_once_with(exception.code)
+    assert workflow.return_code == return_code
+    mock_exit.assert_called_once_with(return_code)
 
 
 @pytest.mark.parametrize("hint", ["", "This is a hint."])
@@ -492,7 +495,7 @@ def test_context_manager_json_error(
 
 
 @pytest.mark.parametrize(
-    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
+    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)]
 )
 @pytest.mark.parametrize("exception", [Exception, RuntimeError])
 def test_context_manager_unknown_exception(

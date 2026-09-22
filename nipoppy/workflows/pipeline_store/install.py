@@ -253,29 +253,38 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             pipeline_config.VERSION,
         )
 
-        # check if the target directory already exists
-        if dpath_target.exists():
-            if not self.force:
-                raise FileOperationError(
-                    f"Pipeline directory exists: {dpath_target}"
-                    ". Use --force to overwrite",
+        if dpath_target.resolve() != dpath_pipeline.resolve():
+            # check if the target directory already exists
+            if dpath_target.exists():
+                if not self.force:
+                    raise FileOperationError(
+                        f"Pipeline directory exists: {dpath_target}"
+                        ". Use --force to overwrite",
+                    )
+                else:
+                    fileops.rm(dpath_target, dry_run=self.dry_run)
+
+            # copy the directory
+            if self.dpath_pipeline is not None:
+                fileops.copy(
+                    source=dpath_pipeline,
+                    target=dpath_target,
+                    dry_run=self.dry_run,
                 )
             else:
-                fileops.rm(dpath_target, dry_run=self.dry_run)
-
-        # copy the directory
-        if self.dpath_pipeline is not None:
-            fileops.copy(
-                source=dpath_pipeline,
-                target=dpath_target,
-                dry_run=self.dry_run,
-            )
+                # move downloaded pipelines to the target location
+                fileops.movetree(
+                    source=dpath_pipeline,
+                    target=dpath_target,
+                    dry_run=self.dry_run,
+                )
         else:
-            # if the pipeline was downloaded from Zenodo, move it to the target location
-            fileops.movetree(
-                source=dpath_pipeline,
-                target=dpath_target,
-                dry_run=self.dry_run,
+            logger.warning(
+                "Source and destination are the same directory; "
+                "skipping pipeline file operations. Editing an installed pipeline "
+                "in place is not recommended, as accidental changes can compromise "
+                "reproducibility. Keep pipeline development separate from the "
+                "installed copy."
             )
 
         # update global config with new pipeline variables
