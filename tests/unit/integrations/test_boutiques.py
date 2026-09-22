@@ -19,7 +19,7 @@ from nipoppy.integrations.boutiques import (
 
 
 @pytest.fixture
-def boutiques_api() -> BoutiquesLegacyAPI:
+def boutiques_api() -> BoutiquesAPI:
     """Return a Boutiques API object for testing."""
     return BoutiquesLegacyAPI()
 
@@ -158,6 +158,6 @@ def test_generate_example_invocation(
     descriptor_path = tmp_path / "descriptor.json"
     descriptor_path.write_text(descriptor_str)
 
-    example_invocation = boutiques_api.generate_example_invocation(descriptor_path)
+    invocation_str = boutiques_api.generate_example_invocation(descriptor_path)
 
-    assert isinstance(json.loads(example_invocation), dict)
+    boutiques_api.validate_invocation_str(descriptor_str, invocation_str)

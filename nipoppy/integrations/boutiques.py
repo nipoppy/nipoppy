@@ -66,12 +66,12 @@ class BoutiquesAPI(ABC):
 
     @abstractmethod
     def create_descriptor(self, output_path: Path) -> None:
-        """Create a starter descriptor template.
+        """Create an example descriptor.
 
         Parameters
         ----------
         output_path : Path
-            Path where the starter descriptor should be written.
+            Path where the descriptor should be written.
         """
         ...
 
@@ -92,7 +92,7 @@ class BoutiquesAPI(ABC):
         ...
 
     def validate_descriptor_file(self, fpath_descriptor: StrOrPathLike) -> str:
-        """Load a descriptor file, validate it, and return it as a JSON string.
+        """Validate a descriptor file.
 
         Parameters
         ----------
