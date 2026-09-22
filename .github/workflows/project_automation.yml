@@ -12,6 +12,7 @@ env:
   # project statuses
   triage: Triage
   todo: Todo
+  assigned: Assigned
   in_progress: In progress
   pending_review: Pending review
   reviewed: Reviewed
@@ -43,7 +44,7 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           status_value: ${{ env.triage }} # Target status
 
-      - name: Move issue to ${{ env.in_progress }}
+      - name: Move issue to ${{ env.assigned }}
         if: github.event_name == 'issues' && github.event.action == 'assigned'
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
@@ -51,10 +52,10 @@ jobs:
           organization: ${{ env.organization }}
           project_id: ${{ env.project_id }}
           resource_node_id: ${{ github.event.issue.node_id }}
-          status_value: ${{ env.in_progress }} # Target status
+          status_value: ${{ env.assigned }} # Target status
 
       - name: Move PR to ${{ env.in_progress }}
-        if: github.event_name == 'pull_request_target' && github.event.action == 'converted_to_draft'
+        if: github.event_name == 'pull_request_target' && (github.event.action == 'opened' || github.event.action == 'converted_to_draft' || github.event.action == 'reopened')
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
         with:
           gh_token: ${{ steps.generate-token.outputs.token }}

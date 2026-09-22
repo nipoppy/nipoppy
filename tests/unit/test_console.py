@@ -8,12 +8,13 @@ from rich.logging import RichHandler
 from rich.table import Table
 
 from nipoppy.console import _INDENT, CONSOLE_STDERR, CONSOLE_STDOUT, _Console, _Status
+from nipoppy.exceptions import ExecutionError
 
 
 @pytest.fixture
 def console():
     """Fixture for Console instance."""
-    return _Console(force_terminal=True)
+    return _Console(force_terminal=True, force_interactive=True)
 
 
 def test_global_consoles():
@@ -39,6 +40,21 @@ def test_console_confirm(console: _Console, capsys: pytest.CaptureFixture):
         ]
     )
     assert not captured.out.endswith("\n")
+
+
+@pytest.mark.parametrize(
+    "is_interactive, is_terminal",
+    [(True, False), (False, True)],
+)
+def test_console_confirm_no_tty(is_interactive: bool, is_terminal: bool):
+    """Test that a non-interactive terminal raises an ExecutionError."""
+    console = _Console(
+        force_interactive=is_interactive,
+        force_terminal=is_terminal,
+    )
+
+    with pytest.raises(ExecutionError, match="Non-interactive terminal detected."):
+        console.confirm("test message")
 
 
 @pytest.mark.no_xdist
