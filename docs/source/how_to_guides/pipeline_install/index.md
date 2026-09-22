@@ -17,7 +17,6 @@ Here is the (trimmed) output obtained at the time of writing:
 <!-- TODO auto-generate this table when building docs? -->
 
 ```
-            ╷                               ╷
   Zenodo ID │             Title             │                         Description
  ═══════════╪═══════════════════════════════╪═════════════════════════════════════════════════════════════
   15299437  │ xcp-d postprocessing pipeline │         Config and Tracker files for running xcp-d
@@ -32,12 +31,19 @@ Here is the (trimmed) output obtained at the time of writing:
   15306679  │       freesurfer-6.0.1        │  Nipoppy configuration files for freesurfer 6.0.1 pipeline
             │                               │                       (tracking only)
   15306685  │        qsiprep-0.23.0         │   Nipoppy configuration files for qsiprep 0.23.0 pipeline
-            ╵                               ╵
 ```
 
-```{tip}
+````{tip}
 By default this shows the 10 results with the highest download counts. You can use the `--size` option to display more.
+
+You can filter the results by pipeline type with the `--type` (or `-t`) option. The supported types are `bidsification`, `processing`, and `extraction`:
+
+```console
+$ nipoppy pipeline search --type processing
 ```
+````
+
+The `Pipeline Type` column shows the type recorded in the Zenodo metadata. It displays `-` when no type is recorded, and is omitted when results are filtered with `--type` because that value is already known.
 
 It is also possible to search for a specific pipeline, for example [fMRIPrep](https://fmriprep.org):
 
@@ -52,14 +58,12 @@ See [this guide](https://help.zenodo.org/guides/search/) for the full Zenodo sea
 At the time of writing, the above command prints the following table (trimmed):
 
 ```
-            ╷                           ╷
   Zenodo ID │           Title           │                       Description
  ═══════════╪═══════════════════════════╪══════════════════════════════════════════════════════════
   15306677  │      fmriprep-24.1.1      │ Nipoppy configuration files for fmriprep 24.1.1 pipeline
   15306675  │      fmriprep-23.1.3      │ Nipoppy configuration files for fmriprep 23.1.3 pipeline
   15306673  │      fmriprep-20.2.7      │ Nipoppy configuration files for fmriprep 20.2.7 pipeline
   15271392  │ Fmriprep Ciftify Pipeline │       Config and Tracker files for running Ciftify
-            ╵                           ╵
 ```
 
 ## Installing a pipeline into a Nipoppy study

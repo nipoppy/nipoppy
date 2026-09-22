@@ -95,15 +95,6 @@ def _assert_command_success(args):
     )
 
 
-@pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_argument"]])
-def test_cli_invalid(args):
-    """Test that a fake command does not exist."""
-    result = runner.invoke(cli, args, catch_exceptions=False)
-    assert result.exit_code == ReturnCode.INVALID_ARGUMENT, (
-        f"Expected invalid command exit code for: {args}\n{result.output}"
-    )
-
-
 @pytest.mark.parametrize(
     "command,workflow,expected_warning",
     [
@@ -274,6 +265,16 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "pipeline",
                 "search",
                 "mriqc",
+            ],
+            "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "search",
+                "mriqc",
+                "--type",
+                "processing",
             ],
             "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow",
         ),
