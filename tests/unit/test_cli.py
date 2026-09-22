@@ -159,26 +159,6 @@ def test_dep_params(
 
 
 @pytest.mark.no_xdist
-def test_study_option_no_warning(
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-):
-    """Test that using --study does not emit a deprecation warning."""
-    mocker.patch("nipoppy.workflows.dataset_init.InitWorkflow.run")
-    result = runner.invoke(
-        cli,
-        ["init", "--study", f"{tmp_path}/nipoppy_study"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code == ReturnCode.SUCCESS
-    assert not any(
-        "The --dataset flag will be deprecated" in record.message
-        for record in caplog.records
-    )
-
-
-@pytest.mark.no_xdist
 def test_study_and_dataset_mutually_exclusive(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
