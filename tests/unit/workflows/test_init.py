@@ -512,14 +512,14 @@ def test_init_bids(
     assert "Sample manifest file copied" not in caplog.text
 
 
-@pytest.mark.parametrize("nested", ["", "sub-01/ses-1/anat"], ids=["empty", "subdirs"])
+@pytest.mark.parametrize("subdirs", ["", "sub-01/ses-1/anat"], ids=["empty", "subdirs"])
 def test_init_manifest_from_empty_bids_fails(
     workflow: InitWorkflow,
     dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
-    nested: str,
+    subdirs: str,
 ):
-    bids_source = dpath_root / "bids" / nested
+    bids_source = dpath_root / "bids" / subdirs
     bids_source.mkdir(parents=True)
     workflow.bids_source = bids_source
 
