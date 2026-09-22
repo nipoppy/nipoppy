@@ -133,6 +133,26 @@ class TestRemovePath:
 
         assert not test_dir.exists()
 
+    def test_rm_missing_ok(self, tmp_path: Path):
+        """Test that rm does not raise for non-existent paths with missing_ok."""
+        fileops.rm(tmp_path / "does_not_exist.txt", missing_ok=True)
+
+    def test_rm_missing_raises(self, tmp_path: Path):
+        """Test that rm raises for non-existent paths without missing_ok."""
+        with pytest.raises(FileNotFoundError):
+            fileops.rm(tmp_path / "does_not_exist.txt")
+
+    def test_rm_missing_ok_dry_run(
+        self, tmp_path: Path, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that dry_run with missing_ok does not raise or remove anything."""
+        nonexistent_path = tmp_path / "does_not_exist.txt"
+
+        fileops.rm(nonexistent_path, missing_ok=True, dry_run=True)
+
+        assert not nonexistent_path.exists()
+        assert f"Removing {nonexistent_path}" in caplog.text
+
 
 class TestMakeDir:
     def test_mkdir_creates_directory(self, tmp_path: Path):
@@ -157,6 +177,29 @@ class TestMakeDir:
 
 
 class TestCopy:
+    @pytest.mark.parametrize("is_directory", [False, True], ids=["file", "directory"])
+    @pytest.mark.parametrize("dry_run", [False, True])
+    def test_cp_creates_parents(
+        self, tmp_path: Path, is_directory: bool, dry_run: bool
+    ):
+        """Test copying into missing parents without creating them during dry runs."""
+        source = tmp_path / "source"
+        target = tmp_path / "missing" / "nested" / "target"
+        if is_directory:
+            create_dummy_directory_structure(source)
+        else:
+            source.write_text("content")
+
+        fileops.copy(source, target, dry_run=dry_run)
+
+        if dry_run:
+            assert not (tmp_path / "missing").exists()  # Parent dir not created
+            assert not target.exists()
+        elif is_directory:
+            check_dummy_directory_structure(target)
+        else:
+            assert target.read_text() == "content"
+
     @pytest.mark.parametrize(
         "exist_ok, raises_error, final_content",
         [
@@ -213,16 +256,6 @@ class TestCopyTemplate:
         fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
 
         assert dest_file.is_file()
-        assert dest_file.read_text() == "Hello, World!"
-
-    def test_copy_template_creates_parent_directory(self, tmp_path: Path):
-        """Test that the parent directory of the destination is created."""
-        template_file = tmp_path / "template.txt"
-        template_file.write_text("Hello, [[NIPOPPY_NAME]]!")
-
-        dest_file = tmp_path / "nonexistent_dir" / "output.txt"
-
-        fileops.copy_template(template_file, dest_file, substitutions={"name": "World"})
         assert dest_file.read_text() == "Hello, World!"
 
     def test_copy_template_existing_file(self, tmp_path: Path):

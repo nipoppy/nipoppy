@@ -53,7 +53,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 "Please remove it or choose a different name.",
             )
         else:
-            target.mkdir(parents=True, exist_ok=True)
+            fileops.mkdir(target)
 
         source_pipeline_config_path = TEMPLATE_PIPELINE_PATH.joinpath(
             f"config-{type_.value}.json5"
@@ -65,7 +65,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
         ).get_step_config()
 
         descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
-        if source_descriptor:
+        if source_descriptor is not None:
             try:
                 boutiques.validate(str(source_descriptor))
             except boutiques.DescriptorValidationError as exception:

@@ -96,7 +96,7 @@ To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job sched
 
 ```console
 $ nipoppy <SUBCOMMAND> \
-    --study <NIPOPPY_PROJECT_ROOT> \
+    --study <NIPOPPY_STUDY_ROOT> \
     --pipeline <PIPELINE_NAME> \
     --hpc slurm
     # other desired options

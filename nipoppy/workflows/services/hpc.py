@@ -15,6 +15,7 @@ from nipoppy.config.hpc import HpcConfig
 from nipoppy.env import PROGRAM_NAME, StrOrPathLike
 from nipoppy.exceptions import LayoutError, WorkflowError
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 from nipoppy.utils.utils import FPATH_HPC_TEMPLATE
 
 if TYPE_CHECKING:
@@ -253,9 +254,9 @@ class HPCRunner:
         # This file is created by PySQA if the job submission command fails.
         # Delete it first to ensure only fresh submission errors are detected.
         fpath_hpc_error = dpath_work / fname_hpc_error
-        fpath_hpc_error.unlink(missing_ok=True)
+        fileops.rm(fpath_hpc_error, missing_ok=True)
 
-        dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
+        fileops.mkdir(dpath_hpc_logs)
 
         # user-defined args
         job_args = self._check_hpc_config()

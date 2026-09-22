@@ -160,7 +160,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         _skip_logfile: bool = False,
         _show_progress: bool = False,
     ):
-        if hpc and write_subcohort:
+        if hpc is not None and write_subcohort is not None:
             raise WorkflowError(
                 "HPC job submission and writing a list of participants and sessions "
                 "are mutually exclusive."
@@ -749,7 +749,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def _log_summary_message(self):
         """Log a summary message."""
-        if self.write_subcohort:
+        if self.write_subcohort is not None:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
         elif self.n_total == 0:
             logger.warning(
