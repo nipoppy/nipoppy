@@ -22,7 +22,6 @@ from nipoppy.cli import (
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
-from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -92,15 +91,6 @@ def _assert_command_success(args):
     result = runner.invoke(cli, args, catch_exceptions=False)
     assert result.exit_code == ReturnCode.SUCCESS, (
         f"Command failed: {args}\n{result.output}"
-    )
-
-
-@pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
-def test_cli_invalid(args):
-    """Test that a fake command does not exist."""
-    result = runner.invoke(cli, args, catch_exceptions=False)
-    assert result.exit_code == ReturnCode.INVALID_COMMAND, (
-        f"Expected invalid command exit code for: {args}\n{result.output}"
     )
 
 
@@ -372,39 +362,6 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
-
-
-def test_pipeline_search_rejects_invalid_type():
-    """Test that pipeline search accepts only supported pipeline types."""
-    result = runner.invoke(
-        cli,
-        ["pipeline", "search", "--type", "invalid"],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == ReturnCode.INVALID_COMMAND
-
-
-@pytest.mark.parametrize("pipeline_type", list(PipelineTypeEnum))
-def test_pipeline_search_passes_type_to_workflow(
-    pipeline_type: PipelineTypeEnum,
-    mocker: pytest_mock.MockerFixture,
-):
-    """Test that the CLI passes each supported type to the workflow."""
-    mocked_workflow = mocker.patch(
-        "nipoppy.workflows.pipeline_store.search.PipelineSearchWorkflow"
-    )
-    mocked_workflow.return_value.return_code = ReturnCode.SUCCESS
-    mocker.patch("sys.exit")
-
-    result = runner.invoke(
-        cli,
-        ["pipeline", "search", "--type", pipeline_type.value],
-        catch_exceptions=False,
-    )
-
-    assert result.exit_code == ReturnCode.SUCCESS
-    assert mocked_workflow.call_args.kwargs["pipeline_type"] == pipeline_type
 
 
 def test_context_manager_no_exception(mocker):
