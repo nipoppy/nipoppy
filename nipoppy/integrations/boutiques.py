@@ -64,27 +64,6 @@ class BoutiquesAPI(ABC):
         """
         ...
 
-    def validate_descriptor_file(self, fpath_descriptor: StrOrPathLike) -> str:
-        """Load a descriptor file, validate it, and return it as a JSON string.
-
-        Parameters
-        ----------
-        fpath_descriptor : StrOrPathLike
-            Path to the descriptor file.
-
-        Returns
-        -------
-        str
-            The validated descriptor as a JSON string.
-        """
-        fpath_descriptor: Path = Path(fpath_descriptor)
-        if not fpath_descriptor.exists():
-            raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
-
-        descriptor_str = json.dumps(load_json(fpath_descriptor))
-        self.validate_descriptor_str(descriptor_str)
-        return descriptor_str
-
     @abstractmethod
     def create_descriptor(self, output_path: Path) -> None:
         """Create a starter descriptor template.
@@ -111,6 +90,27 @@ class BoutiquesAPI(ABC):
             The example invocation as a JSON string.
         """
         ...
+
+    def validate_descriptor_file(self, fpath_descriptor: StrOrPathLike) -> str:
+        """Load a descriptor file, validate it, and return it as a JSON string.
+
+        Parameters
+        ----------
+        fpath_descriptor : StrOrPathLike
+            Path to the descriptor file.
+
+        Returns
+        -------
+        str
+            The validated descriptor as a JSON string.
+        """
+        fpath_descriptor: Path = Path(fpath_descriptor)
+        if not fpath_descriptor.exists():
+            raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
+
+        descriptor_str = json.dumps(load_json(fpath_descriptor))
+        self.validate_descriptor_str(descriptor_str)
+        return descriptor_str
 
 
 class BoutiquesLegacyAPI(BoutiquesAPI):
