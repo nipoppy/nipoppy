@@ -4,7 +4,6 @@ import json
 import logging
 from pathlib import Path
 
-import boutiques
 from pydantic_core import ValidationError
 
 from nipoppy.config.hpc import HpcConfig
@@ -19,6 +18,11 @@ from nipoppy.config.schema import ensure_schema_version_exists
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.integrations.boutiques import (
+    BOUTIQUES_API,
+    DescriptorValidationError,
+    InvocationValidationError,
+)
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, load_json
@@ -67,15 +71,9 @@ def _check_descriptor_file(
 ) -> str:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
-    if not fpath_descriptor.exists():
-        raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
-
-    descriptor_dict = load_json(fpath_descriptor)
-
-    descriptor_str = json.dumps(descriptor_dict)
     try:
-        boutiques.validate(descriptor_str)
-    except boutiques.DescriptorValidationError as exception:
+        descriptor_str = BOUTIQUES_API.validate_descriptor_file(fpath_descriptor)
+    except DescriptorValidationError as exception:
         raise ConfigError(
             f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
         )
@@ -106,10 +104,10 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     invocation_dict = load_json(fpath_invocation, allow_json5=True)
 
     try:
-        boutiques.invocation(
-            "--invocation", json.dumps(invocation_dict), descriptor_str
+        BOUTIQUES_API.validate_invocation_str(
+            descriptor_str, json.dumps(invocation_dict)
         )
-    except boutiques.InvocationValidationError as exception:
+    except InvocationValidationError as exception:
         raise ConfigError(
             f"Invocation file {fpath_invocation} is invalid:\n{exception}"
         )

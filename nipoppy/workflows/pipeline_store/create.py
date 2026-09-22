@@ -1,18 +1,18 @@
 """Workflow for pipeline validate command."""
 
+import json
 import warnings
 from pathlib import Path
 
-import boutiques
-
 from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError, WorkflowError
+from nipoppy.exceptions import FileOperationError, JSONError, WorkflowError
+from nipoppy.integrations.boutiques import BOUTIQUES_API, DescriptorValidationError
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.utils import fileops
 from nipoppy.utils.json5 import update_json5_file
-from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH
 from nipoppy.workflows.base import BaseWorkflow
 
 logger = get_logger()
@@ -67,19 +67,21 @@ class PipelineCreateWorkflow(BaseWorkflow):
         descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
         if source_descriptor is not None:
             try:
-                boutiques.validate(str(source_descriptor))
-            except boutiques.DescriptorValidationError as exception:
+                descriptor_str = BOUTIQUES_API.validate_descriptor_file(
+                    source_descriptor
+                )
+            except DescriptorValidationError as exception:
                 raise WorkflowError(
                     f"Descriptor file {source_descriptor} is invalid:\n{exception}"
                 )
-            except ValueError as exception:  # catches simplejson.errors.JSONDecodeError
+            except (FileOperationError, JSONError) as exception:
                 raise WorkflowError(
                     "Error validating the descriptor file "
                     f"{source_descriptor}:\n{exception}"
                 )
             fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
-            boutiques.create(str(descriptor_path))
+            BOUTIQUES_API.create_descriptor(descriptor_path)
 
         substitutions = {"version": PROGRAM_VERSION}
 
@@ -93,7 +95,9 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
         # then append the actual example invocation
         with invocation_path.open("a") as file_invocation:
-            file_invocation.write(boutiques.example(str(descriptor_path)))
+            file_invocation.write(
+                BOUTIQUES_API.generate_example_invocation(descriptor_path)
+            )
 
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
@@ -112,7 +116,7 @@ class PipelineCreateWorkflow(BaseWorkflow):
 
         # Populate the config.json using descriptor information
         if source_descriptor is not None:
-            descriptor = load_json(source_descriptor)
+            descriptor = json.loads(descriptor_str)
             updates = [
                 (["NAME"], descriptor["name"]),
                 (["VERSION"], descriptor["tool-version"]),
