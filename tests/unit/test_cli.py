@@ -749,7 +749,7 @@ def test_param_source_priority(
     assert parsed_param == expected_parsed_param
 
 
-def test_param_source_priority_deprecated_dataset(
+def test_param_source_priority_with_dataset_flag(
     dummy_cli: click.Group,
     tmp_path: Path,
 ):
