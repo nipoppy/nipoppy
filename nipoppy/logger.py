@@ -115,6 +115,7 @@ class NipoppyLogger(logging.Logger):
         # Only one file handler allowed
         self._cleanup_handler(self._file_handler)
 
+        # inline to prevent circular import
         from nipoppy.utils import fileops
 
         fileops.mkdir(file.parent)

@@ -122,6 +122,7 @@ def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     **kwargs :
         Keyword arguments to pass to json.dump
     """
+    # inline to prevent circular import
     from nipoppy.utils import fileops
 
     if "indent" not in kwargs:
