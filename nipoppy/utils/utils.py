@@ -8,7 +8,7 @@ import os
 import re
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import json5
 
@@ -29,7 +29,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 NIPOPPY_ROOT = Path(__file__).parents[1]
 DPATH_DATA = NIPOPPY_ROOT / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json5"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
@@ -55,20 +55,24 @@ FIELD_DESCRIPTION_MAP = {
 def get_pipeline_tag(
     pipeline_name: str,
     pipeline_version: str,
-    pipeline_step: Optional[str] = None,
-    participant_id: Optional[str] = None,
-    session_id: Optional[str] = None,
+    pipeline_step: str | None = None,
+    participant_id: str | None = None,
+    session_id: str | None = None,
     sep="-",
 ):
     """Generate a tag for a pipeline."""
-    components = [pipeline_name, pipeline_version]
-    if pipeline_step is not None:
-        components.append(pipeline_step)
-    if participant_id is not None:
-        components.append(participant_id)
-    if session_id is not None:
-        components.append(session_id)
-    return sep.join(components)
+    return sep.join(
+        filter(
+            None,
+            [
+                pipeline_name,
+                pipeline_version,
+                pipeline_step,
+                participant_id,
+                session_id,
+            ],
+        )
+    )
 
 
 def load_json(
@@ -147,7 +151,7 @@ def add_path_timestamp(
 def save_df_with_backup(
     df: pd.DataFrame,
     fpath_symlink: StrOrPathLike,
-    dname_backups: Optional[str] = None,
+    dname_backups: str | None = None,
     use_relative_path=True,
     dry_run=False,
     **kwargs,
@@ -160,7 +164,7 @@ def save_df_with_backup(
         The dataframe to save
     fpath_symlink : nipoppy.env.StrOrPathLike
         The path to the symlink
-    dname_backups : Optional[str], optional
+    dname_backups : str | None, optional
         The directory where the timestamped backup file should be written
         (automatically determined if None), by default None
     use_relative_path : bool, optional

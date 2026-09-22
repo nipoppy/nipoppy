@@ -402,9 +402,9 @@ def test_launch_boutiques_run_bosh_opts(
         bosh_command_args = mocked_run_command.call_args[0][0]
 
         for opt in expected_container_opts:
-            assert (
-                opt in bosh_command_args
-            ), f"Expected container option '{opt}' not found in {bosh_command_args}"
+            assert opt in bosh_command_args, (
+                f"Expected container option '{opt}' not found in {bosh_command_args}"
+            )
 
         assert ("--debug" in bosh_command_args) == verbose
 

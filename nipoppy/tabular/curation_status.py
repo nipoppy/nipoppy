@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field
 from typing_extensions import Self
@@ -106,8 +105,8 @@ class CurationStatusTable(Manifest):
     def _get_participant_sessions_helper(
         self,
         status_col: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ):
         """Get subset of participants/sessions based on a status column."""
         curation_status_subset: CurationStatusTable = self.loc[self[status_col]]
@@ -117,8 +116,8 @@ class CurationStatusTable(Manifest):
 
     def get_downloaded_participants_sessions(
         self,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ):
         """Get participants and sessions with downloaded data."""
         return self._get_participant_sessions_helper(
@@ -129,8 +128,8 @@ class CurationStatusTable(Manifest):
 
     def get_organized_participants_sessions(
         self,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ):
         """Get participants and sessions with organized data."""
         return self._get_participant_sessions_helper(
@@ -139,8 +138,8 @@ class CurationStatusTable(Manifest):
 
     def get_bidsified_participants_sessions(
         self,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ):
         """Get participants and sessions with BIDS data."""
         return self._get_participant_sessions_helper(
@@ -151,15 +150,14 @@ class CurationStatusTable(Manifest):
 def generate_curation_status_table(
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
-    dpath_downloaded: Optional[StrOrPathLike] = None,
-    dpath_organized: Optional[StrOrPathLike] = None,
-    dpath_bidsified: Optional[StrOrPathLike] = None,
-    empty=False,
+    dpath_downloaded: StrOrPathLike | None = None,
+    dpath_organized: StrOrPathLike | None = None,
+    dpath_bidsified: StrOrPathLike | None = None,
 ) -> CurationStatusTable:
     """Generate a curation status table."""
 
     def check_status(
-        dpath: Optional[StrOrPathLike],
+        dpath: StrOrPathLike | None,
         dname_subdirectory: StrOrPathLike,
     ):
         dname_subdirectory = Path(dname_subdirectory)
@@ -194,29 +192,24 @@ def generate_curation_status_table(
         bids_participant_id = participant_id_to_bids_participant_id(participant_id)
         bids_session_id = session_id_to_bids_session_id(session_id)
 
-        if empty:
-            status_downloaded = False
-            status_organized = False
-            status_bidsified = False
+        status_downloaded = check_status(
+            dpath=dpath_downloaded,
+            dname_subdirectory=participant_dicom_dir,
+        )
+        status_organized = check_status(
+            dpath=dpath_organized,
+            dname_subdirectory=Path(bids_participant_id, bids_session_id),
+        )
+        if session_id == FAKE_SESSION_ID:
+            # if the session is fake, we don't expect BIDS data
+            # to have bids_session_id in the path
+            dname_subdirectory = Path(bids_participant_id)
         else:
-            status_downloaded = check_status(
-                dpath=dpath_downloaded,
-                dname_subdirectory=participant_dicom_dir,
-            )
-            status_organized = check_status(
-                dpath=dpath_organized,
-                dname_subdirectory=Path(bids_participant_id, bids_session_id),
-            )
-            if session_id == FAKE_SESSION_ID:
-                # if the session is fake, we don't expect BIDS data
-                # to have bids_session_id in the path
-                dname_subdirectory = Path(bids_participant_id)
-            else:
-                dname_subdirectory = Path(bids_participant_id, bids_session_id)
-            status_bidsified = check_status(
-                dpath=dpath_bidsified,
-                dname_subdirectory=dname_subdirectory,
-            )
+            dname_subdirectory = Path(bids_participant_id, bids_session_id)
+        status_bidsified = check_status(
+            dpath=dpath_bidsified,
+            dname_subdirectory=dname_subdirectory,
+        )
 
         curation_status_records.append(
             {
@@ -244,10 +237,9 @@ def update_curation_status_table(
     curation_status_table: CurationStatusTable,
     manifest: Manifest,
     dicom_dir_map: DicomDirMap,
-    dpath_downloaded: Optional[StrOrPathLike] = None,
-    dpath_organized: Optional[StrOrPathLike] = None,
-    dpath_bidsified: Optional[StrOrPathLike] = None,
-    empty=False,
+    dpath_downloaded: StrOrPathLike | None = None,
+    dpath_organized: StrOrPathLike | None = None,
+    dpath_bidsified: StrOrPathLike | None = None,
 ) -> CurationStatusTable:
     """Update an existing curation status file."""
     logger.debug(f"Original curation status table:\n{curation_status_table}")
@@ -267,7 +259,6 @@ def update_curation_status_table(
             dpath_downloaded=dpath_downloaded,
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
-            empty=empty,
         )
     )
 

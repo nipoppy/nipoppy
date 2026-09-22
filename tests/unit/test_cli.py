@@ -23,6 +23,7 @@ from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
+from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -89,18 +90,18 @@ def dummy_cli():
 def _assert_command_success(args):
     """Assert that the CLI command runs successfully."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert (
-        result.exit_code == ReturnCode.SUCCESS
-    ), f"Command failed: {args}\n{result.output}"
+    assert result.exit_code == ReturnCode.SUCCESS, (
+        f"Command failed: {args}\n{result.output}"
+    )
 
 
 @pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
 def test_cli_invalid(args):
     """Test that a fake command does not exist."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert (
-        result.exit_code == ReturnCode.INVALID_COMMAND
-    ), f"Expected invalid command exit code for: {args}\n{result.output}"
+    assert result.exit_code == ReturnCode.INVALID_COMMAND, (
+        f"Expected invalid command exit code for: {args}\n{result.output}"
+    )
 
 
 @pytest.mark.parametrize(
@@ -334,11 +335,12 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
             [
                 "pipeline",
                 "upload",
-                "mocked.zip",
+                "[mocked_dir]",
                 "--zenodo-id",
                 "zenodo.123456",
                 "--password-file",
                 str(PASSWORD_FILE),
+                "--community",
             ],
             "nipoppy.workflows.pipeline_store.upload.PipelineUploadWorkflow",
         ),
@@ -358,7 +360,7 @@ def test_cli_command(
     # Hack to inject the mocked directory into the command
     command = [arg.replace("[mocked_dir]", str(mocked_dir)) for arg in command]
 
-    if workflow:
+    if workflow is not None:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
 
@@ -410,14 +412,15 @@ class MyCustomException(NipoppyError):
 
 
 @pytest.mark.parametrize(
-    "exception",
+    "exception,return_code",
     [
-        NipoppyError,
-        MyCustomException,
+        (NipoppyError, NipoppyError.code),
+        (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
+        (MyCustomException, MyCustomException.code),
     ],
 )
 def test_context_manager_nipoppy_exception(
-    mocker: pytest_mock.MockerFixture, exception
+    mocker: pytest_mock.MockerFixture, exception: Exception, return_code: int
 ):
     """Test that the context manager handles exceptions correctly.
 
@@ -431,8 +434,8 @@ def test_context_manager_nipoppy_exception(
     with exception_handler(workflow):
         raise exception
 
-    assert workflow.return_code == exception.code
-    mock_exit.assert_called_once_with(exception.code)
+    assert workflow.return_code == return_code
+    mock_exit.assert_called_once_with(return_code)
 
 
 @pytest.mark.parametrize("hint", ["", "This is a hint."])

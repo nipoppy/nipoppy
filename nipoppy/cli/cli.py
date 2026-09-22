@@ -18,7 +18,6 @@ except ImportError:
         return decorator
 
 
-from nipoppy._version import __version__
 from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
@@ -30,7 +29,7 @@ from nipoppy.cli.options import (
     runners_options,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
-from nipoppy.env import FPATH_USER_CONFIG
+from nipoppy.env import FPATH_USER_CONFIG, PROGRAM_VERSION
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
@@ -45,7 +44,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--mode",
                 "--container-store",
                 "--default-config",
-                "--empty",
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
@@ -53,8 +51,9 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-id",
                 "--password-file",
-                "--sandbox",
                 "--community",
+                "--sandbox",
+                "--regenerate",
             ],
         },
         {
@@ -104,13 +103,12 @@ click.rich_click.OPTION_GROUPS = {
         "Or visit the documentation at https://nipoppy.readthedocs.io"
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(version=PROGRAM_VERSION)
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
-    pass
 
 
-if cli.commands.get("gui"):
+if cli.commands.get("gui") is not None:
     cli.commands["gui"].hidden = True
 
 
@@ -164,21 +162,12 @@ def init(**params):
 @cli.command()
 @dataset_option
 @click.option(
-    "--empty",
-    is_flag=True,
-    help=(
-        "Set all statuses to False in newly added records"
-        " (regardless of what is on disk). May be useful to reduce runtime."
-    ),
-)
-@click.option(
-    "--force",
     "--regenerate",
-    "-f",
     is_flag=True,
-    help=(
-        "Regenerate the curation status file even if it already exists"
-        " (default: only append rows for new records)"
+    help="Regenerate the curation status file even if it already exists.",
+    deprecated=(
+        "This is now the default/only behaviour,"
+        " and this option will be removed in a future release."
     ),
 )
 @global_options

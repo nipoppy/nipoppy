@@ -2,7 +2,6 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import pytest
@@ -20,10 +19,10 @@ from nipoppy.utils.utils import (
     save_df_with_backup,
     save_json,
 )
-from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
     DPATH_TEST_DATA,
     create_empty_dataset,
+    datetime_fixture,  # noqa F401
 )
 
 
@@ -112,7 +111,7 @@ def test_add_path_timestamp(timestamp_format, expected, datetime_fixture):  # no
 )
 def test_save_df_with_backup(
     fname: str,
-    dname_backups: Optional[str],
+    dname_backups: str | None,
     dname_backups_processed: str,
     use_relative_path: bool,
     tmp_path: Path,

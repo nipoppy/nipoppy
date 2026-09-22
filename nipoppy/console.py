@@ -5,7 +5,6 @@ from __future__ import annotations
 import inspect
 from functools import wraps
 from pathlib import Path
-from typing import List, Optional, Tuple
 
 from rich.console import Console, RenderableType, RenderResult
 from rich.padding import Padding
@@ -13,6 +12,8 @@ from rich.prompt import Confirm
 from rich.status import Status
 from rich.style import StyleType
 from rich.text import TextType
+
+from nipoppy.exceptions import ExecutionError
 
 _INDENT = 9  # match Rich logger offset
 
@@ -62,7 +63,7 @@ class _Confirm(Confirm):
         indent: int = _INDENT,
         console: Console | None = None,
         password: bool = False,
-        choices: List[str] | None = None,
+        choices: list[str] | None = None,
         show_default: bool = True,
         show_choices: bool = True,
     ):
@@ -120,8 +121,8 @@ class _Console(Console):
     def confirm(
         self,
         prompt: str,
-        kwargs_init: Optional[dict] = None,
-        kwargs_call: Optional[dict] = None,
+        kwargs_init: dict | None = None,
+        kwargs_call: dict | None = None,
     ) -> bool:
         """
         Prompt for confirmation with indenting.
@@ -129,6 +130,12 @@ class _Console(Console):
         This function creates a new _Confirm object with the given prompt and
         then calls it.
         """
+        if not self.is_interactive or not self.is_terminal:
+            raise ExecutionError(
+                "Non-interactive terminal detected."
+                " Use the --assume-yes flag to bypass this prompt."
+            )
+
         kwargs_init = kwargs_init or {}
         kwargs_call = kwargs_call or {}
         return _Confirm(prompt, console=self, indent=self.indent, **kwargs_init)(
@@ -138,7 +145,7 @@ class _Console(Console):
     @_force_indent_if_internal
     def print(
         self,
-        *renderables: Tuple[RenderableType],
+        *renderables: tuple[RenderableType],
         with_indent: bool = False,
         **kwargs,
     ) -> None:

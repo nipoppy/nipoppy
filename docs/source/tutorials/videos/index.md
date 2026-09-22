@@ -10,6 +10,10 @@ $ git clone https://github.com/nipoppy/tutorial-dataset.git
 
 or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and download the data without using `git`. We show in the videos how to!
 
+```{attention}
+The Nipoppy version used in the tutorial videos was 0.4.5. Console output as well as certain flags could have changed between this version and newer versions. Please consult the [release notes](../../other/changelog.rst) for details. E.g., the `--regenerate` flag for the `track-curation` command is deprecated.
+```
+
 ## 1. nipoppy init
 
 In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
@@ -17,7 +21,7 @@ In this tutorial we will cover how to create a new Nipoppy dataset. More concret
 - discover the directories that follow the Nipoppy specification
 - explore the [`nipoppy status`](../../reference/cli_reference/status.rst) command
 - modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our dataset
-- and run the [`nipoppy track-curation --regenerate`](../../reference/cli_reference/track_curation.rst) command
+- and run the [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst) command
 
 Duration: 7:43m
 

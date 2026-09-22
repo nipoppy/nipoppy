@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 
 if __name__ == "__main__":
-
     # get the path to the data directory
     # we assume that it is in the same directory as this script
     path_data = Path(__file__).parent / "data"
@@ -14,7 +13,6 @@ if __name__ == "__main__":
     data_for_manifest = []
     for path_participant in sorted(path_data.iterdir()):
         for path_participant_visit in sorted(path_participant.iterdir()):
-
             # participant_id and visit_id are the names of the directories
             participant_id = path_participant.name
             visit_id = path_participant_visit.name

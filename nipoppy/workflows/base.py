@@ -6,9 +6,10 @@ import logging
 import shlex
 import subprocess
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Optional, Protocol, Sequence
+from typing import Protocol
 
 from nipoppy.base import Base
 from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
@@ -212,7 +213,7 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
         self,
         dpath_root: StrOrPathLike,
         name: str,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
         _skip_logfile: bool = False,
@@ -254,8 +255,8 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
 
     def generate_fpath_log(
         self,
-        dnames_parent: Optional[str | list[str]] = None,
-        fname_stem: Optional[str] = None,
+        dnames_parent: str | list[str] | None = None,
+        fname_stem: str | None = None,
     ) -> Path:
         """Generate a log file path."""
         if dnames_parent is None:
@@ -300,7 +301,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 dpath_downloaded=self.study.layout.dpath_pre_reorg,
                 dpath_organized=self.study.layout.dpath_post_reorg,
                 dpath_bidsified=self.study.layout.dpath_bids,
-                empty=False,
             )
 
             if not self.dry_run:

@@ -3,7 +3,7 @@
 import functools
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 from pydantic import (
     AfterValidator,
@@ -35,7 +35,7 @@ class PathInfo(BaseModel):
     _is_required: bool = True
 
     path: Path = Field(description="Relative path to the file or directory")
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None,
         description="Description of the function of the file or directory",
     )
@@ -156,12 +156,12 @@ class LayoutConfig(BaseModel):
     )
     # NOTE: OptionalFpathInfo alone is insufficient because it only marks the field
     # as optional for path validation, not for Pydantic model validation.
-    # Optional[OptionalFpathInfo] with default=None is needed to make the field
+    # OptionalFpathInfo | None with default=None is needed to make the field
     # truly optional so it can be missing from layout JSON files entirely.
-    fpath_bids_dataset_description: Optional[OptionalFpathInfo] = Field(
+    fpath_bids_dataset_description: OptionalFpathInfo | None = Field(
         default=None, description="Path to the BIDS dataset description file"
     )
-    fpath_bidsignore: Optional[OptionalFpathInfo] = Field(
+    fpath_bidsignore: OptionalFpathInfo | None = Field(
         default=None, description="Path to the .bidsignore file"
     )
 
@@ -204,7 +204,7 @@ class DatasetLayout(Base):
     def __init__(
         self,
         dpath_root: StrOrPathLike,
-        fpath_config: Optional[StrOrPathLike] = None,
+        fpath_config: StrOrPathLike | None = None,
     ):
         """Initialize the object.
 
@@ -212,7 +212,7 @@ class DatasetLayout(Base):
         ----------
         dpath_root : nipoppy.env.StrOrPathLike
             Path to the root directory of the dataset.
-        fpath_config : Optional[nipoppy.env.StrOrPathLike], optional
+        fpath_config : nipoppy.env.StrOrPathLike | None, optional
             Path to the layout config to use, by default None.
             If None, the default layout will be used.
 
@@ -368,8 +368,8 @@ class DatasetLayout(Base):
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's working directory."""
         return (
@@ -415,8 +415,8 @@ class DatasetLayout(Base):
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
-        participant_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
     ) -> Path:
         """Return the path to a pipeline's BIDS database directory."""
         dname = get_pipeline_tag(

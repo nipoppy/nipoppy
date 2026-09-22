@@ -5,9 +5,10 @@ from __future__ import annotations
 import contextlib
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from pathlib import Path
-from types import NoneType
-from typing import Any, Optional, Sequence, Union, get_args, get_origin
+from types import NoneType, UnionType
+from typing import Any, Union, get_args, get_origin
 
 import pandas as pd
 from pydantic import BaseModel, ValidationError, model_validator
@@ -130,10 +131,10 @@ class BaseTabular(pd.DataFrame, ABC):
                 self[col] = None
 
                 # set dtype based on model field annotation
-                # if the type is Optional (i.e. Union[X, NoneType]), use X
+                # if the type is X | None, use X
                 # fall back on object if the type is not supported by pandas
                 if (
-                    get_origin(field_info.annotation) == Union
+                    get_origin(field_info.annotation) in (Union, UnionType)
                     and (args := get_args(field_info.annotation))[1] == NoneType
                 ):
                     col_dtype = args[0]
@@ -248,7 +249,7 @@ class BaseTabular(pd.DataFrame, ABC):
     def save_with_backup(
         self,
         fpath_symlink: StrOrPathLike,
-        dname_backups: Optional[str] = None,
+        dname_backups: str | None = None,
         use_relative_path=True,
         sort=True,
         dry_run=False,

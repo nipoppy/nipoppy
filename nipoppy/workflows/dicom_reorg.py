@@ -3,7 +3,6 @@
 import hashlib
 import os
 from pathlib import Path
-from typing import Optional
 
 import pydicom
 
@@ -42,7 +41,7 @@ class DicomReorgWorkflow(BaseDatasetWorkflow):
         dpath_root: StrOrPathLike,
         copy_files: bool = False,
         check_dicoms: bool = False,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

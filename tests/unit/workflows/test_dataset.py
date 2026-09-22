@@ -47,9 +47,7 @@ def test_init(workflow: BaseDatasetWorkflow):
     assert isinstance(workflow.dpath_root, Path)
 
 
-def test_generate_fpath_log(
-    workflow: BaseDatasetWorkflow, datetime_fixture
-):  # noqa F811
+def test_generate_fpath_log(workflow: BaseDatasetWorkflow, datetime_fixture):  # noqa F811
     fpath_log = workflow.generate_fpath_log()
     assert isinstance(fpath_log, Path)
     assert fpath_log == workflow.study.layout.dpath_logs.joinpath(

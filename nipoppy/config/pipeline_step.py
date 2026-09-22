@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from enum import Enum
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import ConfigDict, Field, model_validator
 from pydantic_core import to_jsonable_python
@@ -51,15 +51,15 @@ class BasePipelineStepConfig(_SchemaWithContainerConfig, ABC):
             "tracking will always be done at the participant-session level."
         ),
     )
-    DESCRIPTOR_FILE: Optional[Path] = Field(
+    DESCRIPTOR_FILE: Path | None = Field(
         default=None,
         description="Path to the JSON descriptor file.",
     )
-    INVOCATION_FILE: Optional[Path] = Field(
+    INVOCATION_FILE: Path | None = Field(
         default=None,
         description="Path to the JSON invocation file",
     )
-    HPC_CONFIG_FILE: Optional[Path] = Field(
+    HPC_CONFIG_FILE: Path | None = Field(
         default=None,
         description=(
             "Path to the HPC config file. This file should contain key-value pairs to "
@@ -121,21 +121,21 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
         "PYBIDS_IGNORE_FILE",
     ]
 
-    TRACKER_CONFIG_FILE: Optional[Path] = Field(
+    TRACKER_CONFIG_FILE: Path | None = Field(
         default=None,
         description=(
             "Path to the tracker configuration file associated with the pipeline step."
             "Tracking will always be done at a participant-session level."
         ),
     )
-    PYBIDS_IGNORE_FILE: Optional[Path] = Field(
+    PYBIDS_IGNORE_FILE: Path | None = Field(
         default=None,
         description=(
             "Path to file containing a list of regex patterns (strings) to ignore "
             "when building the PyBIDS layout"
         ),
     )
-    GENERATE_PYBIDS_DATABASE: Optional[bool] = Field(
+    GENERATE_PYBIDS_DATABASE: bool | None = Field(
         default=True,
         description=(
             "Whether or not to generate a PyBIDS database as part of the pipeline step"
@@ -148,7 +148,7 @@ class ProcPipelineStepConfig(BasePipelineStepConfig):
 class BidsPipelineStepConfig(BasePipelineStepConfig):
     """Schema for BIDS pipeline step configuration."""
 
-    UPDATE_STATUS: Optional[bool] = Field(
+    UPDATE_STATUS: bool | None = Field(
         default=False,
         description=(
             f"Whether or not the {CurationStatusTable.col_in_bids} column "

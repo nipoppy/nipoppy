@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 
 if __name__ == "__main__":
-
     # get the path to the participants file
     # we assume that it is in the same directory as this script
     path_participants = Path(__file__).parent / "example1-participants.csv"
@@ -18,7 +17,6 @@ if __name__ == "__main__":
 
     data_for_manifest = []
     for _, row in df_participants.iterrows():
-
         # no change for participant_id
         participant_id = row["participant"]
 

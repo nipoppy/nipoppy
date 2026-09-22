@@ -1,7 +1,6 @@
 """Workflow for status command."""
 
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from rich import box
@@ -23,7 +22,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def __init__(
         self,
         dpath_root: Path,
-        fpath_layout: Optional[StrOrPathLike] = None,
+        fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
     ):

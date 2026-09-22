@@ -5,7 +5,6 @@ import shutil
 import subprocess
 from contextlib import nullcontext
 from pathlib import Path
-from typing import Optional
 
 import pytest
 import pytest_mock
@@ -437,6 +436,7 @@ def test_run_main(
     mocked_update_config_and_save.assert_called_once_with(pipeline_config)
     mocked_download_container.assert_called_once_with(pipeline_config)
     assert "Successfully installed pipeline" in caplog.text
+    assert "Source and destination are the same directory" not in caplog.text
 
 
 @pytest.mark.parametrize("force", [False, True])
@@ -464,6 +464,39 @@ def test_run_main_force(
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
 
 
+@pytest.mark.no_xdist
+def test_run_main_same_directory(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    caplog: pytest.LogCaptureFixture,
+):
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    )
+    workflow.run_main()
+
+    workflow.dpath_pipeline = dpath_installed
+    caplog.clear()
+
+    workflow.run_main()
+
+    _assert_files_copied(workflow.source, dpath_installed)
+    assert any(
+        (
+            "Source and destination are the same directory; "
+            "skipping pipeline file operations. Editing an installed pipeline "
+            "in place is not recommended, as accidental changes can compromise "
+            "reproducibility. Keep pipeline development separate from the "
+            "installed copy."
+        )
+        in record.message
+        and record.levelno == logging.WARNING
+        for record in caplog.records
+    )
+
+
 def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):
     workflow_zenodo.zenodo_id = "bad_zenodo_id"
 
@@ -478,7 +511,7 @@ def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow
     "zenodo_id,exception", [(None, FileOperationError), ("123456", ConfigError)]
 )
 def test_run_main_file_not_found(
-    workflow: PipelineInstallWorkflow, zenodo_id: Optional[str], exception: Exception
+    workflow: PipelineInstallWorkflow, zenodo_id: str | None, exception: Exception
 ):
     # create a non-existent path
     workflow.dpath_pipeline = (

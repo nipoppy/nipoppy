@@ -45,7 +45,7 @@ $ cd my-example-study
 ### Customizing the global configuration file
 
 The global configuration file at {{fpath_config}} starts out like this:
-```{literalinclude} ../../../../nipoppy/data/examples/sample_global_config.json
+```{literalinclude} ../../_inserts/sample_study_config.json5
 ---
 linenos: True
 language: json
@@ -161,7 +161,7 @@ $ nipoppy bidsify --pipeline dcm2bids --pipeline-step convert
 
 **3.** Track the curation status:
 ```{code-block} console
-$ nipoppy track-curation --regenerate
+$ nipoppy track-curation
 ```
 
 The curation status file can be found at {{fpath_curation_status}}.
