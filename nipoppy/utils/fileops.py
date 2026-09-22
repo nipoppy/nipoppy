@@ -111,7 +111,7 @@ def _ignore_oserror_empty_dir(function, path, excinfo):
     raise exception
 
 
-def rm(path: Path, missing_ok: bool = False, dry_run: bool = False):
+def rm(path: Path, *, missing_ok: bool = False, dry_run: bool = False):
     """Remove a file, directory, or symlink."""
     logger.debug(f"Removing {path}")
     if not dry_run:

@@ -254,7 +254,7 @@ class HPCRunner:
         # This file is created by PySQA if the job submission command fails.
         # Delete it first to ensure only fresh submission errors are detected.
         fpath_hpc_error = dpath_work / fname_hpc_error
-        fileops.rm(fpath_hpc_error, dry_run=dry_run, missing_ok=True)
+        fileops.rm(fpath_hpc_error, missing_ok=True)
 
         dpath_hpc_logs.mkdir(parents=True, exist_ok=True)
 

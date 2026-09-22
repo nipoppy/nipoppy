@@ -209,7 +209,9 @@ def save_df_with_backup(
         else:
             fpath_backup_to_link = fpath_backup_full
 
-        fileops.rm(fpath_symlink, missing_ok=True)
+        if fpath_symlink.is_symlink() or fpath_symlink.exists():
+            fileops.rm(fpath_symlink, missing_ok=True)
+
         fpath_symlink.symlink_to(fpath_backup_to_link)
 
     return Path(fpath_backup_full)

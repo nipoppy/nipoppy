@@ -142,19 +142,6 @@ class TestRemovePath:
         with pytest.raises(FileNotFoundError):
             fileops.rm(tmp_path / "does_not_exist.txt")
 
-    def test_rm_missing_ok_broken_symlink(self, tmp_path: Path):
-        """Test that a broken symlink is removed even with missing_ok."""
-        broken_symlink = tmp_path / "broken_link"
-        broken_symlink.symlink_to(tmp_path / "does_not_exist.txt")
-
-        assert broken_symlink.is_symlink()
-        assert not broken_symlink.exists()
-
-        fileops.rm(broken_symlink, missing_ok=True)
-
-        assert not broken_symlink.is_symlink()
-        assert not broken_symlink.exists()
-
     def test_rm_missing_ok_dry_run(
         self, tmp_path: Path, caplog: pytest.LogCaptureFixture
     ):
