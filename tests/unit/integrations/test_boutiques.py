@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
+from nipoppy.exceptions import FileOperationError
 from nipoppy.integrations.boutiques import (
     BOUTIQUES_API,
     BoutiquesAPI,
@@ -77,32 +78,60 @@ def test_boutiques_api_global_is_instance():
     assert isinstance(BOUTIQUES_API, BoutiquesAPI)
 
 
-def test_validate_descriptor(boutiques_api: BoutiquesLegacyAPI, descriptor_str: str):
-    assert boutiques_api.validate_descriptor(descriptor_str) == descriptor_str
+def test_validate_descriptor_str(
+    boutiques_api: BoutiquesLegacyAPI, descriptor_str: str
+):
+    boutiques_api.validate_descriptor_str(descriptor_str)
 
 
-def test_validate_descriptor_error(boutiques_api: BoutiquesLegacyAPI):
+def test_validate_descriptor_str_error(boutiques_api: BoutiquesLegacyAPI):
     invalid_descriptor_str = json.dumps({"name": "test_app"})
 
     with pytest.raises(DescriptorValidationError):
-        boutiques_api.validate_descriptor(invalid_descriptor_str)
+        boutiques_api.validate_descriptor_str(invalid_descriptor_str)
 
 
-def test_validate_invocation(
+def test_validate_invocation_str(
     boutiques_api: BoutiquesLegacyAPI,
     descriptor_str: str,
     invocation_str: str,
 ):
-    boutiques_api.validate_invocation(descriptor_str, invocation_str)
+    boutiques_api.validate_invocation_str(descriptor_str, invocation_str)
 
 
-def test_validate_invocation_error(
+def test_validate_invocation_str_error(
     boutiques_api: BoutiquesLegacyAPI, descriptor_str: str
 ):
     invalid_invocation_str = json.dumps({"invalid_key": "value"})
 
     with pytest.raises(InvocationValidationError):
-        boutiques_api.validate_invocation(descriptor_str, invalid_invocation_str)
+        boutiques_api.validate_invocation_str(descriptor_str, invalid_invocation_str)
+
+
+def test_validate_descriptor_file(
+    boutiques_api: BoutiquesLegacyAPI, descriptor_str: str, tmp_path: Path
+):
+    fpath_descriptor = tmp_path / "descriptor.json"
+    fpath_descriptor.write_text(descriptor_str)
+
+    assert boutiques_api.validate_descriptor_file(fpath_descriptor) == descriptor_str
+
+
+def test_validate_descriptor_file_error(
+    boutiques_api: BoutiquesLegacyAPI, tmp_path: Path
+):
+    fpath_descriptor = tmp_path / "bad_descriptor.json"
+    fpath_descriptor.write_text(json.dumps({"name": "test_app"}))
+
+    with pytest.raises(DescriptorValidationError):
+        boutiques_api.validate_descriptor_file(fpath_descriptor)
+
+
+def test_validate_descriptor_file_not_found(
+    boutiques_api: BoutiquesLegacyAPI, tmp_path: Path
+):
+    with pytest.raises(FileOperationError):
+        boutiques_api.validate_descriptor_file(tmp_path / "missing.json")
 
 
 def test_create_descriptor(boutiques_api: BoutiquesLegacyAPI, tmp_path: Path):
@@ -110,7 +139,7 @@ def test_create_descriptor(boutiques_api: BoutiquesLegacyAPI, tmp_path: Path):
 
     boutiques_api.create_descriptor(output_path)
 
-    boutiques_api.validate_descriptor(output_path.read_text())
+    boutiques_api.validate_descriptor_str(output_path.read_text())
 
 
 def test_generate_example_invocation(

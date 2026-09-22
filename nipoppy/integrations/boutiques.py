@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import importlib.metadata
+import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import boutiques
 from packaging.version import Version
+
+from nipoppy.env import StrOrPathLike
+from nipoppy.exceptions import FileOperationError
+from nipoppy.utils.utils import load_json
 
 
 class BoutiquesAPIError(Exception):
@@ -26,18 +31,13 @@ class BoutiquesAPI(ABC):
     """Interface for the Boutiques Python API."""
 
     @abstractmethod
-    def validate_descriptor(self, descriptor_str: str) -> str:
-        """Validate a descriptor and return the validated descriptor string.
+    def validate_descriptor_str(self, descriptor_str: str) -> None:
+        """Validate a descriptor.
 
         Parameters
         ----------
         descriptor_str : str
             The Boutiques descriptor as a JSON string.
-
-        Returns
-        -------
-        str
-            The validated descriptor as a JSON string.
 
         Raises
         ------
@@ -47,7 +47,7 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def validate_invocation(self, descriptor_str: str, invocation_str: str) -> None:
+    def validate_invocation_str(self, descriptor_str: str, invocation_str: str) -> None:
         """Validate an invocation against a descriptor.
 
         Parameters
@@ -63,6 +63,27 @@ class BoutiquesAPI(ABC):
             If the invocation is invalid.
         """
         ...
+
+    def validate_descriptor_file(self, fpath_descriptor: StrOrPathLike) -> str:
+        """Load a descriptor file, validate it, and return it as a JSON string.
+
+        Parameters
+        ----------
+        fpath_descriptor : StrOrPathLike
+            Path to the descriptor file.
+
+        Returns
+        -------
+        str
+            The validated descriptor as a JSON string.
+        """
+        fpath_descriptor: Path = Path(fpath_descriptor)
+        if not fpath_descriptor.exists():
+            raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
+
+        descriptor_str = json.dumps(load_json(fpath_descriptor))
+        self.validate_descriptor_str(descriptor_str)
+        return descriptor_str
 
     @abstractmethod
     def create_descriptor(self, output_path: Path) -> None:
@@ -95,14 +116,14 @@ class BoutiquesAPI(ABC):
 class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
-    def validate_descriptor(self, descriptor_str: str) -> str:  # noqa: D102
+    def validate_descriptor_str(self, descriptor_str: str) -> str:  # noqa: D102
         try:
             boutiques.validate(descriptor_str)
         except boutiques.DescriptorValidationError as exception:
             raise DescriptorValidationError(str(exception)) from exception
         return descriptor_str
 
-    def validate_invocation(self, descriptor_str: str, invocation_str: str) -> None:  # noqa: D102
+    def validate_invocation_str(self, descriptor_str: str, invocation_str: str) -> None:  # noqa: D102
         try:
             boutiques.invocation("--invocation", invocation_str, descriptor_str)
         except boutiques.InvocationValidationError as exception:
