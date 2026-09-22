@@ -94,11 +94,11 @@ def _assert_command_success(args):
     )
 
 
-@pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_command"]])
+@pytest.mark.parametrize("args", [["--invalid-arg"], ["invalid_argument"]])
 def test_cli_invalid(args):
     """Test that a fake command does not exist."""
     result = runner.invoke(cli, args, catch_exceptions=False)
-    assert result.exit_code == ReturnCode.INVALID_COMMAND, (
+    assert result.exit_code == ReturnCode.INVALID_ARGUMENT, (
         f"Expected invalid command exit code for: {args}\n{result.output}"
     )
 
@@ -380,7 +380,7 @@ def test_context_manager_no_exception(mocker):
     [
         (None, ReturnCode.UNKNOWN_FAILURE),
         (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.INVALID_COMMAND, ReturnCode.INVALID_COMMAND),
+        (ReturnCode.INVALID_ARGUMENT, ReturnCode.INVALID_ARGUMENT),
     ],
 )
 def test_context_manager_system_exit_exception(
@@ -491,7 +491,7 @@ def test_context_manager_json_error(
 
 
 @pytest.mark.parametrize(
-    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_COMMAND)]
+    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)]
 )
 @pytest.mark.parametrize("exception", [Exception, RuntimeError])
 def test_context_manager_unknown_exception(
