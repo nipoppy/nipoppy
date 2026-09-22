@@ -141,6 +141,7 @@ class TelemetryHandler:
             self.provider = MeterProvider(
                 resource=resource,
                 metric_readers=[reader],
+                shutdown_on_exit=False,
             )
             meter = self.provider.get_meter(__name__)
             if isinstance(meter, NoOpMeter):
@@ -262,3 +263,22 @@ class TelemetryHandler:
         self.provider = None
         self.metrics = None
         self._initialized = False
+
+
+_telemetry_handler: TelemetryHandler | None = None
+
+
+def get_telemetry_handler() -> TelemetryHandler:
+    """Return the process-wide initialized telemetry handler.
+
+    The handler is created once per process and shared by all callers, so there is
+    a single meter provider, `atexit` registration and SIGTERM handler. Both the
+    creation and `initialize()` are idempotent, so repeated calls are cheap.
+    """
+    global _telemetry_handler
+
+    if _telemetry_handler is None:
+        _telemetry_handler = TelemetryHandler()
+
+    _telemetry_handler.initialize()
+    return _telemetry_handler

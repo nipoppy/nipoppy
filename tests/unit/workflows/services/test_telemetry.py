@@ -13,7 +13,12 @@ from opentelemetry.sdk.metrics.export import InMemoryMetricReader
 
 from nipoppy.env import TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
 from nipoppy.exceptions import ReturnCode
-from nipoppy.workflows.services.telemetry import TelemetryHandler, _get_user_country
+from nipoppy.workflows.services import telemetry as telemetry_module
+from nipoppy.workflows.services.telemetry import (
+    TelemetryHandler,
+    _get_user_country,
+    get_telemetry_handler,
+)
 
 
 def _data_points(reader: InMemoryMetricReader, metric_name: str):
@@ -28,6 +33,23 @@ def _data_points(reader: InMemoryMetricReader, metric_name: str):
                 if metric.name == metric_name:
                     points.extend(metric.data.data_points)
     return points
+
+
+@pytest.fixture(autouse=True)
+def _reset_telemetry_singleton():
+    """Shut down and clear the module-level singleton between tests."""
+    yield
+    if telemetry_module._telemetry_handler is not None:
+        telemetry_module._telemetry_handler.shutdown()
+    telemetry_module._telemetry_handler = None
+
+
+@pytest.fixture()
+def _offline_handler(monkeypatch):
+    """Make the singleton's handler use an in-memory reader instead of the network."""
+    monkeypatch.setattr(
+        TelemetryHandler, "build_default_reader", lambda self: InMemoryMetricReader()
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -89,6 +111,12 @@ class TestFailSafe:
 
 
 class TestInitialize:
+    def test_provider_does_not_register_its_own_atexit(self):
+        """shutdown_on_exit=False: this class owns the only atexit hook."""
+        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler.initialize()
+        assert handler.provider._atexit_handler is None
+
     def test_initialize_returns_true_with_in_memory_reader(self):
         """initialize() succeeds and initializes the handler with a valid reader."""
         handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
@@ -403,3 +431,19 @@ class TestSigtermHandler:
 
         assert handler.shutdown_called is True
         mock_exit.assert_called_once_with(0)
+
+
+@pytest.mark.usefixtures("_offline_handler")
+class TestGetTelemetryHandler:
+    """The process-wide singleton accessor."""
+
+    def test_returns_the_same_initialized_handler(self):
+        """Repeated calls return one shared, already-initialized handler."""
+        handler = get_telemetry_handler()
+        assert handler.is_initialized is True
+        assert get_telemetry_handler() is handler
+
+    def test_does_not_reinitialize(self):
+        """The second call reuses the provider rather than building a new one."""
+        provider = get_telemetry_handler().provider
+        assert get_telemetry_handler().provider is provider
