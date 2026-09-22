@@ -91,11 +91,7 @@ def pipeline_search(**params):
     "-t",
     "type_",
     type=click.Choice(
-        [
-            PipelineTypeEnum.BIDSIFICATION,
-            PipelineTypeEnum.PROCESSING,
-            PipelineTypeEnum.EXTRACTION,
-        ],
+        PipelineTypeEnum,
         case_sensitive=False,
     ),
     required=True,
