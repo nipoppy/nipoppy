@@ -77,6 +77,8 @@ class InitWorkflow(BaseDatasetWorkflow):
         Copy default config files.
         Copy HPC config files.
         """
+        if self.telemetry is not None:
+            self.telemetry.record_location_async()
         self._validate_study_root()
 
         # create directories

@@ -57,6 +57,11 @@ FPATH_USER_CONFIG = "~/.nipoppy/config.json"
 EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
+# telemetry
+TELEMETRY_DEFAULT_OTLP_ENDPOINT = "https://telemetry.nipoppy.org"
+TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 2000
+TELEMETRY_EXPORT_TIMEOUT_SECONDS = 2
+
 # dotenv files
 # from highest to lowest priority
 DEFAULT_DOTENV_PATHS = ("[[NIPOPPY_DPATH_ROOT]]/.env", "~/.nipoppy/.env")
