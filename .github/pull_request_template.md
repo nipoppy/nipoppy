@@ -14,7 +14,7 @@
 
 ## Checklist
 
-_This section is for the PR reviewer_
+_This section is for the PR reviewer._
 
 ### All PRs
 

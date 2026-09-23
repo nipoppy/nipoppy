@@ -6,8 +6,8 @@ Concretely, we will:
 
 1. **Initialize** a Nipoppy dataset from a BIDS dataset
 2. **Install** and set up the MRIQC processing pipeline
-2. **Run** MRIQC on a single participant and session
-3. **Track** the output files to check if processing was successful
+3. **Run** MRIQC on a single participant and session
+4. **Track** the output files to check if processing was successful
 
 ```{note}
 If you have not installed Nipoppy yet, instructions are available [here](../../overview/installation).

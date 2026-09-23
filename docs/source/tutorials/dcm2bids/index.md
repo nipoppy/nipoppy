@@ -20,7 +20,7 @@ We will use the [tutorial dataset](https://github.com/nipoppy/tutorial-dataset) 
 
 There are multiple ways of downloading the dataset:
 
-**1. via `git clone`**
+**1. via `git clone`:**
 
 SSH: `git clone git@github.com:nipoppy/tutorial-dataset.git`
 

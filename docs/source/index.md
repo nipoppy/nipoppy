@@ -1,4 +1,4 @@
-# Welcome to the Nipoppy documentation website!
+# Welcome to the Nipoppy documentation website
 
 Nipoppy is a lightweight framework for standardized organization and processing of neuroimaging-clinical datasets. Its goal is to help users adopt the [FAIR](https://www.go-fair.org/fair-principles/) principles and improve the reproducibility of studies.
 
