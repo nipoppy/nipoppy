@@ -56,6 +56,16 @@ def zenodo_options(func):
         " community."
     ),
 )
+@click.option(
+    "--type",
+    "-t",
+    "pipeline_type",
+    type=click.Choice(
+        PipelineTypeEnum,
+        case_sensitive=False,
+    ),
+    help="Filter search results by pipeline type.",
+)
 @password_file_option(required=False)
 @zenodo_options
 @global_options
@@ -81,11 +91,7 @@ def pipeline_search(**params):
     "-t",
     "type_",
     type=click.Choice(
-        [
-            PipelineTypeEnum.BIDSIFICATION,
-            PipelineTypeEnum.PROCESSING,
-            PipelineTypeEnum.EXTRACTION,
-        ],
+        PipelineTypeEnum,
         case_sensitive=False,
     ),
     required=True,
@@ -177,7 +183,7 @@ def pipeline_validate(**params):
 @pipeline.command("upload")
 @click.argument(
     "pipeline_dir",
-    type=str,
+    type=click.Path(path_type=Path, exists=True, file_okay=False, resolve_path=True),
 )
 @click.option(
     "--zenodo-id",
@@ -193,6 +199,11 @@ def pipeline_validate(**params):
     "-f",
     is_flag=True,
     help="Ignore safeguard warnings and upload anyway. Use with caution.",
+)
+@click.option(
+    "--community",
+    is_flag=True,
+    help="Request inclusion of the pipeline in the Nipoppy Zenodo community.",
 )
 @zenodo_options
 @global_options

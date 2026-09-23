@@ -51,9 +51,10 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-id",
                 "--password-file",
-                "--sandbox",
                 "--community",
+                "--sandbox",
                 "--regenerate",
+                "--type",
             ],
         },
         {
@@ -108,7 +109,7 @@ def cli():
     """Organize and process neuroimaging-clinical datasets."""
 
 
-if cli.commands.get("gui"):
+if cli.commands.get("gui") is not None:
     cli.commands["gui"].hidden = True
 
 
@@ -202,8 +203,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
