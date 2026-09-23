@@ -14,8 +14,10 @@ from dataclasses import dataclass
 import httpx
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.metrics import Counter, NoOpMeter
+from opentelemetry.sdk.metrics import Counter as SDKCounter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
     MetricReader,
     PeriodicExportingMetricReader,
 )
@@ -25,6 +27,7 @@ from nipoppy.env import (
     PROGRAM_NAME,
     PROGRAM_VERSION,
     TELEMETRY_DEFAULT_OTLP_ENDPOINT,
+    TELEMETRY_EXPORT_TIMEOUT_SECONDS,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
 )
 from nipoppy.exceptions import ReturnCode
@@ -184,11 +187,13 @@ class TelemetryHandler:
         if not otlp_endpoint.rstrip("/").endswith("/v1/metrics"):
             otlp_endpoint = otlp_endpoint.rstrip("/") + "/v1/metrics"
 
-        # Force DELTA temporality so the collector's deltatocumulative processor
-        # can accumulate across short-lived process runs. Without this the
-        # OTLPMetricExporter defaults to CUMULATIVE, sending value=1 every time.
-        os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] = "delta"
-        otlp_exporter = OTLPMetricExporter(endpoint=otlp_endpoint)
+        # Short timeout so an unreachable collector cannot stall shutdown, which
+        # runs at exit. The exporter otherwise defaults to 10 seconds.
+        otlp_exporter = OTLPMetricExporter(
+            endpoint=otlp_endpoint,
+            timeout=TELEMETRY_EXPORT_TIMEOUT_SECONDS,
+            preferred_temporality={SDKCounter: AggregationTemporality.DELTA},
+        )
 
         # Short export interval so the HTTP session is established before shutdown.
         return PeriodicExportingMetricReader(

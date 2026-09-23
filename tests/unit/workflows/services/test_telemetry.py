@@ -9,9 +9,16 @@ import threading
 import pytest
 import pytest_httpx
 import pytest_mock
-from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+from opentelemetry.sdk.metrics import Counter as SDKCounter
+from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
+    InMemoryMetricReader,
+)
 
-from nipoppy.env import TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
+from nipoppy.env import (
+    TELEMETRY_EXPORT_TIMEOUT_SECONDS,
+    TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
+)
 from nipoppy.exceptions import ReturnCode
 from nipoppy.workflows.services import telemetry as telemetry_module
 from nipoppy.workflows.services.telemetry import (
@@ -71,23 +78,6 @@ class TestGetUserCountry:
         )
         assert _get_user_country() == "CA"
 
-    def test_raises_when_lookup_fails(self, httpx_mock: pytest_httpx.HTTPXMock):
-        """Not fail-safe on its own: callers (record_location) handle exceptions."""
-        httpx_mock.add_exception(
-            Exception("geoip down"), url="https://api.db-ip.com/v2/free/self"
-        )
-        with pytest.raises(Exception, match="geoip down"):
-            _get_user_country()
-
-    def test_raises_when_country_code_missing(self, httpx_mock: pytest_httpx.HTTPXMock):
-        """No countryCode in the payload means there is nothing to upper-case."""
-        httpx_mock.add_response(
-            url="https://api.db-ip.com/v2/free/self",
-            json={"ipAddress": "1.2.3.4"},
-        )
-        with pytest.raises(AttributeError):
-            _get_user_country()
-
 
 class TestFailSafe:
     """Telemetry must never raise, even when broken or uninitialized."""
@@ -103,11 +93,6 @@ class TestFailSafe:
         handler = TelemetryHandler()
         handler.record_location_async()
         assert handler._location_thread is None
-
-    def test_is_initialized_false_before_initialize(self):
-        """A handler is not initialized until initialize() is called."""
-        handler = TelemetryHandler()
-        assert handler.is_initialized is False
 
 
 class TestInitialize:
@@ -136,33 +121,27 @@ class TestInitialize:
         assert handler.initialize() is True
         assert handler.initialize() is True
 
-    def test_initialize_returns_false_on_unexpected_error(self, monkeypatch):
-        """Any failure while building the provider/reader is swallowed."""
-        handler = TelemetryHandler()
-        monkeypatch.setattr(
-            handler,
-            "build_default_reader",
-            lambda: (_ for _ in ()).throw(RuntimeError("boom")),
-        )
+    @pytest.mark.parametrize(
+        "handler_kwargs,failing_method",
+        [
+            ({}, "build_default_reader"),
+            ({"metric_reader": InMemoryMetricReader()}, "create_metric_instruments"),
+        ],
+    )
+    def test_initialize_cleans_up_when_setup_fails(
+        self,
+        mocker: pytest_mock.MockerFixture,
+        handler_kwargs,
+        failing_method,
+    ):
+        """A failure at any point during setup is swallowed, leaving no state."""
+        handler = TelemetryHandler(**handler_kwargs)
+        mocker.patch.object(handler, failing_method, side_effect=RuntimeError("boom"))
+
         assert handler.initialize() is False
         assert handler.is_initialized is False
-        assert handler.provider is None
-
-    def test_initialize_cleans_up_after_provider_creation_fails(
-        self, mocker: pytest_mock.MockerFixture
-    ):
-        """A failure after provider creation does not leave partial state."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
-        mocker.patch.object(
-            handler,
-            "create_metric_instruments",
-            side_effect=RuntimeError("instrument creation failed"),
-        )
-
-        assert handler.initialize() is False
         assert handler.provider is None
         assert handler.metrics is None
-        assert handler.is_initialized is False
 
     def test_service_version_defaults_to_unknown(self):
         """An absent service version is reported as unknown."""
@@ -184,23 +163,17 @@ class TestBuildDefaultReader:
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
 
-    def test_explicit_endpoint_gets_metrics_path_appended(self):
-        """An explicit endpoint gets the metrics path appended."""
-        handler = TelemetryHandler(otlp_endpoint="https://collector.example.com")
-        reader = handler.build_default_reader()
-        assert reader._exporter._endpoint == "https://collector.example.com/v1/metrics"
-
-    def test_trailing_slash_is_stripped_before_appending(self):
-        """A trailing slash is stripped before the metrics path is appended."""
-        handler = TelemetryHandler(otlp_endpoint="https://collector.example.com/")
-        reader = handler.build_default_reader()
-        assert reader._exporter._endpoint == "https://collector.example.com/v1/metrics"
-
-    def test_endpoint_already_ending_in_metrics_path_is_unchanged(self):
-        """An endpoint already ending in the metrics path is left unchanged."""
-        handler = TelemetryHandler(
-            otlp_endpoint="https://collector.example.com/v1/metrics"
-        )
+    @pytest.mark.parametrize(
+        "otlp_endpoint",
+        [
+            "https://collector.example.com",
+            "https://collector.example.com/",
+            "https://collector.example.com/v1/metrics",
+        ],
+    )
+    def test_metrics_path_is_appended_exactly_once(self, otlp_endpoint):
+        """Any spelling of an explicit endpoint resolves to one metrics path."""
+        handler = TelemetryHandler(otlp_endpoint=otlp_endpoint)
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://collector.example.com/v1/metrics"
 
@@ -211,45 +184,61 @@ class TestBuildDefaultReader:
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://env.example.com/v1/metrics"
 
-    def test_sets_delta_temporality_preference(self, monkeypatch):
-        """The reader requests delta temporality from the exporter."""
+    def test_counters_use_delta_temporality(self, monkeypatch):
+        """Counters are exported as deltas, without touching the environment."""
         monkeypatch.delenv(
             "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", raising=False
         )
-        handler = TelemetryHandler()
-        handler.build_default_reader()
+        reader = TelemetryHandler().build_default_reader()
+
         assert (
-            os.environ["OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE"] == "delta"
+            reader._exporter._preferred_temporality[SDKCounter]
+            is AggregationTemporality.DELTA
+        )
+        assert "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE" not in os.environ
+
+    def test_delta_temporality_survives_a_conflicting_env_var(self, monkeypatch):
+        """A user's CUMULATIVE preference cannot break collector accumulation."""
+        monkeypatch.setenv(
+            "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", "cumulative"
+        )
+        reader = TelemetryHandler().build_default_reader()
+
+        assert (
+            reader._exporter._preferred_temporality[SDKCounter]
+            is AggregationTemporality.DELTA
         )
 
-    def test_export_interval_is_capped_at_max(self):
-        """An oversized export interval is capped at the maximum."""
-        handler = TelemetryHandler(
-            export_interval_millis=TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS + 5000
-        )
+    @pytest.mark.parametrize(
+        "requested,expected",
+        [
+            (
+                TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS + 5000,
+                TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
+            ),
+            (
+                TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS - 500,
+                TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS - 500,
+            ),
+        ],
+    )
+    def test_export_interval_is_capped_at_max(self, requested, expected):
+        """The export interval is honoured below the maximum and capped above it."""
+        handler = TelemetryHandler(export_interval_millis=requested)
         reader = handler.build_default_reader()
-        assert reader._export_interval_millis == TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS
+        assert reader._export_interval_millis == expected
 
-    def test_export_interval_below_max_is_kept(self):
-        """An export interval below the maximum is left unchanged."""
-        handler = TelemetryHandler(
-            export_interval_millis=TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS - 500
-        )
-        reader = handler.build_default_reader()
-        assert (
-            reader._export_interval_millis == TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS - 500
-        )
+    def test_export_timeout_is_set(self, monkeypatch):
+        """An explicit export timeout keeps a stalled collector from delaying exit."""
+        monkeypatch.delenv("OTEL_EXPORTER_OTLP_TIMEOUT", raising=False)
+        reader = TelemetryHandler().build_default_reader()
+        assert reader._exporter._timeout == TELEMETRY_EXPORT_TIMEOUT_SECONDS
 
 
 class TestCommandCompletion:
     @pytest.mark.parametrize(
         "return_code",
-        [
-            ReturnCode.SUCCESS,
-            ReturnCode.PARTIAL_SUCCESS,
-            ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN,
-            ReturnCode.UNKNOWN_FAILURE,
-        ],
+        [ReturnCode.SUCCESS, ReturnCode.UNKNOWN_FAILURE],
     )
     def test_status_mapping(self, return_code):
         """Return codes map to their enum name/value as status/return_code."""

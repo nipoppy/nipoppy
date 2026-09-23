@@ -60,6 +60,7 @@ EXT_LOG = ".log"
 # telemetry
 TELEMETRY_DEFAULT_OTLP_ENDPOINT = "https://telemetry.nipoppy.org"
 TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 2000
+TELEMETRY_EXPORT_TIMEOUT_SECONDS = 2
 
 # dotenv files
 # from highest to lowest priority
