@@ -42,7 +42,7 @@ jobs:
 
     - name: Install package
       run: |
-        pip install nipoppy[tests,gui]
+        pip install .[tests,gui]
 
     - name: Run non-API tests
       run: |
