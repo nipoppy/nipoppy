@@ -18,7 +18,12 @@ from nipoppy.env import (
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    InvalidArgumentError,
+    WorkflowError,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -120,7 +125,7 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
 
 def test_init_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
     with pytest.raises(
-        WorkflowError,
+        InvalidArgumentError,
         match="--assume-yes and --skip-container are mutually exclusive",
     ):
         PipelineInstallWorkflow(

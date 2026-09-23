@@ -13,6 +13,7 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    InvalidArgumentError,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
@@ -43,7 +44,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
     ):
         """Initialize the workflow."""
         if assume_yes and skip_container:
-            raise WorkflowError(
+            raise InvalidArgumentError(
                 "--assume-yes and --skip-container are mutually exclusive."
             )
 
