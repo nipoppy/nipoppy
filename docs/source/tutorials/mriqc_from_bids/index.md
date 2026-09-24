@@ -30,7 +30,7 @@ We will use the [**ds004101 dataset from OpenNeuro**](https://openneuro.org/data
 Run the following command to create a Nipoppy study and populate it with the BIDS data:
 
 ```console
-$ nipoppy init --dataset nipoppy_study --bids-source ds004101-1.0.1
+$ nipoppy init --study nipoppy_study --bids-source ds004101-1.0.1
 ```
 
 This command creates a folder named `nipoppy_study` with subdirectories for raw data, processed (derivatives) data, pipeline configuration files, logs, etc. The `tree` command can be used to show the directory structure.
@@ -83,7 +83,7 @@ participant_id  visit_id    session_id  datatype
 The `nipoppy status` prints out a summary of the study, including the number of participants who are in BIDS or have completed a pipeline.
 
 ```console
-$ nipoppy status --dataset nipoppy_study
+$ nipoppy status --study nipoppy_study
 ```
 
 For now, the study only has BIDS data:
@@ -130,7 +130,7 @@ By default, this file does not contain any pipeline-specific information, since 
 
 The following command can be used to check which pipelines can be run with the study:
 ```console
-$ nipoppy pipeline list --dataset nipoppy_study
+$ nipoppy pipeline list --study nipoppy_study
 ```
 
 The output says that there are no available pipelines to be run:
@@ -142,7 +142,7 @@ INFO     No available extraction pipelines
 
 That is because a newly initialized Nipoppy study does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for MRIQC](https://zenodo.org/records/15306682) can be downloaded by running the following:
 ```{code-block} console
-$ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_mriqc_23_1_0}}
+$ nipoppy pipeline install --study nipoppy_study {{zenodo_id_mriqc_23_1_0}}
 ```
 
 When running `nipoppy pipeline install`, if using a container engine, you will be asked if you would like to download the MRIQC container. If you do not already have a download of the container, type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. Apptainer or Singularity container images will be downloaded as `mriqc_23.1.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file). Docker images are managed centrally and so will not be downloaded to the study.
@@ -179,7 +179,7 @@ Use `nipoppy process` to run MRIQC on a single participant and session. This cou
 
 ```console
 $ nipoppy process \
-    --dataset nipoppy_study \
+    --study nipoppy_study \
     --pipeline mriqc \
     --pipeline-version 23.1.0 \
     --participant-id 09114 \
@@ -211,7 +211,7 @@ Run `nipoppy track-processing` to determine the MRIQC processing status for each
 
 ```console
 $ nipoppy track-processing \
-    --dataset nipoppy_study \
+    --study nipoppy_study \
     --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
@@ -240,7 +240,7 @@ participant_id  bids_participant_id     session_id  pipeline_name   pipeline_ver
 10570           sub-10570               2post       mriqc           23.1.0              default         ses-2post           FAIL
 ```
 
-Running `nipoppy status --dataset nipoppy_study` again will show a new column for the MRIQC pipeline showing that one participant has completed processing for the first session:
+Running `nipoppy status --study nipoppy_study` again will show a new column for the MRIQC pipeline showing that one participant has completed processing for the first session:
 
 ```{code-block}
 :caption: Table in `nipoppy status` output
@@ -265,7 +265,7 @@ Use `nipoppy process` without the participant and session flags to process the r
 
 ```console
 $ nipoppy process \
-    --dataset nipoppy_study \
+    --study nipoppy_study \
     --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
@@ -274,7 +274,7 @@ Then, run the tracking command again to update the {term}`processing status file
 
 ```console
 $ nipoppy track-processing \
-    --dataset nipoppy_study \
+    --study nipoppy_study \
     --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
