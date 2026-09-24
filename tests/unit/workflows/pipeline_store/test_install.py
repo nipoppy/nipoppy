@@ -18,7 +18,12 @@ from nipoppy.env import (
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    InvalidArgumentError,
+    WorkflowError,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
@@ -116,6 +121,19 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
             for record in caplog.records
         ]
     )
+
+
+def test_init_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
+    with pytest.raises(
+        InvalidArgumentError,
+        match="--assume-yes and --skip-container are mutually exclusive",
+    ):
+        PipelineInstallWorkflow(
+            dpath_root=tmp_path / "my_dataset",
+            source="not_a_path",
+            assume_yes=True,
+            skip_container=True,
+        )
 
 
 def test_run_cleanup(workflow: PipelineInstallWorkflow):
@@ -280,6 +298,23 @@ def test_download_container(
     )
     # first call, positional arg list, first element
     assert not isinstance(mocked_run_command.call_args[0][0][0], ContainerCommandEnum)
+
+
+def test_download_container_skipped(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    workflow.assume_yes = False
+    workflow.skip_container = True
+
+    mocked_run_command = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install._run_command"
+    )
+
+    workflow._download_container(pipeline_config)
+
+    mocked_run_command.assert_not_called()
 
 
 @pytest.mark.parametrize("confirm_download", [True, False])

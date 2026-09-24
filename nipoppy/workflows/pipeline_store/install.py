@@ -13,6 +13,7 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    InvalidArgumentError,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
@@ -39,8 +40,14 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
+        skip_container: bool = False,
     ):
         """Initialize the workflow."""
+        if assume_yes and skip_container:
+            raise InvalidArgumentError(
+                "--assume-yes and --skip-container are mutually exclusive."
+            )
+
         super().__init__(
             dpath_root=dpath_root,
             name="pipeline_install",
@@ -52,6 +59,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self.zenodo_api = zenodo_api or ZenodoAPI()
         self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.assume_yes = assume_yes
+        self.skip_container = skip_container
         self.force = force
 
         self.dpath_pipeline = None
@@ -141,6 +149,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         return config
 
     def _download_container(self, pipeline_config: BasePipelineConfig):
+        if self.skip_container:
+            return
+
         uri = pipeline_config.CONTAINER_INFO.URI
 
         # pipeline is not containerized
