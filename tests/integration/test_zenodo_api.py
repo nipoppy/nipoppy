@@ -103,6 +103,57 @@ def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
     (not os.environ.get("ZENODO_TOKEN")),
     reason="Requires Zenodo token",
 )
+def test_upload_record_cleans_up_after_failed_update(
+    zenodo_api: ZenodoAPI, metadata: dict
+):
+    """Test that a failed update deletes the leftover draft and unblocks the record."""
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    # Create a fresh published record
+    doi = zenodo_api.upload_record(
+        input_dir=TEST_PIPELINE,
+        metadata=metadata,
+        default_preview_filename=DEFAULT_PREVIEW,
+    )
+    record_id = doi.split("/")[-1].removeprefix("zenodo.")
+
+    # Leave a new version draft unpublished and populate it with files
+    draft_record_id = zenodo_api._create_new_version(record_id)[0]
+    assert draft_record_id != record_id
+    zenodo_api._upload_files(sorted(TEST_PIPELINE.iterdir()), draft_record_id)
+
+    # The update fails because the leftover draft is reused and
+    # already contains the files
+    with pytest.raises(
+        ZenodoAPIError,
+        match="Failed to update the Zenodo record",
+    ):
+        zenodo_api.upload_record(
+            input_dir=TEST_PIPELINE,
+            metadata=metadata,
+            record_id=record_id,
+            default_preview_filename=DEFAULT_PREVIEW,
+        )
+
+    # check that the leftover draft was deleted by the failed update
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
+    assert zenodo_api.get_latest_version_id(record_id) == record_id
+
+    # The record can be updated again
+    new_doi = zenodo_api.upload_record(
+        input_dir=TEST_PIPELINE,
+        metadata=metadata,
+        record_id=record_id,
+        default_preview_filename=DEFAULT_PREVIEW,
+    )
+    assert new_doi.split("/")[-1].removeprefix("zenodo.") != record_id
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
 def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict):
     record_id = "invalid_record_id"
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
