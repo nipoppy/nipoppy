@@ -11,25 +11,56 @@ from nipoppy.logger import get_logger
 logger = get_logger()
 
 
-def dataset_option(func):
-    """Define dataset options for the CLI."""
-    # The dataset argument is deprecated, but we keep it for backward compatibility.
-    return click.option(
-        "--dataset",
+def study_option(func):
+    """Define study options for the CLI."""
+    func = click.option(
+        "--study",
         "dpath_root",
         type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
         required=False,
         default=Path.cwd(),
         show_default=(False if os.environ.get("READTHEDOCS") else True),
-        help="Path to the root of the dataset. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
+        help="Path to the root of the study. Default: current working directory or the closest parent directory that contains a .nipoppy directory.",  # noqa: E501
     )(func)
+    # alias: to be deprecated
+    func = click.option(
+        "--dataset",
+        "dataset",
+        type=click.Path(file_okay=False, path_type=Path, resolve_path=True),
+        required=False,
+        default=None,
+        hidden=True,
+    )(func)
+    return func
 
 
 def dep_params(**params):
     """Handle deprecated parameters."""
+    ctx = click.get_current_context(silent=True)
+    if ctx is not None:
+        study_provided = (
+            ctx.get_parameter_source("dpath_root")
+            == click.core.ParameterSource.COMMANDLINE
+        )
+        dataset_provided = (
+            ctx.get_parameter_source("dataset")
+            == click.core.ParameterSource.COMMANDLINE
+        )
+        if study_provided and dataset_provided:
+            raise click.UsageError("Cannot specify both --study and --dataset.")
+
+    # --dataset is deprecated by --study
+    if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):
+        logger.warning(
+            "The --dataset flag will be deprecated in a future version of Nipoppy. "
+            "Use the --study flag instead."
+        )
+        params["dpath_root"] = _dep_dataset
+
     # --write-list is deprecated by --write-subcohort
-    if "write_subcohort" in params and (
-        _dep_write_subcohort := params.pop("write_list")
+    if (
+        "write_subcohort" in params
+        and (_dep_write_subcohort := params.pop("write_list")) is not None
     ):
         logger.warning(
             "The --write-list option is deprecated and will be removed in a future "

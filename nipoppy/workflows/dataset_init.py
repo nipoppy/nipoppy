@@ -16,7 +16,7 @@ from nipoppy.env import (
     PipelineTypeEnum,
     StrOrPathLike,
 )
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
@@ -79,11 +79,26 @@ class InitWorkflow(BaseDatasetWorkflow):
         """
         self._validate_study_root()
 
+        if self.bids_source is None:
+            fileops.copy(
+                FPATH_SAMPLE_MANIFEST,
+                self.study.layout.fpath_manifest,
+                exist_ok=True,
+                dry_run=self.dry_run,
+            )
+            logger.warning(
+                f"Sample manifest file copied to {self.study.layout.fpath_manifest}. "
+                "It should be edited to match your dataset."
+            )
+        else:
+            self._handle_bids_source()
+            self._init_manifest_from_bids_dataset()
+
         # create directories
         fileops.mkdir(self.dpath_root / NIPOPPY_DIR_NAME, dry_run=self.dry_run)
         for dpath in self.study.layout.get_paths(directory=True, include_optional=True):
             if self.bids_source is not None and dpath == self.study.layout.dpath_bids:
-                self._handle_bids_source()
+                continue
             elif (
                 self.container_store is not None
                 and dpath == self.study.layout.dpath_containers
@@ -107,23 +122,11 @@ class InitWorkflow(BaseDatasetWorkflow):
         # config file
         self._create_config_file()
 
-        # manifest
-        if self.bids_source is not None:
-            self._init_manifest_from_bids_dataset()
-        else:
-            fileops.copy(
-                FPATH_SAMPLE_MANIFEST,
-                self.study.layout.fpath_manifest,
-                exist_ok=True,
-                dry_run=self.dry_run,
-            )
-            logger.warning(
-                f"Sample manifest file copied to {self.study.layout.fpath_manifest}. "
-                "It should be edited to match your dataset."
-            )
-
         # copy dataset description file if specified in layout
-        if getattr(self.study.layout, "fpath_bids_dataset_description", None):
+        if (
+            getattr(self.study.layout, "fpath_bids_dataset_description", None)
+            is not None
+        ):
             fileops.copy_template(
                 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION,
                 self.study.layout.fpath_bids_dataset_description,
@@ -133,7 +136,7 @@ class InitWorkflow(BaseDatasetWorkflow):
             )
 
         # copy bidsignore file if specified in layout
-        if getattr(self.study.layout, "fpath_bidsignore", None):
+        if getattr(self.study.layout, "fpath_bidsignore", None) is not None:
             fileops.copy(
                 FPATH_SAMPLE_BIDSIGNORE,
                 self.study.layout.fpath_bidsignore,
@@ -284,27 +287,29 @@ class InitWorkflow(BaseDatasetWorkflow):
                 ):
                     # if the session is fake, we don't expect BIDS data
                     # to have session dir in the path
-                    datatypes = sorted(
-                        [
-                            x.name
-                            for x in (
-                                self.study.layout.dpath_bids / bids_participant_id
-                            ).iterdir()
-                            if x.is_dir()
-                        ]
+                    dpath_participant_session = (
+                        self.study.layout.dpath_bids / bids_participant_id
                     )
                 else:
-                    datatypes = sorted(
-                        [
-                            x.name
-                            for x in (
-                                self.study.layout.dpath_bids
-                                / bids_participant_id
-                                / bids_session_id
-                            ).iterdir()
-                            if x.is_dir()
-                        ]
+                    dpath_participant_session = (
+                        self.study.layout.dpath_bids
+                        / bids_participant_id
+                        / bids_session_id
                     )
+
+                datatypes = sorted(
+                    [
+                        x.name
+                        for x in (dpath_participant_session).iterdir()
+                        if x.is_dir() and any(child.is_file() for child in x.iterdir())
+                    ]
+                )
+
+                if len(datatypes) == 0:
+                    logger.warning(
+                        f"No files found in datatype folder {dpath_participant_session}. Skipping this folder."  # noqa: E501
+                    )
+                    continue
 
                 df[Manifest.col_participant_id].append(
                     check_participant_id(bids_participant_id)
@@ -315,6 +320,11 @@ class InitWorkflow(BaseDatasetWorkflow):
         df[Manifest.col_visit_id] = df[Manifest.col_session_id]
 
         manifest = Manifest(df).validate()
+        if manifest.empty:
+            raise WorkflowError(
+                f"No subjects found in BIDS source directory {self.bids_source}. "
+                f"Expected {BIDS_SUBJECT_PREFIX}* directories directly inside it."
+            )
         manifest.save_with_backup(
             self.study.layout.fpath_manifest, dry_run=self.dry_run
         )
