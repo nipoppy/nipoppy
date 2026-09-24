@@ -135,7 +135,7 @@ def pipeline_create(**params):
     is_flag=True,
     help=(
         "Skip downloading the pipeline container "
-        "(mutually exclusive with --container-store)."
+        "(mutually exclusive with --assume-yes)."
     ),
 )
 @global_options
