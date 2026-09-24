@@ -290,9 +290,8 @@ def extract(**params):
     "--datatype",
     type=str,
     help=(
-        "Only include imaging manifest rows whose datatype list contains this exact "
-        "BIDS datatype. Curation and processing counts use the selected "
-        "participant-session pairs."
+        "Only include imaging manifest rows whose datatype list contains any of the "
+        "comma-separated BIDS datatypes, e.g. '--datatype dwi,anat'."
     ),
 )
 @global_options

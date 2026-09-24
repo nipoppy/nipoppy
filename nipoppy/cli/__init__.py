@@ -31,7 +31,6 @@ def exception_handler(workflow):
         )
     except SystemExit as e:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE if e.code is None else e.code
-
     except Exception:
         workflow.return_code = ReturnCode.UNKNOWN_FAILURE
         logger.exception("Unexpected error occurred")
