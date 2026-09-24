@@ -154,6 +154,38 @@ def test_upload_record_cleans_up_after_failed_update(
     (not os.environ.get("ZENODO_TOKEN")),
     reason="Requires Zenodo token",
 )
+def test_delete_draft(zenodo_api: ZenodoAPI):
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    # Create an unpublished draft
+    draft_record_id, _ = zenodo_api._create_draft()
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 200
+
+    # Delete it
+    assert zenodo_api._delete_draft(draft_record_id) is None
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
+def test_delete_draft_not_found(zenodo_api: ZenodoAPI):
+    """Test that _delete_draft is a no-op when the draft does not exist."""
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    draft_record_id = "invalid_record_id"
+
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
+    assert zenodo_api._delete_draft(draft_record_id) is None
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
 def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict):
     record_id = "invalid_record_id"
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
