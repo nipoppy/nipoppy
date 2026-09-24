@@ -255,6 +255,18 @@ class ZenodoAPI:
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
+    def _delete_draft(self, record_id: str) -> None:
+        """Delete the draft of a record, if it exists."""
+        response = self.client.delete(f"/records/{record_id}/draft")
+        if response.status_code == 204:
+            self.logger.info(f"Draft deleted for zenodo.{record_id}")
+        elif response.status_code == 404:
+            self.logger.warning(f"No draft to delete for zenodo.{record_id}")
+        else:
+            raise ZenodoAPIError(
+                f"Failed to delete draft for zenodo.{record_id}: {response.json()}"
+            )
+
     def upload_record(
         self,
         input_dir: Path,
