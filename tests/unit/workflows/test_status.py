@@ -314,7 +314,7 @@ def make_mixed_datatype_status_tables():
             },
         ),
         (
-            "anat",
+            ("anat",),
             {
                 "in_manifest": {"BL": 2, "M12": 1},
                 "in_pre_reorg": {"BL": 1, "M12": 1},
@@ -324,7 +324,7 @@ def make_mixed_datatype_status_tables():
             },
         ),
         (
-            "dwi",
+            ("dwi",),
             {
                 "in_manifest": {"BL": 2, "M12": 1},
                 "in_pre_reorg": {"BL": 1, "M12": 0},
@@ -334,13 +334,12 @@ def make_mixed_datatype_status_tables():
             },
         ),
         (
-            "anat,dwi",
+            ("anat", "dwi"),
             {
-                "in_manifest": {"BL": 3, "M12": 2},
-                "in_pre_reorg": {"BL": 2, "M12": 1},
-                "in_post_reorg": {"BL": 2, "M12": 1},
-                "in_bids": {"BL": 2, "M12": 0},
-                "pipeline\n1.0.0\ndefault": {"BL": 2, "M12": 0},
+                "in_manifest": {"BL": 1},
+                "in_pre_reorg": {"BL": 0},
+                "in_post_reorg": {"BL": 0},
+                "in_bids": {"BL": 0},
             },
         ),
     ],
@@ -389,7 +388,7 @@ def test_unmatched_datatype_returns_empty_table(
     dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
 ):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype="fake,")
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("fake",))
     (
         workflow.study.manifest,
         workflow.curation_status_table,
@@ -408,12 +407,13 @@ def test_unmatched_datatype_returns_empty_table(
 @pytest.mark.parametrize(
     "datatype,expected",
     [
-        (" dwi,anat ", {"anat", "dwi"}),
-        ("fake,", {"fake"}),
+        ((" dwi ", "anat "), {"anat", "dwi"}),
+        (("fake",), {"fake"}),
+        (("", " "), None),
     ],
 )
 def test_datatype_values_are_normalized(
-    dpath_root: Path, datatype: str, expected: tuple[str]
+    dpath_root: Path, datatype: tuple[str, ...], expected: set[str] | None
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
 
@@ -469,7 +469,7 @@ def test_build_status_df_does_not_mutate_source_tables(dpath_root: Path):
 
 def test_filter_uses_manifest_datatypes(dpath_root: Path):
     """Status rows and the manifest use combined participant-session datatypes."""
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype="dwi")
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("anat", "dwi"))
     workflow.study.manifest = Manifest(
         pd.DataFrame(
             [
@@ -510,7 +510,7 @@ def test_filter_uses_manifest_datatypes(dpath_root: Path):
 
     status_df = workflow._filter_status_df(workflow._build_status_df())
 
-    # DWI data only
+    # Both datatypes are present across visits for the same session.
     assert status_df[COL_CHECKPOINT].value_counts().to_dict() == {
         CurationStatusTable.col_in_pre_reorg: 1,
         CurationStatusTable.col_in_post_reorg: 1,

@@ -289,9 +289,12 @@ def extract(**params):
 @click.option(
     "--datatype",
     type=str,
+    multiple=True,
     help=(
-        "Only include imaging manifest rows whose datatype list contains any of the "
-        "comma-separated BIDS datatypes, e.g. '--datatype dwi,anat'."
+        "Only include imaging manifest rows whose datatype list contains all of the "
+        "requested BIDS datatypes. Repeat the option for each datatype, "
+        "e.g. '--datatype dwi --datatype anat'."
+        " The manifest is the source of the selection."
     ),
 )
 @global_options

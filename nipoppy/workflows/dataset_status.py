@@ -40,7 +40,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
-        datatype: str | None = None,
+        datatype: tuple[str, ...] | str | None = None,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -51,11 +51,11 @@ class StatusWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        datatypes = (
-            {value.strip() for value in datatype.split(",") if value.strip() != ""}
-            if datatype is not None
-            else set()
-        )
+        if isinstance(datatype, str):
+            datatype = (datatype,)
+        if datatype is None:
+            datatype = ()
+        datatypes = {value.strip() for value in datatype if value.strip()}
         self.datatypes: set[str] | None = datatypes or None
 
     def run_main(self) -> pd.DataFrame | None:
@@ -247,12 +247,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             return status_df.copy()
 
         return status_df.loc[
-            status_df[Manifest.col_datatype].apply(
-                lambda datatypes: (
-                    isinstance(datatypes, list)
-                    and any(datatype in self.datatypes for datatype in datatypes)
-                )
-            )
+            status_df[Manifest.col_datatype].apply(self.datatypes.issubset)
         ].copy()
 
     def _log_dataset_summary(self, status_df: pd.DataFrame, session_ids: list[str]):
