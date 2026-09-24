@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--community",
                 "--sandbox",
                 "--regenerate",
+                "--type",
             ],
         },
         {
@@ -202,8 +203,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
