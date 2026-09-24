@@ -33,6 +33,7 @@ from nipoppy.env import (
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    InvalidArgumentError,
     ReturnCode,
     WorkflowError,
 )
@@ -1426,7 +1427,7 @@ def test_check_filter_args_compatibility_error(
     workflow.participant_id = participant_id
     workflow.session_id = session_id
 
-    with pytest.raises(WorkflowError, match=re.escape(expected_message)):
+    with pytest.raises(InvalidArgumentError, match=re.escape(expected_message)):
         workflow._check_filter_args_compatibility()
 
 
