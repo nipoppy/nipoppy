@@ -5,6 +5,7 @@ This guide describes the steps required to run Nipoppy with the {term}`Docker` c
 ## Study-level configuration
 
 The following changes need to be made to the `"CONTAINER_CONFIG"` field of the `global_config.json` file:
+
 - `"COMMAND"` should be set to `"docker"` instead of `"apptainer"`
 - Any non-Docker argument/option should be removed from `"ARGS"`
     - In particular, the default `global_config.json` uses the `"--cleanenv"` argument, which is specific to Apptainer and needs to be removed if using Docker.

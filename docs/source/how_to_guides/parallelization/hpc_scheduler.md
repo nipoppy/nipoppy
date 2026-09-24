@@ -29,6 +29,7 @@ emphasize-lines: 7,20-29,30
 
 `HPC_PREAMBLE` is a list of Bash commands that should executed at the beginning of **every** job.
 Importantly, there should be a command for activating the Nipoppy Python environment.
+
 * For {term}`venv` environments, the command would be something like this: `"source <PATH_TO_NIPOPPY_VENV>/bin/activate"`
 * For {term}`conda` environments, the command would instead be something like this: `"source ~/.bashrc; conda activate <NIPOPPY_ENV_NAME>"`
 
@@ -150,11 +151,13 @@ As an example, let's say we are interested in specifying the `--nice` option in 
 
 * To hardcode the same `--nice` value for all jobs/pipelines, add e.g., `#SBATCH --nice=10` in a new line near the beginning of the template script (outside of any `if` block).
 * To expose `--nice` as a parameter that can be set independently for each pipeline, instead add the following block:
+
   ```bash
   {% if NICE %}
   #SBATCH --nice={{ NICE }}
   {%- endif %}
   ```
+
   Then set `"NICE"` in a new field (alongside `"TIME"`, `"CORE"` etc.) in a pipeline's HPC config file.
 
 ## Support for other job schedulers
@@ -170,7 +173,6 @@ To add support for another job scheduler supported by `pysqa` (e.g., [Flux](http
 5. You should now be able to run `nipoppy bidsify`/`process`/`extract` with `--hpc flux`.
 
 See also the [`pysqa` documentation](https://pysqa.readthedocs.io) for more information.
-
 
 ```{important}
 If you have configured the Nipoppy HPC functionalities to work on a job scheduler other than Slurm/SGE, please consider [opening an issue on our GitHub repository](https://github.com/nipoppy/nipoppy/issues/new/choose) and contributing your additions back to the codebase.

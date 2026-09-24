@@ -1,0 +1,8 @@
+# Preserve presentation conventions and avoid maintenance churn/breakage.
+rules '~MD002', # Enforces H1 first; breaks GitHub PR template where PR title is already H1.
+      '~MD007', # Enforces 3-space list indent; breaks existing 2- and 4-space nested lists across docs.
+      '~MD013', # Enforces 80-char line limit; causes massive diff churn and breaks responsive text reflow.
+      '~MD014', # Forbids '$' prompts without output; degrades Pygments syntax highlighting in console blocks.
+      '~MD028', # Forbids blank lines in blockquotes; breaks MyST admonition parsing for adjacent alert boxes.
+      '~MD029', # Enforces '1. 1. 1.' numbering; churns docs written with explicit sequential numbering.
+      '~MD033'  # Forbids inline HTML; breaks embedded YouTube videos, theme logos, and contributor tables.

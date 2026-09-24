@@ -1,4 +1,4 @@
-# Why Nipoppy?
+# Why Nipoppy
 
 *This is why Nipoppy was created.*
 
@@ -10,7 +10,7 @@ If the data-wrangling is hard enough for a single study, imagine coordinating th
 
 Given the heterogeneity in data, tools, and usage practices, we don’t think there is one technical solution that fits all. Thus, Nipoppy tries to engage with the users to show and instill best-practices that would empower them to make better decisions for their custom research workflows. We hope to proliferate [FAIR](https://www.go-fair.org/fair-principles/) datasets in the global community - neuroimaging and beyond - striving towards more open, reproducible, and translational neuroscience research.
 
-*Or you can just use it to sleep better after a day of data-wrangling…*
+*Or you can just use it to sleep better after a day of data-wrangling.*
 
 ```{toctree}
 ---
