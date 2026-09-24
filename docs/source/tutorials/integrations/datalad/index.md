@@ -70,7 +70,7 @@ Next we will record the tracking status from the {doc}`main tutorial Step 5 <../
 ```console
 $ datalad run -m "Track processing status" \
     nipoppy track-processing \
-        --dataset nipoppy_study \
+        --study nipoppy_study \
         --pipeline mriqc \
         --pipeline-version 23.1.0
 ```
@@ -93,7 +93,7 @@ Date:   Fri Jul 11 12:43:47 2025 -0500
     === Do not change lines below ===
     {
      "chain": [],
-     "cmd": "nipoppy track-processing --dataset nipoppy_study --pipeline mriqc --pipeline-version 23.1.0",
+     "cmd": "nipoppy track-processing --study nipoppy_study --pipeline mriqc --pipeline-version 23.1.0",
      "dsid": "880521ec-8d70-4fdf-85db-b9cafe4fec2f",
      "exit": 0,
      "extra_inputs": [],
