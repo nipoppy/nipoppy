@@ -446,6 +446,58 @@ def test_build_status_df(dpath_root: Path):
     )
 
 
+def test_get_manifest_datatypes_with_empty_imaging_manifest():
+    manifest_datatypes = StatusWorkflow._get_manifest_datatypes(pd.DataFrame())
+
+    assert manifest_datatypes.empty
+    assert manifest_datatypes.columns.tolist() == [
+        *StatusWorkflow.INDEX_COLS,
+        Manifest.col_datatype,
+    ]
+
+
+@pytest.mark.parametrize("empty_status,empty_manifest", [(True, False), (False, True)])
+def test_attach_manifest_datatypes_with_empty_input(empty_status, empty_manifest):
+    status_df = pd.DataFrame(
+        [("01", "BL", CurationStatusTable.col_in_bids)],
+        columns=[*StatusWorkflow.INDEX_COLS, COL_CHECKPOINT],
+    )
+    manifest_datatypes = pd.DataFrame(
+        [("01", "BL", ["anat"])],
+        columns=[*StatusWorkflow.INDEX_COLS, Manifest.col_datatype],
+    )
+    if empty_status:
+        status_df = status_df.iloc[:0]
+    if empty_manifest:
+        manifest_datatypes = manifest_datatypes.iloc[:0]
+
+    result = StatusWorkflow._attach_manifest_datatypes(status_df, manifest_datatypes)
+
+    pd.testing.assert_frame_equal(result, pd.DataFrame(columns=LONG_STATUS_COLUMNS))
+
+
+def test_build_status_df_with_no_imaging_sessions(dpath_root: Path):
+    workflow = StatusWorkflow(dpath_root=dpath_root)
+    workflow.study.manifest = Manifest(
+        pd.DataFrame(
+            [("01", "V1", None, None)],
+            columns=[
+                Manifest.col_participant_id,
+                Manifest.col_visit_id,
+                Manifest.col_session_id,
+                Manifest.col_datatype,
+            ],
+        )
+    )
+    workflow.curation_status_table = CurationStatusTable()
+    workflow.processing_status_table = ProcessingStatusTable()
+
+    status_df = workflow._build_status_df()
+
+    assert status_df.empty
+    assert status_df.columns.tolist() == LONG_STATUS_COLUMNS
+
+
 def test_build_status_df_does_not_mutate_source_tables(dpath_root: Path):
     """Ensure that the original tables are not modified by the workflow."""
     workflow = StatusWorkflow(dpath_root=dpath_root)
