@@ -3,69 +3,60 @@
 from __future__ import annotations
 
 import importlib.metadata
-import json
 from abc import ABC, abstractmethod
 from pathlib import Path
 
 import boutiques
+from boutiques.util.utils import LoadError
 from packaging.version import Version
 
-from nipoppy.env import StrOrPathLike
-from nipoppy.exceptions import FileOperationError
-from nipoppy.utils.utils import load_json
+from nipoppy.exceptions import ConfigError
+from nipoppy.utils.utils import StrOrPathLike
 
-
-class BoutiquesAPIError(Exception):
-    """Base exception for errors raised by the Boutiques API."""
-
-
-class DescriptorValidationError(BoutiquesAPIError):
-    """Raised when a Boutiques descriptor fails validation."""
-
-
-class InvocationValidationError(BoutiquesAPIError):
-    """Raised when a Boutiques invocation fails validation."""
+BOUTIQUES_NEXT_VERSION = Version("0.6.0")
 
 
 class BoutiquesAPI(ABC):
     """Interface for the Boutiques Python API."""
 
     @abstractmethod
-    def validate_descriptor_str(self, descriptor_str: str) -> None:
+    def validate_descriptor(self, descriptor: StrOrPathLike, /) -> None:
         """Validate a descriptor.
 
         Parameters
         ----------
-        descriptor_str : str
-            The Boutiques descriptor as a JSON string.
+        descriptor : StrOrPathLike
+            The descriptor as a JSON string, or the path to a descriptor file.
 
         Raises
         ------
-        DescriptorValidationError
+        ConfigError
             If the descriptor is invalid.
         """
         ...
 
     @abstractmethod
-    def validate_invocation_str(self, descriptor_str: str, invocation_str: str) -> None:
+    def validate_invocation(
+        self, invocation: StrOrPathLike, *, descriptor: StrOrPathLike
+    ) -> None:
         """Validate an invocation against a descriptor.
 
         Parameters
         ----------
-        descriptor_str : str
-            The Boutiques descriptor as a JSON string.
-        invocation_str : str
-            The Boutiques invocation as a JSON string.
+        invocation : StrOrPathLike
+            The invocation as a JSON string, or the path to an invocation file.
+        descriptor : StrOrPathLike
+            The descriptor as a JSON string, or the path to a descriptor file.
 
         Raises
         ------
-        InvocationValidationError
-            If the invocation is invalid.
+        ConfigError
+            If the invocation is invalid or if the descriptor cannot be loaded.
         """
         ...
 
     @abstractmethod
-    def create_descriptor(self, output_path: Path) -> None:
+    def create_descriptor(self, descriptor_path: Path, /) -> None:
         """Create an example descriptor.
 
         Parameters
@@ -76,7 +67,7 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def generate_example_invocation(self, descriptor_path: Path) -> str:
+    def generate_example_invocation(self, descriptor_path: Path, /) -> str:
         """Generate an example invocation for a descriptor.
 
         Parameters
@@ -91,49 +82,65 @@ class BoutiquesAPI(ABC):
         """
         ...
 
-    def validate_descriptor_file(self, fpath_descriptor: StrOrPathLike) -> str:
-        """Validate a descriptor file.
-
-        Parameters
-        ----------
-        fpath_descriptor : StrOrPathLike
-            Path to the descriptor file.
-
-        Returns
-        -------
-        str
-            The validated descriptor as a JSON string.
-        """
-        fpath_descriptor: Path = Path(fpath_descriptor)
-        if not fpath_descriptor.exists():
-            raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
-
-        descriptor_str = json.dumps(load_json(fpath_descriptor))
-        self.validate_descriptor_str(descriptor_str)
-        return descriptor_str
-
 
 class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
-    def validate_descriptor_str(self, descriptor_str: str) -> str:  # noqa: D102
+    def validate_descriptor(self, descriptor: StrOrPathLike, /) -> None:  # noqa: D102
+        descriptor = str(descriptor)
         try:
-            boutiques.validate(descriptor_str)
-        except boutiques.DescriptorValidationError as exception:
-            raise DescriptorValidationError(str(exception)) from exception
-        return descriptor_str
+            boutiques.validate(descriptor)
+        except (
+            boutiques.DescriptorValidationError,
+            LoadError,
+        ) as exception:
+            raise ConfigError(
+                f"Descriptor {descriptor} is invalid: {str(exception)}"
+            ) from exception
 
-    def validate_invocation_str(self, descriptor_str: str, invocation_str: str) -> None:  # noqa: D102
+    def validate_invocation(  # noqa: D102
+        self, invocation: StrOrPathLike, *, descriptor: StrOrPathLike
+    ) -> None:
+        invocation = str(invocation)
+        descriptor = str(descriptor)
+        self.validate_descriptor(descriptor)
         try:
-            boutiques.invocation("--invocation", invocation_str, descriptor_str)
-        except boutiques.InvocationValidationError as exception:
-            raise InvocationValidationError(str(exception)) from exception
+            boutiques.invocation("--invocation", invocation, descriptor)
+        except (
+            boutiques.InvocationValidationError,
+            LoadError,
+        ) as exception:
+            raise ConfigError(
+                f"Invocation {invocation} is invalid: {str(exception)}"
+            ) from exception
 
-    def create_descriptor(self, output_path: Path) -> None:  # noqa: D102
-        boutiques.create(str(output_path))
+    def create_descriptor(self, descriptor_path: Path, /) -> None:  # noqa: D102
+        boutiques.create(str(descriptor_path))
 
-    def generate_example_invocation(self, descriptor_path: Path) -> str:  # noqa: D102
+    def generate_example_invocation(  # noqa: D102
+        self, descriptor_path: Path, /
+    ) -> str:
         return boutiques.example(str(descriptor_path))
+
+
+class BoutiquesNextAPI(BoutiquesAPI):
+    """Boutiques API for versions >= 0.6.0."""
+
+    def validate_descriptor(self, descriptor: StrOrPathLike, /) -> None:  # noqa: D102
+        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+
+    def validate_invocation(  # noqa: D102
+        self, invocation: StrOrPathLike, *, descriptor: StrOrPathLike
+    ) -> None:
+        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+
+    def create_descriptor(self, descriptor_path: Path, /) -> None:  # noqa: D102
+        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+
+    def generate_example_invocation(  # noqa: D102
+        self, descriptor_path: Path, /
+    ) -> str:
+        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
 
 
 def _create_boutiques_api() -> BoutiquesAPI:
@@ -149,9 +156,10 @@ def _create_boutiques_api() -> BoutiquesAPI:
         If the installed ``boutiques`` version is not supported yet.
     """
     version = importlib.metadata.version("boutiques")
-    if Version(version) < Version("0.6"):
+    if Version(version) < BOUTIQUES_NEXT_VERSION:
         return BoutiquesLegacyAPI()
-    raise NotImplementedError(f"boutiques version {version} is not supported yet.")
+    else:
+        return BoutiquesNextAPI()
 
 
-BOUTIQUES_API = _create_boutiques_api()
+boutiques_api = _create_boutiques_api()

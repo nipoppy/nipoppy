@@ -1,1 +1,1 @@
-"""Integration classes and utilities for third-party software/APIs."""
+"""Integrations for third-party software/APIs."""
