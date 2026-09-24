@@ -85,10 +85,80 @@ def test_download_invalid_record(tmp_path: Path, zenodo_api: ZenodoAPI):
 
 @pytest.mark.api
 @pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
+def test_delete_draft(zenodo_api: ZenodoAPI):
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    # Create an unpublished draft
+    draft_record_id, _ = zenodo_api._create_draft()
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 200
+
+    # Delete it
+    assert zenodo_api._delete_draft(draft_record_id) is None
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
+def test_delete_draft_not_found(zenodo_api: ZenodoAPI):
+    """Test that _delete_draft is a no-op when the draft does not exist."""
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    draft_record_id = "invalid_record_id"
+
+    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
+    assert zenodo_api._delete_draft(draft_record_id) is None
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    not os.environ.get("ZENODO_TOKEN"),
+    reason="Requires Zenodo token",
+)
+def test_upload_record(zenodo_api: ZenodoAPI, metadata: dict):
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+    doi = zenodo_api.upload_record(
+        input_dir=TEST_PIPELINE,
+        metadata=metadata,
+        default_preview_filename=DEFAULT_PREVIEW,
+    )
+
+    # extract the new record ID from the DOI (e.g. 10.5072/zenodo.123456)
+    new_record_id = doi.split("/")[-1].removeprefix("zenodo.")
+
+    # verify that the default preview file is set correctly
+    response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
+    assert response.json()["default_preview"] == DEFAULT_PREVIEW
+
+
+@pytest.mark.api
+def test_upload_record_fails_with_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
+    zenodo_api.set_authorization("invalid_token")
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=(
+            "Failed to authenticate to Zenodo: "
+            "{'status': 403, 'message': 'Permission denied.'}"
+        ),
+    ):
+        zenodo_api.upload_record(
+            input_dir=TEST_PIPELINE,
+            metadata=metadata,
+        )
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
     (not (os.environ.get("ZENODO_TOKEN") and os.environ.get("ZENODO_ID"))),
     reason="Requires Zenodo token and record ID",
 )
-def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
+def test_upload_record_with_existing_record_id(zenodo_api: ZenodoAPI, metadata: dict):
     zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
     zenodo_api.upload_record(
         input_dir=TEST_PIPELINE,
@@ -96,6 +166,31 @@ def test_create_new_version(zenodo_api: ZenodoAPI, metadata: dict):
         record_id=os.environ["ZENODO_ID"],
         default_preview_filename=DEFAULT_PREVIEW,
     )
+
+
+@pytest.mark.api
+@pytest.mark.skipif(
+    (not os.environ.get("ZENODO_TOKEN")),
+    reason="Requires Zenodo token",
+)
+def test_upload_record_fails_with_invalid_record_id(
+    zenodo_api: ZenodoAPI, metadata: dict
+):
+    record_id = "invalid_record_id"
+    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=(
+            f"Failed to get latest version for zenodo.{record_id}: "
+            "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
+        ),
+    ):
+        zenodo_api.upload_record(
+            input_dir=TEST_PIPELINE,
+            metadata=metadata,
+            record_id=record_id,
+        )
 
 
 @pytest.mark.api
@@ -147,99 +242,6 @@ def test_upload_record_cleans_up_after_failed_update(
         default_preview_filename=DEFAULT_PREVIEW,
     )
     assert new_doi.split("/")[-1].removeprefix("zenodo.") != record_id
-
-
-@pytest.mark.api
-@pytest.mark.skipif(
-    (not os.environ.get("ZENODO_TOKEN")),
-    reason="Requires Zenodo token",
-)
-def test_delete_draft(zenodo_api: ZenodoAPI):
-    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-
-    # Create an unpublished draft
-    draft_record_id, _ = zenodo_api._create_draft()
-    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 200
-
-    # Delete it
-    assert zenodo_api._delete_draft(draft_record_id) is None
-    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
-
-
-@pytest.mark.api
-@pytest.mark.skipif(
-    (not os.environ.get("ZENODO_TOKEN")),
-    reason="Requires Zenodo token",
-)
-def test_delete_draft_not_found(zenodo_api: ZenodoAPI):
-    """Test that _delete_draft is a no-op when the draft does not exist."""
-    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-
-    draft_record_id = "invalid_record_id"
-
-    assert zenodo_api.client.get(f"/records/{draft_record_id}/draft").status_code == 404
-    assert zenodo_api._delete_draft(draft_record_id) is None
-
-
-@pytest.mark.api
-@pytest.mark.skipif(
-    (not os.environ.get("ZENODO_TOKEN")),
-    reason="Requires Zenodo token",
-)
-def test_create_new_version_invalid_record(zenodo_api: ZenodoAPI, metadata: dict):
-    record_id = "invalid_record_id"
-    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-
-    with pytest.raises(
-        ZenodoAPIError,
-        match=(
-            f"Failed to get latest version for zenodo.{record_id}: "
-            "{'status': 404, 'message': 'The persistent identifier does not exist.'}"
-        ),
-    ):
-        zenodo_api.upload_record(
-            input_dir=TEST_PIPELINE,
-            metadata=metadata,
-            record_id=record_id,
-        )
-
-
-@pytest.mark.api
-@pytest.mark.skipif(
-    not os.environ.get("ZENODO_TOKEN"),
-    reason="Requires Zenodo token",
-)
-def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
-    zenodo_api.set_authorization(os.environ["ZENODO_TOKEN"])
-    doi = zenodo_api.upload_record(
-        input_dir=TEST_PIPELINE,
-        metadata=metadata,
-        default_preview_filename=DEFAULT_PREVIEW,
-    )
-
-    # extract the new record ID from the DOI (e.g. 10.5072/zenodo.123456)
-    new_record_id = doi.split("/")[-1].removeprefix("zenodo.")
-
-    # verify that the default preview file is set correctly
-    response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
-    assert response.json()["default_preview"] == DEFAULT_PREVIEW
-
-
-@pytest.mark.api
-def test_create_new_record_invalid_token(zenodo_api: ZenodoAPI, metadata: dict):
-    zenodo_api.set_authorization("invalid_token")
-
-    with pytest.raises(
-        ZenodoAPIError,
-        match=(
-            "Failed to authenticate to Zenodo: "
-            "{'status': 403, 'message': 'Permission denied.'}"
-        ),
-    ):
-        zenodo_api.upload_record(
-            input_dir=TEST_PIPELINE,
-            metadata=metadata,
-        )
 
 
 @pytest.mark.api
