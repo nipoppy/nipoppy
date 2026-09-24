@@ -41,6 +41,7 @@ from nipoppy.exceptions import (
     ConfigError,
     ContainerError,
     FileOperationError,
+    InvalidArgumentError,
     ReturnCode,
     WorkflowError,
 )
@@ -705,8 +706,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             ignored_flags.append("--session-id")
 
         if len(ignored_flags) > 0:
-            self.return_code = ReturnCode.INVALID_COMMAND
-            raise WorkflowError(
+            raise InvalidArgumentError(
                 (
                     f"The {' and '.join(ignored_flags)} flag(s) are given, "
                     f"but the pipeline is run at the {analysis_level.value} level"
