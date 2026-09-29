@@ -19,7 +19,6 @@ from nipoppy.env import (
     PipelineTypeEnum,
 )
 from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
-from nipoppy.layout import DatasetLayout
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -54,11 +53,7 @@ def workflow(
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        source=(
-            tmp_path
-            / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
-            / "my_pipeline-1.0.0"
-        ),
+        source=(tmp_path / PipelineTypeEnum.PROCESSING.value / "my_pipeline-1.0.0"),
         zenodo_api=mocker.MagicMock(),
         assume_yes=True,
     )
