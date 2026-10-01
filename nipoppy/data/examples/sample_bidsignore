@@ -1,4 +1,4 @@
-# Nipoppy-specific directories (no trailing slashes - .bidsignore differs from .gitignore)
+# Nipoppy-specific directories and files
 scratch
 manifest.tsv
 *.boshjob.sh
