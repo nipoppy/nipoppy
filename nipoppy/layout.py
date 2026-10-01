@@ -191,13 +191,6 @@ class DatasetLayout(Base):
     dname_pipeline_output = "output"
     dname_pipeline_idp = "idp"
 
-    # pipeline store subdirectories
-    pipeline_type_to_dname_map = {
-        PipelineTypeEnum.BIDSIFICATION: "bidsification",
-        PipelineTypeEnum.PROCESSING: "processing",
-        PipelineTypeEnum.EXTRACTION: "extraction",
-    }
-
     # file names
     fname_pipeline_config = "config.json"
 
@@ -430,7 +423,7 @@ class DatasetLayout(Base):
 
     def get_dpath_pipeline_store(self, pipeline_type: PipelineTypeEnum) -> Path:
         """Return the path to the pipeline store directory."""
-        return self.dpath_pipelines / self.pipeline_type_to_dname_map[pipeline_type]
+        return self.dpath_pipelines / pipeline_type.value
 
     def get_dpath_pipeline_bundle(
         self, pipeline_type: PipelineTypeEnum, pipeline_name: str, pipeline_version: str
@@ -442,4 +435,4 @@ class DatasetLayout(Base):
 
 
 # for printing defaults in docs
-DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<NIPOPPY_PROJECT_ROOT>")
+DEFAULT_LAYOUT_INFO = DatasetLayout(dpath_root="<NIPOPPY_STUDY_ROOT>")

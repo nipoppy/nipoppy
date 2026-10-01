@@ -4,15 +4,11 @@ This guide shows how to track the completion status of [BIDSification](#bidsific
 
 ## BIDSification pipelines
 
-The [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst) command can be used to track dataset curation stages (reorganization and BIDSification).
+The [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst) command can be used to track data curation stages (reorganization and BIDSification).
 The command to create a curation status file from scratch is:
 
 ```console
-$ nipoppy track-curation --regenerate
-```
-
-```{note}
-Without the `--regenerate` flag, `nipoppy track-curation` will only update the curation status for new participants in the {term}`manifest <manifest file>`.
+$ nipoppy track-curation
 ```
 
 The above command creates or updates the curation status file at {{fpath_curation_status}}.
@@ -115,7 +111,7 @@ Available template strings are:
 - `[[NIPOPPY_BIDS_SESSION_ID]]`: the session ID *with* the `ses-` prefix",
 ```
 
-Given a dataset with the following content in {{dpath_pipeline_output}}:
+Given the following content in {{dpath_pipeline_output}}:
 ```{literalinclude} ./mriqc_outputs.txt
 ---
 class: no-copybutton

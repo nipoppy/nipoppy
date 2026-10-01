@@ -301,7 +301,6 @@ class BaseDatasetWorkflow(BaseWorkflow, ABC):
                 dpath_downloaded=self.study.layout.dpath_pre_reorg,
                 dpath_organized=self.study.layout.dpath_post_reorg,
                 dpath_bidsified=self.study.layout.dpath_bids,
-                empty=False,
             )
 
             if not self.dry_run:

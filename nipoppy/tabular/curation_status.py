@@ -153,7 +153,6 @@ def generate_curation_status_table(
     dpath_downloaded: StrOrPathLike | None = None,
     dpath_organized: StrOrPathLike | None = None,
     dpath_bidsified: StrOrPathLike | None = None,
-    empty=False,
 ) -> CurationStatusTable:
     """Generate a curation status table."""
 
@@ -193,29 +192,24 @@ def generate_curation_status_table(
         bids_participant_id = participant_id_to_bids_participant_id(participant_id)
         bids_session_id = session_id_to_bids_session_id(session_id)
 
-        if empty:
-            status_downloaded = False
-            status_organized = False
-            status_bidsified = False
+        status_downloaded = check_status(
+            dpath=dpath_downloaded,
+            dname_subdirectory=participant_dicom_dir,
+        )
+        status_organized = check_status(
+            dpath=dpath_organized,
+            dname_subdirectory=Path(bids_participant_id, bids_session_id),
+        )
+        if session_id == FAKE_SESSION_ID:
+            # if the session is fake, we don't expect BIDS data
+            # to have bids_session_id in the path
+            dname_subdirectory = Path(bids_participant_id)
         else:
-            status_downloaded = check_status(
-                dpath=dpath_downloaded,
-                dname_subdirectory=participant_dicom_dir,
-            )
-            status_organized = check_status(
-                dpath=dpath_organized,
-                dname_subdirectory=Path(bids_participant_id, bids_session_id),
-            )
-            if session_id == FAKE_SESSION_ID:
-                # if the session is fake, we don't expect BIDS data
-                # to have bids_session_id in the path
-                dname_subdirectory = Path(bids_participant_id)
-            else:
-                dname_subdirectory = Path(bids_participant_id, bids_session_id)
-            status_bidsified = check_status(
-                dpath=dpath_bidsified,
-                dname_subdirectory=dname_subdirectory,
-            )
+            dname_subdirectory = Path(bids_participant_id, bids_session_id)
+        status_bidsified = check_status(
+            dpath=dpath_bidsified,
+            dname_subdirectory=dname_subdirectory,
+        )
 
         curation_status_records.append(
             {
@@ -246,7 +240,6 @@ def update_curation_status_table(
     dpath_downloaded: StrOrPathLike | None = None,
     dpath_organized: StrOrPathLike | None = None,
     dpath_bidsified: StrOrPathLike | None = None,
-    empty=False,
 ) -> CurationStatusTable:
     """Update an existing curation status file."""
     logger.debug(f"Original curation status table:\n{curation_status_table}")
@@ -266,7 +259,6 @@ def update_curation_status_table(
             dpath_downloaded=dpath_downloaded,
             dpath_organized=dpath_organized,
             dpath_bidsified=dpath_bidsified,
-            empty=empty,
         )
     )
 

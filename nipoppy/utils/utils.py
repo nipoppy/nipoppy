@@ -29,7 +29,7 @@ TEMPLATE_REPLACE_PATTERN = re.compile("\\[\\[NIPOPPY\\_(.*?)\\]\\]")
 NIPOPPY_ROOT = Path(__file__).parents[1]
 DPATH_DATA = NIPOPPY_ROOT / "data"
 DPATH_EXAMPLES = DPATH_DATA / "examples"
-FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json"
+FPATH_SAMPLE_CONFIG = DPATH_EXAMPLES / "sample_global_config.json5"
 FPATH_SAMPLE_MANIFEST = DPATH_EXAMPLES / "sample_manifest.tsv"
 FPATH_SAMPLE_DICOM_DIR_MAP = DPATH_EXAMPLES / "sample_dicom_dir_map.tsv"
 FPATH_SAMPLE_BIDS_DATASET_DESCRIPTION = (
@@ -61,14 +61,18 @@ def get_pipeline_tag(
     sep="-",
 ):
     """Generate a tag for a pipeline."""
-    components = [pipeline_name, pipeline_version]
-    if pipeline_step is not None:
-        components.append(pipeline_step)
-    if participant_id is not None:
-        components.append(participant_id)
-    if session_id is not None:
-        components.append(session_id)
-    return sep.join(components)
+    return sep.join(
+        filter(
+            None,
+            [
+                pipeline_name,
+                pipeline_version,
+                pipeline_step,
+                participant_id,
+                session_id,
+            ],
+        )
+    )
 
 
 def load_json(
@@ -122,10 +126,13 @@ def save_json(obj: dict, fpath: StrOrPathLike, **kwargs):
     **kwargs :
         Keyword arguments to pass to json.dump
     """
+    # inline to prevent circular import
+    from nipoppy.utils import fileops
+
     if "indent" not in kwargs:
         kwargs["indent"] = 4
     fpath = Path(fpath)
-    fpath.parent.mkdir(parents=True, exist_ok=True)
+    fileops.mkdir(fpath.parent)
     with open(fpath, "w") as file:
         json.dump(obj, file, **kwargs)
 
@@ -173,6 +180,8 @@ def save_df_with_backup(
     Path
         The path to the backup file
     """
+    from nipoppy.utils import fileops  # to avoid circular import
+
     if "index" not in kwargs:
         kwargs["index"] = False
     if "sep" not in kwargs:
@@ -193,7 +202,7 @@ def save_df_with_backup(
     fpath_backup_full: Path = fpath_symlink.parent / dname_backups / fname_backup
 
     if not dry_run:
-        fpath_backup_full.parent.mkdir(parents=True, exist_ok=True)
+        fileops.mkdir(fpath_backup_full.parent)
         df.to_csv(fpath_backup_full, **kwargs)
 
         if use_relative_path:
@@ -204,8 +213,9 @@ def save_df_with_backup(
             fpath_backup_to_link = fpath_backup_full
 
         if fpath_symlink.is_symlink() or fpath_symlink.exists():
-            fpath_symlink.unlink()
-        fpath_symlink.symlink_to(fpath_backup_to_link)
+            fileops.rm(fpath_symlink, missing_ok=True)
+
+        fileops.symlink(source=fpath_backup_to_link, target=fpath_symlink)
 
     return Path(fpath_backup_full)
 

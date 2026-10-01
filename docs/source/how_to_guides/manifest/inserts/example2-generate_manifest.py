@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 
 if __name__ == "__main__":
-
     # get the path to the demographics/neuropsych file and the MRI file
     # we assume that it is in the same directory as this script
     path_neuropsych = Path(__file__).parent / "example2-demographics_neuropsych.csv"
@@ -21,7 +20,6 @@ if __name__ == "__main__":
 
     data_for_manifest = []
     for _, row in df_merged.iterrows():
-
         # remove underscores
         participant_id = row["PARTICIPANT"].replace("_", "")
 
@@ -33,7 +31,6 @@ if __name__ == "__main__":
             "MRI1",
             "MRI2",
         ]:
-
             # if the DATE column is empty, the visit did not happen yet
             if pd.isna(row[f"DATE_{visit_id}"]):
                 continue

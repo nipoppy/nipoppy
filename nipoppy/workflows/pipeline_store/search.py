@@ -5,7 +5,7 @@ from rich import box
 from rich.table import Table
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
-from nipoppy.env import ZENODO_COMMUNITY_ID
+from nipoppy.env import ZENODO_COMMUNITY_ID, PipelineTypeEnum
 from nipoppy.logger import get_logger
 from nipoppy.utils.html import strip_html_tags
 from nipoppy.workflows.base import BaseWorkflow
@@ -23,12 +23,14 @@ class PipelineSearchWorkflow(BaseWorkflow):
 
     col_zenodo_id = "Zenodo ID"
     col_community = "Community"
+    col_pipeline_type = "Pipeline Type"
     col_title = "Title"
     col_description = "Description"
     col_downloads = "Downloads"
     widths = {
         col_zenodo_id: len(col_zenodo_id),
         col_community: 10,
+        col_pipeline_type: len(col_pipeline_type),
         col_title: 20,
         col_downloads: len(col_downloads),
     }
@@ -45,6 +47,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         size: int = 10,
         verbose: bool = False,
         dry_run: bool = False,
+        pipeline_type: PipelineTypeEnum | None = None,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -57,6 +60,7 @@ class PipelineSearchWorkflow(BaseWorkflow):
         self.query = query
         self.community = community
         self.size = size
+        self.pipeline_type = pipeline_type
 
     def _hits_to_df(self, hits: list[dict]) -> pd.DataFrame:
         data_for_df = []
@@ -69,11 +73,21 @@ class PipelineSearchWorkflow(BaseWorkflow):
             community_names = "\n".join(
                 rv for c in communities if (rv := c.get("id")) is not None
             )
+            keywords = hit.get("metadata", {}).get("keywords", [])
+            pipeline_type = next(
+                (
+                    keyword.removeprefix("pipeline_type:")
+                    for keyword in keywords
+                    if isinstance(keyword, str) and keyword.startswith("pipeline_type:")
+                ),
+                None,
+            )
             data_for_df.append(
                 {
                     self.col_zenodo_id: zenodo_id_with_link,
                     self.col_title: hit.get("title"),
                     self.col_community: community_names or "-",
+                    self.col_pipeline_type: pipeline_type or "-",
                     self.col_description: description,
                     self.col_downloads: hit.get("stats", {}).get("downloads"),
                 }
@@ -94,6 +108,12 @@ class PipelineSearchWorkflow(BaseWorkflow):
                 self.col_community,
                 justify="center",
                 width=self.widths[self.col_community],
+            )
+        if self.pipeline_type is None:
+            table.add_column(
+                self.col_pipeline_type,
+                justify="center",
+                width=self.widths[self.col_pipeline_type],
             )
         table.add_column(
             self.col_title, justify="left", min_width=self.widths[self.col_title]
@@ -121,10 +141,13 @@ class PipelineSearchWorkflow(BaseWorkflow):
         with CONSOLE_STDOUT.status("Searching Nipoppy pipelines on Zenodo..."):
             # we get all results and sort/slice them ourselves since we cannot currently
             # sort by "mostdownloaded" through the API
+            keywords = ["Nipoppy"]
+            if self.pipeline_type is not None:
+                keywords.append(f"pipeline_type:{self.pipeline_type.value}")
             results = self.zenodo_api.search_records(
                 query=self.query,
                 community_id=ZENODO_COMMUNITY_ID if self.community else None,
-                keywords=["Nipoppy"],
+                keywords=keywords,
                 size=self.size,
             )
 

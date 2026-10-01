@@ -1,3 +1,5 @@
+// Nipoppy will apply string substitutions when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html
 {
     "NAME": "tool name",
     "VERSION": "v0.1.0",
@@ -11,10 +13,10 @@
     },
     "STEPS": [
         {
-            "INVOCATION_FILE": "invocation.json",
+            "INVOCATION_FILE": "invocation.json5",
             "DESCRIPTOR_FILE": "descriptor.json",
             "ANALYSIS_LEVEL": "participant_session",
-            "HPC_CONFIG_FILE": "hpc.json"
+            "HPC_CONFIG_FILE": "hpc.json5"
         }
     ],
     "PROC_DEPENDENCIES": [

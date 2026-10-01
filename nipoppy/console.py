@@ -13,6 +13,8 @@ from rich.status import Status
 from rich.style import StyleType
 from rich.text import TextType
 
+from nipoppy.exceptions import ExecutionError
+
 _INDENT = 9  # match Rich logger offset
 
 _DPATH_PACKAGE_ROOT = Path(__file__).parent.resolve()
@@ -128,6 +130,12 @@ class _Console(Console):
         This function creates a new _Confirm object with the given prompt and
         then calls it.
         """
+        if not self.is_interactive or not self.is_terminal:
+            raise ExecutionError(
+                "Non-interactive terminal detected."
+                " Use the --assume-yes flag to bypass this prompt."
+            )
+
         kwargs_init = kwargs_init or {}
         kwargs_call = kwargs_call or {}
         return _Confirm(prompt, console=self, indent=self.indent, **kwargs_init)(

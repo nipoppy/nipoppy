@@ -15,6 +15,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import ContainerError
 from nipoppy.logger import get_logger
+from nipoppy.utils import fileops
 
 BIND_SEP = ":"
 
@@ -48,7 +49,7 @@ class ContainerHandler(Base, ABC):
 
     def check_command_exists(self):
         """Check that the command is available (i.e. in PATH)."""
-        if not shutil.which(self.command):
+        if shutil.which(self.command) is None:
             raise ContainerError(
                 f"Container executable not found: {self.command}"
                 ". Make sure it is installed and in your PATH."
@@ -122,7 +123,7 @@ class ContainerHandler(Base, ABC):
                             f": {path_local_original} -> {path_local}"
                         )
                     if not path_local.exists():
-                        path_local.mkdir(parents=True)
+                        fileops.mkdir(path_local)
                         logger.debug(
                             "Creating missing directory for container bind path"
                             f": {path_local}"

@@ -18,8 +18,12 @@ from nipoppy.env import (
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
-from nipoppy.layout import DatasetLayout
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    InvalidArgumentError,
+    WorkflowError,
+)
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -54,11 +58,7 @@ def workflow(
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        source=(
-            tmp_path
-            / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
-            / "my_pipeline-1.0.0"
-        ),
+        source=(tmp_path / PipelineTypeEnum.PROCESSING.value / "my_pipeline-1.0.0"),
         zenodo_api=mocker.MagicMock(),
         assume_yes=True,
     )
@@ -116,6 +116,19 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
             for record in caplog.records
         ]
     )
+
+
+def test_init_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
+    with pytest.raises(
+        InvalidArgumentError,
+        match="--assume-yes and --skip-container are mutually exclusive",
+    ):
+        PipelineInstallWorkflow(
+            dpath_root=tmp_path / "my_dataset",
+            source="not_a_path",
+            assume_yes=True,
+            skip_container=True,
+        )
 
 
 def test_run_cleanup(workflow: PipelineInstallWorkflow):
@@ -282,6 +295,23 @@ def test_download_container(
     assert not isinstance(mocked_run_command.call_args[0][0][0], ContainerCommandEnum)
 
 
+def test_download_container_skipped(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    workflow.assume_yes = False
+    workflow.skip_container = True
+
+    mocked_run_command = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install._run_command"
+    )
+
+    workflow._download_container(pipeline_config)
+
+    mocked_run_command.assert_not_called()
+
+
 @pytest.mark.parametrize("confirm_download", [True, False])
 def test_download_container_confirm_true(
     confirm_download: bool,
@@ -436,6 +466,7 @@ def test_run_main(
     mocked_update_config_and_save.assert_called_once_with(pipeline_config)
     mocked_download_container.assert_called_once_with(pipeline_config)
     assert "Successfully installed pipeline" in caplog.text
+    assert "Source and destination are the same directory" not in caplog.text
 
 
 @pytest.mark.parametrize("force", [False, True])
@@ -461,6 +492,39 @@ def test_run_main_force(
     ):
         workflow.run_main()
         _assert_files_copied(workflow.dpath_pipeline, dpath_installed)
+
+
+@pytest.mark.no_xdist
+def test_run_main_same_directory(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    caplog: pytest.LogCaptureFixture,
+):
+    dpath_installed = workflow.study.layout.get_dpath_pipeline_bundle(
+        pipeline_config.PIPELINE_TYPE,
+        pipeline_config.NAME,
+        pipeline_config.VERSION,
+    )
+    workflow.run_main()
+
+    workflow.dpath_pipeline = dpath_installed
+    caplog.clear()
+
+    workflow.run_main()
+
+    _assert_files_copied(workflow.source, dpath_installed)
+    assert any(
+        (
+            "Source and destination are the same directory; "
+            "skipping pipeline file operations. Editing an installed pipeline "
+            "in place is not recommended, as accidental changes can compromise "
+            "reproducibility. Keep pipeline development separate from the "
+            "installed copy."
+        )
+        in record.message
+        and record.levelno == logging.WARNING
+        for record in caplog.records
+    )
 
 
 def test_run_main_invalid_zenodo_record(workflow_zenodo: PipelineInstallWorkflow):

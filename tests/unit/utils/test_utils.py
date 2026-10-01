@@ -19,10 +19,10 @@ from nipoppy.utils.utils import (
     save_df_with_backup,
     save_json,
 )
-from tests.conftest import datetime_fixture  # noqa F401
 from tests.conftest import (
     DPATH_TEST_DATA,
     create_empty_dataset,
+    datetime_fixture,  # noqa F401
 )
 
 

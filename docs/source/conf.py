@@ -9,8 +9,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from nipoppy._version import __version__
-from nipoppy.env import FPATH_USER_CONFIG, PipelineTypeEnum
+from nipoppy.env import FPATH_USER_CONFIG, PROGRAM_VERSION, PipelineTypeEnum
 from nipoppy.layout import DEFAULT_LAYOUT_INFO  # for substitutions
 from nipoppy.zenodo_api import ZenodoAPI
 
@@ -26,10 +25,10 @@ author = "NeuroDataScience-ORIGAMI Lab"
 # the built documents.
 #
 # The short X.Y version.
-version = __version__
+version = PROGRAM_VERSION
 
 # The full version, including alpha/beta/rc tags.
-release = __version__
+release = PROGRAM_VERSION
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

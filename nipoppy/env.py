@@ -4,9 +4,15 @@ import os
 from enum import Enum
 from typing import TypeVar
 
+try:
+    from nipoppy._version import __version__
+except ImportError:
+    __version__ = "unknown"
+
 StrOrPathLike = TypeVar("StrOrPathLike", str, os.PathLike)
 
 PROGRAM_NAME = "nipoppy"
+PROGRAM_VERSION = __version__
 NIPOPPY_DIR_NAME = ".nipoppy"
 ZENODO_COMMUNITY_ID = "1c136bd0-655e-495f-8460-884751d4fdf4"
 

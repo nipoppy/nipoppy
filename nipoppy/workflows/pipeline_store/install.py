@@ -13,6 +13,7 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    InvalidArgumentError,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
@@ -39,8 +40,14 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
+        skip_container: bool = False,
     ):
         """Initialize the workflow."""
+        if assume_yes and skip_container:
+            raise InvalidArgumentError(
+                "--assume-yes and --skip-container are mutually exclusive."
+            )
+
         super().__init__(
             dpath_root=dpath_root,
             name="pipeline_install",
@@ -52,6 +59,7 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         self.zenodo_api = zenodo_api or ZenodoAPI()
         self.zenodo_api.logger = logger  # use nipoppy logger configuration
         self.assume_yes = assume_yes
+        self.skip_container = skip_container
         self.force = force
 
         self.dpath_pipeline = None
@@ -141,6 +149,9 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
         return config
 
     def _download_container(self, pipeline_config: BasePipelineConfig):
+        if self.skip_container:
+            return
+
         uri = pipeline_config.CONTAINER_INFO.URI
 
         # pipeline is not containerized
@@ -253,29 +264,38 @@ class PipelineInstallWorkflow(BaseDatasetWorkflow):
             pipeline_config.VERSION,
         )
 
-        # check if the target directory already exists
-        if dpath_target.exists():
-            if not self.force:
-                raise FileOperationError(
-                    f"Pipeline directory exists: {dpath_target}"
-                    ". Use --force to overwrite",
+        if dpath_target.resolve() != dpath_pipeline.resolve():
+            # check if the target directory already exists
+            if dpath_target.exists():
+                if not self.force:
+                    raise FileOperationError(
+                        f"Pipeline directory exists: {dpath_target}"
+                        ". Use --force to overwrite",
+                    )
+                else:
+                    fileops.rm(dpath_target, dry_run=self.dry_run)
+
+            # copy the directory
+            if self.dpath_pipeline is not None:
+                fileops.copy(
+                    source=dpath_pipeline,
+                    target=dpath_target,
+                    dry_run=self.dry_run,
                 )
             else:
-                fileops.rm(dpath_target, dry_run=self.dry_run)
-
-        # copy the directory
-        if self.dpath_pipeline is not None:
-            fileops.copy(
-                source=dpath_pipeline,
-                target=dpath_target,
-                dry_run=self.dry_run,
-            )
+                # move downloaded pipelines to the target location
+                fileops.movetree(
+                    source=dpath_pipeline,
+                    target=dpath_target,
+                    dry_run=self.dry_run,
+                )
         else:
-            # if the pipeline was downloaded from Zenodo, move it to the target location
-            fileops.movetree(
-                source=dpath_pipeline,
-                target=dpath_target,
-                dry_run=self.dry_run,
+            logger.warning(
+                "Source and destination are the same directory; "
+                "skipping pipeline file operations. Editing an installed pipeline "
+                "in place is not recommended, as accidental changes can compromise "
+                "reproducibility. Keep pipeline development separate from the "
+                "installed copy."
             )
 
         # update global config with new pipeline variables

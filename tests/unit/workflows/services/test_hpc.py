@@ -348,7 +348,7 @@ def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: di
             [
                 PROGRAM_NAME,
                 "test",
-                "--dataset",
+                "--study",
                 "test",
                 "--pipeline",
                 "test",
@@ -368,7 +368,7 @@ def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: di
             [
                 PROGRAM_NAME,
                 "test",
-                "--dataset",
+                "--study",
                 "test",
                 "--pipeline",
                 "test",

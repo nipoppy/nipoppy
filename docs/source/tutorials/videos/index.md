@@ -10,14 +10,18 @@ $ git clone https://github.com/nipoppy/tutorial-dataset.git
 
 or visit the [GitHub repo](https://github.com/nipoppy/tutorial-dataset) and download the data without using `git`. We show in the videos how to!
 
+```{attention}
+The Nipoppy version used in the tutorial videos was 0.4.5. Console output as well as certain flags could have changed between this version and newer versions. Please consult the [release notes](../../other/changelog.rst) for details. E.g., the `--regenerate` flag for the `track-curation` command is deprecated.
+```
+
 ## 1. nipoppy init
 
-In this tutorial we will cover how to create a new Nipoppy dataset. More concretely, we will
+In this tutorial we will cover how to create a new Nipoppy study. More concretely, we will
 - run the [`nipoppy init`](../../reference/cli_reference/init.rst) command
 - discover the directories that follow the Nipoppy specification
 - explore the [`nipoppy status`](../../reference/cli_reference/status.rst) command
-- modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our dataset
-- and run the [`nipoppy track-curation --regenerate`](../../reference/cli_reference/track_curation.rst) command
+- modify the content of the [`manifest.tsv`](../../explanations/manifest.md) file according to our study
+- and run the [`nipoppy track-curation`](../../reference/cli_reference/track_curation.rst) command
 
 Duration: 7:43m
 
@@ -25,7 +29,7 @@ Duration: 7:43m
 
 ## 2. nipoppy pipeline
 
-In this tutorial we will cover how to install a pipeline in a Nipoppy dataset. More concretely, we will
+In this tutorial we will cover how to install a pipeline in a Nipoppy study. More concretely, we will
 - explore the [`nipoppy pipeline`](../../reference/cli_reference/pipeline_install.rst) subcommands
 - learn how to share containers
 - set pipeline configurations
@@ -61,7 +65,7 @@ Duration: 8:31m
 ## 5. nipoppy process
 
 In this tutorial we will cover how to run processing pipelines on imaging data. More concretely, we will
-- check the prerequisites to run [mriqc](https://mriqc.readthedocs.io/en/stable/index.html) on our dataset
+- check the prerequisites to run [mriqc](https://mriqc.readthedocs.io/en/stable/index.html) on our study
 - execute the [`nipoppy process`](../../reference/cli_reference/process.rst) command
 - explore the created output
 

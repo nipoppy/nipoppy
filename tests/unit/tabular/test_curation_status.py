@@ -197,7 +197,6 @@ def test_get_participant_sessions_helper(
         ),
     ],
 )
-@pytest.mark.parametrize("empty", [True, False])
 @pytest.mark.parametrize("str_paths", [False, True])
 def test_generate_and_update(
     participants_and_sessions_manifest1: dict[str, list[str]],
@@ -208,7 +207,6 @@ def test_generate_and_update(
     dpath_downloaded_relative: StrOrPathLike,
     dpath_organized_relative: StrOrPathLike,
     dpath_bidsified_relative: StrOrPathLike,
-    empty: bool,
     str_paths: bool,
     tmp_path: Path,
 ):
@@ -242,7 +240,6 @@ def test_generate_and_update(
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
         dpath_bidsified=dpath_bidsified,
-        empty=empty,
     )
     # the table should have the same number of records as the manifest
     assert len(table1) == len(manifest1)
@@ -253,7 +250,6 @@ def test_generate_and_update(
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        empty=empty,
     )
 
     # create a new manifest
@@ -267,7 +263,6 @@ def test_generate_and_update(
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
         dpath_bidsified=dpath_bidsified,
-        empty=empty,
     )
     assert len(table2) == len(manifest2)
 
@@ -277,7 +272,6 @@ def test_generate_and_update(
         participants_and_sessions_downloaded=participants_and_sessions_downloaded,
         participants_and_sessions_organized=participants_and_sessions_organized,
         participants_and_sessions_bidsified=participants_and_sessions_bidsified,
-        empty=empty,
     )
 
 
@@ -310,7 +304,6 @@ def test_generate_missing_paths(tmp_path: Path):
         dpath_downloaded=dpath_downloaded,
         dpath_organized=dpath_organized,
         dpath_bidsified=dpath_bidsified,
-        empty=False,
     )
 
     assert table[CurationStatusTable.col_in_pre_reorg].all()
@@ -355,7 +348,6 @@ def test_curation_status_table_generation_no_session(
         dpath_downloaded=None,
         dpath_organized=None,
         dpath_bidsified=dpath_bidsified,
-        empty=False,
     )
 
     assert table[CurationStatusTable.col_participant_id].to_list() == ["01", "02"]

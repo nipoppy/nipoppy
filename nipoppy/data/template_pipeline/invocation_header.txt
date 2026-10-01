@@ -1,0 +1,2 @@
+// Nipoppy will apply string substitutions when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html

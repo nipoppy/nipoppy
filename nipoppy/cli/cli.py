@@ -18,26 +18,25 @@ except ImportError:
         return decorator
 
 
-from nipoppy._version import __version__
 from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import (
-    dataset_option,
     dep_params,
     global_options,
     layout_option,
     pipeline_options,
     runners_options,
+    study_option,
 )
 from nipoppy.cli.pipeline_catalog import pipeline
-from nipoppy.env import FPATH_USER_CONFIG
+from nipoppy.env import FPATH_USER_CONFIG, PROGRAM_VERSION
 
 click.rich_click.OPTION_GROUPS = {
     "nipoppy *": [
         {
             "name": "Command-specific",
             "options": [
-                "--dataset",
+                "--study",
                 "--pipeline",
                 "--pipeline-version",
                 "--pipeline-step",
@@ -45,7 +44,6 @@ click.rich_click.OPTION_GROUPS = {
                 "--mode",
                 "--container-store",
                 "--default-config",
-                "--empty",
                 "--copy-files",
                 "--check-dicoms",
                 "--tar",
@@ -53,8 +51,11 @@ click.rich_click.OPTION_GROUPS = {
                 "--size",
                 "--zenodo-id",
                 "--password-file",
-                "--sandbox",
                 "--community",
+                "--sandbox",
+                "--regenerate",
+                "--type",
+                "--skip-container",
             ],
         },
         {
@@ -104,18 +105,17 @@ click.rich_click.OPTION_GROUPS = {
         "Or visit the documentation at https://nipoppy.readthedocs.io"
     ),
 )
-@click.version_option(version=__version__)
+@click.version_option(version=PROGRAM_VERSION)
 def cli():
     """Organize and process neuroimaging-clinical datasets."""
-    pass
 
 
-if cli.commands.get("gui"):
+if cli.commands.get("gui") is not None:
     cli.commands["gui"].hidden = True
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
     "--bids-source",
     type=click.Path(exists=True, file_okay=False, path_type=Path, resolve_path=True),
@@ -162,23 +162,14 @@ def init(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
-    "--empty",
-    is_flag=True,
-    help=(
-        "Set all statuses to False in newly added records"
-        " (regardless of what is on disk). May be useful to reduce runtime."
-    ),
-)
-@click.option(
-    "--force",
     "--regenerate",
-    "-f",
     is_flag=True,
-    help=(
-        "Regenerate the curation status file even if it already exists"
-        " (default: only append rows for new records)"
+    help="Regenerate the curation status file even if it already exists.",
+    deprecated=(
+        "This is now the default/only behaviour,"
+        " and this option will be removed in a future release."
     ),
 )
 @global_options
@@ -193,7 +184,7 @@ def track_curation(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @click.option(
     "--copy-files",
     is_flag=True,
@@ -213,8 +204,8 @@ def track_curation(**params):
 def reorg(**params):
     """(Re)organize raw (DICOM) files.
 
-    From ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/pre_reorg`` to
-    ``<NIPOPPY_PROJECT_ROOT>/sourcedata/imaging/post_reorg``
+    From ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/pre_reorg`` to
+    ``<NIPOPPY_STUDY_ROOT>/sourcedata/imaging/post_reorg``
     """
     from nipoppy.workflows.dicom_reorg import DicomReorgWorkflow
 
@@ -224,7 +215,7 @@ def reorg(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @global_options
 @layout_option
@@ -238,7 +229,7 @@ def bidsify(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @click.option(
     "--tar",
@@ -261,7 +252,7 @@ def process(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @pipeline_options
 @click.option(
     "--n-jobs",
@@ -281,7 +272,7 @@ def track_processing(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @runners_options
 @global_options
 @layout_option
@@ -295,7 +286,7 @@ def extract(**params):
 
 
 @cli.command()
-@dataset_option
+@study_option
 @global_options
 @layout_option
 def status(**params):

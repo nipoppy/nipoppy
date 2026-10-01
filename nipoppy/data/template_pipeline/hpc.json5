@@ -1,0 +1,9 @@
+// Nipoppy will apply string substitutions when this file is loaded,
+// see https://nipoppy.readthedocs.io/en/[[NIPOPPY_VERSION]]/reference/substitutions.html
+{
+    "ACCOUNT": "[[HPC_ACCOUNT_NAME]]",
+    "TIME": "1:00:00",
+    "CORES": "1",
+    "MEMORY": "16G",
+    "ARRAY_CONCURRENCY_LIMIT": ""
+}
