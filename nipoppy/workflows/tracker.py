@@ -1,7 +1,6 @@
 """PipelineTracker workflow."""
 
 import tarfile
-from collections import Counter
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -171,52 +170,15 @@ class PipelineTracker(BasePipelineWorkflow):
         }
         return processing_status_record
 
-    def _get_status_changes_table(self) -> Table:
-        """Summarize how this run changes the processing status file."""
-        status_table = self.processing_status_table
-        current_pipeline_rows = status_table.loc[
-            (status_table[status_table.col_pipeline_name] == self.pipeline_name)
-            & (status_table[status_table.col_pipeline_version] == self.pipeline_version)
-            & (status_table[status_table.col_pipeline_step] == self.pipeline_step)
-        ]
-        old_statuses = {
-            (participant_id, session_id): status
-            for participant_id, session_id, status in current_pipeline_rows[
-                [
-                    status_table.col_participant_id,
-                    status_table.col_session_id,
-                    status_table.col_status,
-                ]
-            ].itertuples(index=False)
-        }
-
-        change_counts = Counter()
-        for record in self.run_single_results:
-            old_status = old_statuses.get(
-                (
-                    record[status_table.col_participant_id],
-                    record[status_table.col_session_id],
-                )
-            )
-            new_status = record[status_table.col_status]
-            if old_status is None:
-                change_counts[f"New {new_status}"] += 1
-            elif old_status != new_status:
-                change_counts[f"{old_status} -> {new_status}"] += 1
-
-        changes_table = Table(
-            title="Processing status changes", box=box.MINIMAL_DOUBLE_HEAD
-        )
-        changes_table.add_column("Change")
-        changes_table.add_column("Count", justify="right")
-        for change, count in change_counts.items():
-            changes_table.add_row(change, str(count))
-        return changes_table
-
     def _update_status_file(self):
         """Update the processing status file."""
-        # compute before updating since add_or_update_records modifies the table
-        changes_table = self._get_status_changes_table()
+        # count before updating since add_or_update_records modifies the table
+        change_counts = self.processing_status_table.get_status_changes(
+            self.run_single_results,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
         self.processing_status_table = (
             self.processing_status_table.add_or_update_records(self.run_single_results)
         )
@@ -228,7 +190,14 @@ class PipelineTracker(BasePipelineWorkflow):
             self.study.layout.fpath_processing_status,
             dry_run=self.dry_run,
         )
-        if not self.dry_run and changes_table.row_count > 0:
+        if not self.dry_run and change_counts:
+            changes_table = Table(
+                title="Processing status changes", box=box.MINIMAL_DOUBLE_HEAD
+            )
+            changes_table.add_column("Change")
+            changes_table.add_column("Count", justify="right")
+            for change, count in change_counts.items():
+                changes_table.add_row(change, str(count))
             CONSOLE_STDOUT.print(changes_table)
 
     def run_main(self):
