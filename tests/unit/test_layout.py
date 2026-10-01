@@ -65,14 +65,10 @@ def test_init_default(dpath_root):
     "fpath_spec",
     [
         None,
-        FPATH_DEFAULT_LAYOUT,
-        DPATH_LAYOUTS / "layout-0.1.0.json",
-        DPATH_LAYOUTS / "layout-0.2.x.json",
-        DPATH_LAYOUTS / "layout-0.3.x.json",
-        DPATH_LAYOUTS / "layout-0.4.x.json",
         DPATH_TEST_DATA / "layout1.json",
         DPATH_TEST_DATA / "layout2.json",
-    ],
+    ]
+    + list(DPATH_LAYOUTS.glob("layout-*.json")),
 )
 def test_init_custom_layout(dpath_root, fpath_spec):
     DatasetLayout(dpath_root=dpath_root, fpath_config=fpath_spec)
