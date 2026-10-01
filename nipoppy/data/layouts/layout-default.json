@@ -65,11 +65,11 @@
     },
     "dpath_tabular": {
         "path": "phenotype",
-        "description": "This directory is for tabular/phenotypic data."
+        "description": null
     },
     "dpath_assessments": {
-        "path": "phenotype/assessments",
-        "description": "This directory is for assessments data."
+        "path": "phenotype",
+        "description": null
     },
     "fpath_config": {
         "path": ".nipoppy/config.json5",

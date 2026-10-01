@@ -55,7 +55,7 @@ ATTR_TO_REQUIRED_DPATH_MAP = {
     "dpath_work": "scratch/work",
     "dpath_logs": "logs",
     "dpath_tabular": "phenotype",
-    "dpath_assessments": "phenotype/assessments",
+    "dpath_assessments": "phenotype",
 }
 
 ATTR_TO_DPATH_MAP = {
