@@ -14,32 +14,31 @@ Below we list several use case scenarios and their touchpoints with Nipoppy for 
 
 ## Use cases for individual researchers
 
-
-**Imaging Data Curation**
+### Imaging Data Curation
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
 | Standardize acquired imaging scans | Source images (e.g. DICOMs) with an expected list of participants | Curate BIDSified dataset and assert multimodal data availability | [BIDS](https://bids.neuroimaging.io/) and BIDSification tools |
 
-**Tabular Data Curation** (_under development_)
+### Tabular Data Curation (_under development_)
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
 |Organize source demographic, clinical, and other tabular data | Source tabular data collected in spreadsheets or other data capture software (e.g. RedCAP) | Assert data availability across data types and link with imaging modalities | Pandas (Python) or R |
 
-**Imaging Data Processing** (_with common pipelines_)
+### Imaging Data Processing (_with common pipelines_)
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
 |Process BIDSified data to produce derived imaging output| Valid BIDS dataset | Assert availability of processed output |[Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) |
 
-**Imaging Data Processing** (_with custom pipelines_)
+### Imaging Data Processing (_with custom pipelines_)
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
 |Process BIDSified data to produce custom derived imaging output | Organized dataset (BIDS or otherwise) required by the custom pipeline | Assert availability of processed output | [Apptainer](https://apptainer.org/) / [Docker](https://www.docker.com/) <br> [Boutiques](https://boutiques.github.io/) <br> HPCs (recommended) |
 
-**Imaging Data Extraction**
+### Imaging Data Extraction
 
 | Task | Starting point | End goal | Related resources |
 |:-------|:------------------------------------------------------------------------|:--|:--|
