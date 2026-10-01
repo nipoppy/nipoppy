@@ -172,6 +172,34 @@ def pipeline_list(**params):
         workflow.run()
 
 
+@pipeline.command("info")
+@study_option
+@click.option(
+    "--pipeline",
+    "pipeline_name",
+    type=str,
+    required=True,
+    help="Pipeline name, as specified in the config file.",
+)
+@click.option(
+    "--pipeline-version",
+    type=str,
+    help=(
+        "Pipeline version, as specified in the pipeline config file "
+        "(default: latest out of the installed versions)."
+    ),
+)
+@global_options
+@layout_option
+def pipeline_info(**params):
+    """Show the file paths of an installed pipeline."""
+    from nipoppy.workflows.pipeline_store.info import PipelineInfoWorkflow
+
+    params = dep_params(**params)
+    with exception_handler(PipelineInfoWorkflow(**params)) as workflow:
+        workflow.run()
+
+
 @pipeline.command("validate")
 @click.argument(
     "path",
