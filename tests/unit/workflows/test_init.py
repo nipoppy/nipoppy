@@ -2,6 +2,7 @@
 
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from collections.abc import Generator
@@ -168,19 +169,18 @@ def assert_config_matches(fpath_actual: Path, fpath_expected: Path):
 
 @pytest.mark.no_xdist
 @pytest.mark.parametrize(
-    "fname_layout",
-    ["layout-default.json", "layout-bids-study.json", "layout-0.1.0.json"],
+    "fpath_layout", list(DPATH_LAYOUTS.glob("layout-*.json")), ids=lambda p: p.name
 )
 @pytest.mark.parametrize("dry_run", [False, True])
 def test_run(
     dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
-    fname_layout: str,
+    fpath_layout: Path,
     dry_run: bool,
 ):
     workflow = InitWorkflow(
         dpath_root=dpath_root,
-        fpath_layout=DPATH_LAYOUTS / fname_layout,
+        fpath_layout=fpath_layout,
         dry_run=dry_run,
     )
     workflow.run()
@@ -460,27 +460,29 @@ def test_default_layout_passes_bids_validation(dpath_root: Path):
     workflow.run()
 
     # Run BIDS validator
-    result = subprocess.run(
-        ["bids-validator-deno", str(dpath_root), "--datasetTypes", "study"],
-        capture_output=True,
-        text=True,
-    )
+    args = [
+        "bids-validator-deno",
+        str(dpath_root),
+        "--datasetTypes",
+        "study",
+        "--schema",
+        "latest",
+    ]
+    result = subprocess.run(args, capture_output=True, text=True)
 
     # Check that there are no errors (warnings are OK)
-    assert result.returncode == 0, "BIDS validation failed"
+    assert result.returncode == 0, (
+        f"BIDS validation failed: run `{shlex.join(args)}` for details"
+    )
 
 
 @pytest.mark.parametrize("mode", ["copy", "move", "symlink"])
-@pytest.mark.parametrize(
-    "fname_layout", ["layout-default.json", "layout-bids-study.json"]
-)
 def test_init_bids(
     dpath_root: Path,
     fake_bids_root: Path,
     mocker: pytest_mock.MockerFixture,
     caplog: pytest.LogCaptureFixture,
     mode: str,
-    fname_layout: str,
 ):
     """Test init from an existing BIDS dataset.
 
@@ -493,7 +495,6 @@ def test_init_bids(
         dpath_root=dpath_root,
         bids_source=fake_bids_root,
         mode=mode,
-        fpath_layout=DPATH_LAYOUTS / fname_layout,
     )
 
     mocked_handle_bids_source = mocker.patch.object(
@@ -511,11 +512,10 @@ def test_init_bids(
 @pytest.mark.parametrize("subdirs", ["", "sub-01/ses-1/anat"], ids=["empty", "subdirs"])
 def test_init_manifest_from_empty_bids_fails(
     workflow: InitWorkflow,
-    dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
     subdirs: str,
 ):
-    bids_source = dpath_root / "bids" / subdirs
+    bids_source = workflow.study.layout.dpath_bids / subdirs
     bids_source.mkdir(parents=True)
     workflow.bids_source = bids_source
 
