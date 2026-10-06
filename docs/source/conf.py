@@ -117,6 +117,7 @@ html_title = "Nipoppy"
 # https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html
 
 intersphinx_mapping = {
+    "opentelemetry": ("https://opentelemetry-python.readthedocs.io/en/latest/", None),
     "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
     "pydantic": ("https://docs.pydantic.dev/latest/", None),
     "python": ("https://docs.python.org/3", None),
