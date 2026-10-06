@@ -135,7 +135,7 @@ class TelemetryHandler:
             resource = Resource(
                 attributes={
                     SERVICE_NAME: self.service_name,
-                    SERVICE_VERSION: self.service_version
+                    SERVICE_VERSION: self.service_version,
                 }
             )
 
@@ -156,7 +156,7 @@ class TelemetryHandler:
             atexit.register(self.shutdown)
             # Handle SIGTERM separately (not covered by atexit.register)
             signal.signal(signal.SIGTERM, _sigterm_handler)
-            
+
             self._initialized = True
 
             return True
