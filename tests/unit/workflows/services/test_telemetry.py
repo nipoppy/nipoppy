@@ -1,4 +1,4 @@
-"""Tests for the TelemetryHandler class and its module-level helpers."""
+"""Tests for the nipoppy.workflows.services.telemetry module."""
 
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def _offline_handler(monkeypatch):
     )
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture()
 def _restore_sigterm():
     """Prevent SIGTERM handlers registered by initialize() from leaking across tests."""
     original = signal.getsignal(signal.SIGTERM)
@@ -80,7 +80,7 @@ class TestGetUserCountry:
 
 
 class TestFailSafe:
-    """Telemetry must never raise, even when broken or uninitialized."""
+    """TelemetryHandler must never raise, even when broken or uninitialized."""
 
     def test_record_command_completion_does_not_raise_when_uninitialized(self):
         """Recording a command completion before init is a silent no-op."""
@@ -229,7 +229,7 @@ class TestBuildDefaultReader:
         assert reader._export_interval_millis == expected
 
     def test_export_timeout_is_set(self, monkeypatch):
-        """An explicit export timeout keeps a stalled collector from delaying exit."""
+        """Make sure that the default timeout is set."""
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_TIMEOUT", raising=False)
         reader = TelemetryHandler().build_default_reader()
         assert reader._exporter._timeout == TELEMETRY_EXPORT_TIMEOUT_SECONDS
@@ -302,7 +302,7 @@ class TestLocation:
         assert _data_points(reader, "location.by_country") == []
 
     def test_record_location_async_returns_before_lookup_completes(self, monkeypatch):
-        """The call returns while the lookup is still in flight."""
+        """The call returns while the lookup is still running."""
         handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
 
@@ -317,7 +317,7 @@ class TestLocation:
         )
         handler.record_location_async()
 
-        # Control is back here while the worker is still blocked on the event.
+        # Make sure the worker is still blocked on the event.
         assert handler._location_thread.is_alive()
 
         release.set()
@@ -388,6 +388,7 @@ class TestShutdown:
         spy.assert_called_once()
 
 
+@pytest.mark.use_fixtures(_restore_sigterm)
 class TestSigtermHandler:
     """initialize() installs a SIGTERM handler that flushes telemetry on exit."""
 

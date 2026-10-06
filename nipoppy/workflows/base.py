@@ -211,9 +211,7 @@ class BaseWorkflow(Base, ABC):
             self.run_main()
         finally:
             self.run_cleanup()
-            # return_code is finalized by the CLI's exception_handler after run()
-            # returns, so detect an in-flight exception here to record failures
-            # accurately.
+            # for the telemetry to get the correct return code
             return_code = self.return_code
             if sys.exc_info()[0] is not None and return_code == ReturnCode.SUCCESS:
                 return_code = ReturnCode.UNKNOWN_FAILURE

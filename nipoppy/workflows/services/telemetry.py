@@ -69,7 +69,7 @@ class TelemetryHandler:
     def __init__(
         self,
         service_name: str = PROGRAM_NAME,
-        service_version: str | None = PROGRAM_VERSION,
+        service_version: str = PROGRAM_VERSION,
         otlp_endpoint: str | None = None,
         export_interval_millis: int = TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
         metric_reader: MetricReader | None = None,
@@ -80,7 +80,7 @@ class TelemetryHandler:
         ----------
         service_name : str
             Service name for metrics (default: `nipoppy.env.PROGRAM_NAME`).
-        service_version : str, optional
+        service_version : str
             Version tag (default: `nipoppy.env.PROGRAM_VERSION`).
         otlp_endpoint : str, optional
             Collector endpoint (default:
@@ -91,7 +91,7 @@ class TelemetryHandler:
             (default: `TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS`).
         metric_reader : opentelemetry MetricReader, optional
             Pre-built reader to use instead of the default OTLP/HTTP exporter.
-            Primarily for testing (e.g. InMemoryMetricReader).
+            Primarily for testing.
         """
         self.service_name = service_name
         self.service_version = service_version
@@ -135,7 +135,7 @@ class TelemetryHandler:
             resource = Resource(
                 attributes={
                     SERVICE_NAME: self.service_name,
-                    SERVICE_VERSION: self.service_version or "unknown",
+                    SERVICE_VERSION: self.service_version
                 }
             )
 
@@ -152,11 +152,11 @@ class TelemetryHandler:
                 return False
             self.metrics = self.create_metric_instruments(meter)
 
-            # Flush and export pending metrics on normal exit and Ctrl+C (SIGINT
-            # raises KeyboardInterrupt, which unwinds normally). atexit does not
-            # fire on SIGTERM, so that signal gets its own handler below.
+            # Flush and export pending metrics on normal exit and SIGINT (Ctrl+C)
             atexit.register(self.shutdown)
+            # Handle SIGTERM separately (not covered by atexit.register)
             signal.signal(signal.SIGTERM, _sigterm_handler)
+            
             self._initialized = True
 
             return True
@@ -181,21 +181,16 @@ class TelemetryHandler:
                 TELEMETRY_DEFAULT_OTLP_ENDPOINT,
             )
 
-        # OTLP/HTTP keeps the scheme in the URL (https:// implies TLS). When an
-        # endpoint is passed explicitly the SDK does not append the signal path,
-        # so add /v1/metrics here if the user gave only a base endpoint.
+        # Make sure the endpoint ends with /v1/metrics
         if not otlp_endpoint.rstrip("/").endswith("/v1/metrics"):
             otlp_endpoint = otlp_endpoint.rstrip("/") + "/v1/metrics"
 
-        # Short timeout so an unreachable collector cannot stall shutdown, which
-        # runs at exit. The exporter otherwise defaults to 10 seconds.
         otlp_exporter = OTLPMetricExporter(
             endpoint=otlp_endpoint,
             timeout=TELEMETRY_EXPORT_TIMEOUT_SECONDS,
             preferred_temporality={SDKCounter: AggregationTemporality.DELTA},
         )
 
-        # Short export interval so the HTTP session is established before shutdown.
         return PeriodicExportingMetricReader(
             otlp_exporter,
             export_interval_millis=min(
@@ -274,12 +269,7 @@ _telemetry_handler: TelemetryHandler | None = None
 
 
 def get_telemetry_handler() -> TelemetryHandler:
-    """Return the process-wide initialized telemetry handler.
-
-    The handler is created once per process and shared by all callers, so there is
-    a single meter provider, `atexit` registration and SIGTERM handler. Both the
-    creation and `initialize()` are idempotent, so repeated calls are cheap.
-    """
+    """Return the process-wide initialized telemetry handler."""
     global _telemetry_handler
 
     if _telemetry_handler is None:

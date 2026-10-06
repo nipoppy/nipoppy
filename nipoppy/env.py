@@ -58,9 +58,13 @@ EXT_TAR = ".tar"
 EXT_LOG = ".log"
 
 # telemetry
-TELEMETRY_DEFAULT_OTLP_ENDPOINT = "https://telemetry.nipoppy.org"
-TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 2000
-TELEMETRY_EXPORT_TIMEOUT_SECONDS = 2
+TELEMETRY_DEFAULT_OTLP_ENDPOINT = (
+    "https://telemetry.nipoppy.org"  # need https:// for TLS
+)
+# Short export interval so the HTTP session is established before shutdown.
+TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 1000
+# Short timeout so an unreachable collector cannot stall shutdown
+TELEMETRY_EXPORT_TIMEOUT_SECONDS = 1
 
 # dotenv files
 # from highest to lowest priority
