@@ -29,7 +29,7 @@ from nipoppy.utils.utils import (
     is_nipoppy_project,
 )
 from nipoppy.workflows.services.telemetry import (
-    TelemetryHandler,
+    _TelemetryHandler,
     get_telemetry_handler,
 )
 
@@ -183,7 +183,7 @@ class BaseWorkflow(Base, ABC):
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
-        self.telemetry: TelemetryHandler | None = None
+        self._telemetry: _TelemetryHandler | None = None
 
         logger.set_verbose(self.verbose)
 
@@ -193,7 +193,7 @@ class BaseWorkflow(Base, ABC):
         if self.dry_run:
             logger.info("Doing a dry run")
         else:
-            self.telemetry = get_telemetry_handler()
+            self._telemetry = get_telemetry_handler()
 
     @abstractmethod
     def run_main(self):
@@ -215,8 +215,8 @@ class BaseWorkflow(Base, ABC):
             return_code = self.return_code
             if sys.exc_info()[0] is not None and return_code == ReturnCode.SUCCESS:
                 return_code = ReturnCode.UNKNOWN_FAILURE
-            if self.telemetry is not None:
-                self.telemetry.record_command_completion(self.name, return_code)
+            if self._telemetry is not None:
+                self._telemetry.record_command_completion(self.name, return_code)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):

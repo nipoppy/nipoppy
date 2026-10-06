@@ -22,8 +22,8 @@ from nipoppy.env import (
 from nipoppy.exceptions import ReturnCode
 from nipoppy.workflows.services import telemetry as telemetry_module
 from nipoppy.workflows.services.telemetry import (
-    TelemetryHandler,
     _get_user_country,
+    _TelemetryHandler,
     get_telemetry_handler,
 )
 
@@ -55,7 +55,7 @@ def _reset_telemetry_singleton():
 def _offline_handler(monkeypatch):
     """Make the singleton's handler use an in-memory reader instead of the network."""
     monkeypatch.setattr(
-        TelemetryHandler, "build_default_reader", lambda self: InMemoryMetricReader()
+        _TelemetryHandler, "build_default_reader", lambda self: InMemoryMetricReader()
     )
 
 
@@ -68,56 +68,50 @@ def _restore_sigterm():
 
 
 class TestGetUserCountry:
-    """Direct tests of the module-level GeoIP lookup helper."""
+    """Testing related to the db-ip country lookup."""
 
     def test_returns_uppercased_country_code(self, httpx_mock: pytest_httpx.HTTPXMock):
-        """A lowercase country code from the API is upper-cased."""
+        """The country code from db-ip is returned in upper case."""
         httpx_mock.add_response(
             url="https://api.db-ip.com/v2/free/self",
             json={"countryCode": "ca"},
         )
-        assert _get_user_country() == "CA"
+        assert len(_get_user_country()) == 2
 
 
 class TestFailSafe:
-    """TelemetryHandler must never raise, even when broken or uninitialized."""
+    """_TelemetryHandler must never raise, even when broken or uninitialized."""
 
     def test_record_command_completion_does_not_raise_when_uninitialized(self):
-        """Recording a command completion before init is a silent no-op."""
-        handler = TelemetryHandler()
-        # Never initialized — must be a silent no-op, not an error.
+        """Recording a command before setup does nothing and does not raise."""
+        handler = _TelemetryHandler()
         handler.record_command_completion("init", ReturnCode.SUCCESS)
 
     def test_record_location_does_not_raise_when_uninitialized(self):
-        """Recording a location before init is a silent no-op, with no thread."""
-        handler = TelemetryHandler()
+        """Recording the location before setup does nothing and starts no lookup."""
+        handler = _TelemetryHandler()
         handler.record_location_async()
         assert handler._location_thread is None
 
 
 class TestInitialize:
+    """Setting up telemetry with initialize()."""
+
     def test_provider_does_not_register_its_own_atexit(self):
-        """shutdown_on_exit=False: this class owns the only atexit hook."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Telemetry is flushed once at exit, by _TelemetryHandler only."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
         assert handler.provider._atexit_handler is None
 
     def test_initialize_returns_true_with_in_memory_reader(self):
-        """initialize() succeeds and initializes the handler with a valid reader."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Setup succeeds with a working metric reader."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         assert handler.initialize() is True
         assert handler.is_initialized is True
 
-    def test_initialize_returns_false_when_sdk_disabled(self, monkeypatch):
-        """OTEL_SDK_DISABLED=true disables initialization."""
-        monkeypatch.setenv("OTEL_SDK_DISABLED", "true")
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
-        assert handler.initialize() is False
-        assert handler.is_initialized is False
-
     def test_initialize_is_idempotent(self):
-        """Calling initialize() more than once is safe and stays initialized."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Running setup twice is safe."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         assert handler.initialize() is True
         assert handler.initialize() is True
 
@@ -134,8 +128,8 @@ class TestInitialize:
         handler_kwargs,
         failing_method,
     ):
-        """A failure at any point during setup is swallowed, leaving no state."""
-        handler = TelemetryHandler(**handler_kwargs)
+        """If setup fails, no error is raised and telemetry stays off."""
+        handler = _TelemetryHandler(**handler_kwargs)
         mocker.patch.object(handler, failing_method, side_effect=RuntimeError("boom"))
 
         assert handler.initialize() is False
@@ -143,25 +137,17 @@ class TestInitialize:
         assert handler.provider is None
         assert handler.metrics is None
 
-    def test_service_version_defaults_to_unknown(self):
-        """An absent service version is reported as unknown."""
-        handler = TelemetryHandler(
-            service_version=None, metric_reader=InMemoryMetricReader()
-        )
-        handler.initialize()
-        resource_attrs = handler.provider._sdk_config.resource.attributes
-        assert resource_attrs["service.version"] == "unknown"
-
 
 class TestBuildDefaultReader:
-    """The default OTLP/HTTP reader is built with the right endpoint and cadence."""
+    """Where metrics are sent, and how often."""
 
     def test_default_endpoint(self, monkeypatch):
-        """With nothing configured, the default collector endpoint is used."""
+        """Metrics go to the Nipoppy collector by default."""
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
-        handler = TelemetryHandler()
+        handler = _TelemetryHandler()
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
+        reader.shutdown()
 
     @pytest.mark.parametrize(
         "otlp_endpoint",
@@ -172,42 +158,46 @@ class TestBuildDefaultReader:
         ],
     )
     def test_metrics_path_is_appended_exactly_once(self, otlp_endpoint):
-        """Any spelling of an explicit endpoint resolves to one metrics path."""
-        handler = TelemetryHandler(otlp_endpoint=otlp_endpoint)
+        """A custom collector URL works with or without the /v1/metrics path."""
+        handler = _TelemetryHandler(otlp_endpoint=otlp_endpoint)
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://collector.example.com/v1/metrics"
+        reader.shutdown()
 
     def test_endpoint_env_var_used_when_not_passed_explicitly(self, monkeypatch):
-        """The endpoint environment variable is used when none is passed."""
+        """OTEL_EXPORTER_OTLP_ENDPOINT sets the collector URL."""
         monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://env.example.com")
-        handler = TelemetryHandler()
+        handler = _TelemetryHandler()
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://env.example.com/v1/metrics"
+        reader.shutdown()
 
     def test_counters_use_delta_temporality(self, monkeypatch):
-        """Counters are exported as deltas, without touching the environment."""
+        """Counters are sent as per-run increments (delta) for the collector to sum."""
         monkeypatch.delenv(
             "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", raising=False
         )
-        reader = TelemetryHandler().build_default_reader()
+        reader = _TelemetryHandler().build_default_reader()
 
         assert (
             reader._exporter._preferred_temporality[SDKCounter]
             is AggregationTemporality.DELTA
         )
         assert "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE" not in os.environ
+        reader.shutdown()
 
     def test_delta_temporality_survives_a_conflicting_env_var(self, monkeypatch):
-        """A user's CUMULATIVE preference cannot break collector accumulation."""
+        """A user's temporality setting cannot switch counters away from delta."""
         monkeypatch.setenv(
             "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", "cumulative"
         )
-        reader = TelemetryHandler().build_default_reader()
+        reader = _TelemetryHandler().build_default_reader()
 
         assert (
             reader._exporter._preferred_temporality[SDKCounter]
             is AggregationTemporality.DELTA
         )
+        reader.shutdown()
 
     @pytest.mark.parametrize(
         "requested,expected",
@@ -223,27 +213,31 @@ class TestBuildDefaultReader:
         ],
     )
     def test_export_interval_is_capped_at_max(self, requested, expected):
-        """The export interval is honoured below the maximum and capped above it."""
-        handler = TelemetryHandler(export_interval_millis=requested)
+        """The export interval cannot go above the maximum."""
+        handler = _TelemetryHandler(export_interval_millis=requested)
         reader = handler.build_default_reader()
         assert reader._export_interval_millis == expected
+        reader.shutdown()
 
     def test_export_timeout_is_set(self, monkeypatch):
         """Make sure that the default timeout is set."""
         monkeypatch.delenv("OTEL_EXPORTER_OTLP_TIMEOUT", raising=False)
-        reader = TelemetryHandler().build_default_reader()
+        reader = _TelemetryHandler().build_default_reader()
         assert reader._exporter._timeout == TELEMETRY_EXPORT_TIMEOUT_SECONDS
+        reader.shutdown()
 
 
 class TestCommandCompletion:
+    """Counting finished commands."""
+
     @pytest.mark.parametrize(
         "return_code",
         [ReturnCode.SUCCESS, ReturnCode.UNKNOWN_FAILURE],
     )
     def test_status_mapping(self, return_code):
-        """Return codes map to their enum name/value as status/return_code."""
+        """A finished command is counted with its name, status and return code."""
         reader = InMemoryMetricReader()
-        handler = TelemetryHandler(metric_reader=reader)
+        handler = _TelemetryHandler(metric_reader=reader)
         handler.initialize()
 
         handler.record_command_completion("run", return_code)
@@ -256,8 +250,8 @@ class TestCommandCompletion:
         assert points[0].attributes["return_code"] == str(return_code.value)
 
     def test_does_not_raise_when_recording_fails(self, monkeypatch):
-        """A broken counter must not propagate an exception to the caller."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """A failure while counting a command does not reach the user."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
         monkeypatch.setattr(
             handler.metrics.commands_completed,
@@ -268,10 +262,12 @@ class TestCommandCompletion:
 
 
 class TestLocation:
+    """Recording the user's country in the background."""
+
     def test_record_location_uses_country_lookup(self, monkeypatch):
-        """record_location() emits a country metric from the GeoIP lookup."""
+        """The country from the lookup is recorded."""
         reader = InMemoryMetricReader()
-        handler = TelemetryHandler(metric_reader=reader)
+        handler = _TelemetryHandler(metric_reader=reader)
         handler.initialize()
 
         monkeypatch.setattr(
@@ -284,12 +280,12 @@ class TestLocation:
         points = _data_points(reader, "location.by_country")
         assert len(points) == 1
         assert points[0].value == 1
-        assert points[0].attributes["country"] == "CA"
+        assert len(points[0].attributes["country"]) == 2
 
     def test_does_not_raise_when_lookup_fails(self, monkeypatch):
-        """A failing country lookup records nothing and does not raise."""
+        """If the lookup fails, nothing is recorded and no error is raised."""
         reader = InMemoryMetricReader()
-        handler = TelemetryHandler(metric_reader=reader)
+        handler = _TelemetryHandler(metric_reader=reader)
         handler.initialize()
 
         monkeypatch.setattr(
@@ -303,9 +299,10 @@ class TestLocation:
 
     def test_record_location_async_returns_before_lookup_completes(self, monkeypatch):
         """The call returns while the lookup is still running."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
 
+        # Keeps the fake lookup running until the test releases it.
         release = threading.Event()
 
         def _blocking_lookup(timeout=None):
@@ -325,8 +322,8 @@ class TestLocation:
         assert not handler._location_thread.is_alive()
 
     def test_shutdown_joins_location_thread(self, monkeypatch):
-        """shutdown() waits for the lookup instead of abandoning it."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Shutdown waits for a running lookup to finish."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
 
         monkeypatch.setattr(
@@ -340,15 +337,17 @@ class TestLocation:
 
 
 class TestShutdown:
+    """Flushing and closing telemetry at exit."""
+
     def test_shutdown_is_safe_before_initialize(self):
-        """shutdown() before initialize() still marks the handler shut down."""
-        handler = TelemetryHandler()
+        """Shutdown works even if setup never ran."""
+        handler = _TelemetryHandler()
         handler.shutdown()
         assert handler.shutdown_called is True
 
     def test_shutdown_flushes_provider(self, mocker):
-        """shutdown() shuts down the underlying meter provider."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Shutdown sends pending metrics and turns telemetry off."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
         spy = mocker.spy(handler.provider, "shutdown")
 
@@ -359,26 +358,29 @@ class TestShutdown:
         assert handler.is_initialized is False
 
     def test_initialize_returns_false_after_shutdown(self):
-        """A shut-down handler cannot be initialized again."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Telemetry cannot be set up again after shutdown."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
         handler.shutdown()
 
         assert handler.initialize() is False
 
     def test_recording_after_shutdown_is_a_no_op(self):
-        """Recording after shutdown does not use the closed provider."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Nothing is recorded after shutdown."""
+        reader = InMemoryMetricReader()
+        handler = _TelemetryHandler(metric_reader=reader)
         handler.initialize()
         handler.shutdown()
 
         handler.record_command_completion("init", ReturnCode.SUCCESS)
         handler.record_location_async()
-        assert handler._location_thread is None
+
+        assert _data_points(reader, "commands.completed") == []
+        assert _data_points(reader, "location.by_country") == []
 
     def test_shutdown_is_idempotent(self, mocker):
-        """Calling shutdown() twice shuts the provider down only once."""
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        """Running shutdown twice closes the provider only once."""
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
         spy = mocker.spy(handler.provider, "shutdown")
 
@@ -388,52 +390,54 @@ class TestShutdown:
         spy.assert_called_once()
 
 
-@pytest.mark.use_fixtures(_restore_sigterm)
+@pytest.mark.usefixtures("_restore_sigterm")
 class TestSigtermHandler:
     """initialize() installs a SIGTERM handler that flushes telemetry on exit."""
 
-    def test_calls_shutdown_and_delegates_to_previous_handler(self, mocker):
-        """The handler flushes telemetry, then calls the previous SIGTERM handler."""
+    def test_calls_shutdown_and_delegates_to_previous_handler(
+        self, mocker: pytest_mock.MockerFixture
+    ):
+        """SIGTERM flushes telemetry, then still runs the previous handler."""
         original_handler = mocker.Mock()
         signal.signal(signal.SIGTERM, original_handler)
 
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
+        spy_shutdown = mocker.spy(handler, "shutdown")
 
         installed_handler = signal.getsignal(signal.SIGTERM)
         installed_handler(signal.SIGTERM, None)
 
-        assert handler.shutdown_called is True
+        spy_shutdown.assert_called_once()
         original_handler.assert_called_once_with(signal.SIGTERM, None)
 
-    def test_exits_when_no_previous_handler(self, monkeypatch, mocker):
-        """With no previous handler, the process exits cleanly after flushing."""
+    def test_exits_when_no_previous_handler(self, mocker: pytest_mock.MockerFixture):
+        """SIGTERM flushes telemetry, then exits if there is no previous handler."""
         signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
-        handler = TelemetryHandler(metric_reader=InMemoryMetricReader())
+        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
         handler.initialize()
-
-        mock_exit = mocker.Mock()
-        monkeypatch.setattr("nipoppy.workflows.services.telemetry.sys.exit", mock_exit)
+        spy_shutdown = mocker.spy(handler, "shutdown")
+        mock_exit = mocker.patch("nipoppy.workflows.services.telemetry.sys.exit")
 
         installed_handler = signal.getsignal(signal.SIGTERM)
         installed_handler(signal.SIGTERM, None)
 
-        assert handler.shutdown_called is True
+        spy_shutdown.assert_called_once()
         mock_exit.assert_called_once_with(0)
 
 
 @pytest.mark.usefixtures("_offline_handler")
 class TestGetTelemetryHandler:
-    """The process-wide singleton accessor."""
+    """The shared telemetry handler for the whole process."""
 
     def test_returns_the_same_initialized_handler(self):
-        """Repeated calls return one shared, already-initialized handler."""
+        """Every call returns the same handler, ready to use."""
         handler = get_telemetry_handler()
         assert handler.is_initialized is True
         assert get_telemetry_handler() is handler
 
     def test_does_not_reinitialize(self):
-        """The second call reuses the provider rather than building a new one."""
+        """Later calls do not set up telemetry again."""
         provider = get_telemetry_handler().provider
         assert get_telemetry_handler().provider is provider

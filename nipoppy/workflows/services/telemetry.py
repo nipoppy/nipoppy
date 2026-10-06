@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import httpx
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
-from opentelemetry.metrics import Counter, NoOpMeter
+from opentelemetry.metrics import Counter
 from opentelemetry.sdk.metrics import Counter as SDKCounter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
@@ -26,7 +26,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 from nipoppy.env import (
     PROGRAM_NAME,
     PROGRAM_VERSION,
-    TELEMETRY_DEFAULT_OTLP_ENDPOINT,
+    TELEMETRY_ENDPOINT,
     TELEMETRY_EXPORT_TIMEOUT_SECONDS,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
 )
@@ -35,7 +35,7 @@ from nipoppy.logger import get_logger
 
 logger = get_logger()
 
-_GEOIP_TIMEOUT = 1
+_DB_IP_TIMEOUT = 1
 
 
 def _get_user_country(timeout: float = 1) -> str:
@@ -63,7 +63,7 @@ class MetricInstruments:
     location_by_country: Counter
 
 
-class TelemetryHandler:
+class _TelemetryHandler:
     """Self-contained OpenTelemetry metrics handler."""
 
     def __init__(
@@ -83,8 +83,7 @@ class TelemetryHandler:
         service_version : str
             Version tag (default: `nipoppy.env.PROGRAM_VERSION`).
         otlp_endpoint : str, optional
-            Collector endpoint (default:
-            `nipoppy.env.TELEMETRY_DEFAULT_OTLP_ENDPOINT`).
+            Collector endpoint (default: `nipoppy.env.TELEMETRY_ENDPOINT`).
         export_interval_millis : int
             Export frequency in milliseconds, capped at
             `nipoppy.env.TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS`
@@ -115,7 +114,7 @@ class TelemetryHandler:
         Initialize the meter provider and metric instruments.
 
         Safe to call multiple times (only initializes once). Returns False if
-        initialization is disabled or fails.
+        initialization fails.
         """
         if self.is_initialized:
             return True
@@ -147,9 +146,6 @@ class TelemetryHandler:
                 shutdown_on_exit=False,
             )
             meter = self.provider.get_meter(__name__)
-            if isinstance(meter, NoOpMeter):
-                self.provider = None
-                return False
             self.metrics = self.create_metric_instruments(meter)
 
             # Flush and export pending metrics on normal exit and SIGINT (Ctrl+C)
@@ -178,7 +174,7 @@ class TelemetryHandler:
         if otlp_endpoint is None:
             otlp_endpoint = os.getenv(
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
-                TELEMETRY_DEFAULT_OTLP_ENDPOINT,
+                TELEMETRY_ENDPOINT,
             )
 
         # Make sure the endpoint ends with /v1/metrics
@@ -238,7 +234,7 @@ class TelemetryHandler:
 
         def _worker() -> None:
             try:
-                country_code = _get_user_country(timeout=_GEOIP_TIMEOUT)
+                country_code = _get_user_country(timeout=_DB_IP_TIMEOUT)
                 self.metrics.location_by_country.add(
                     1,
                     attributes={"country": country_code},
@@ -257,7 +253,7 @@ class TelemetryHandler:
             return
         self.shutdown_called = True
         if self._location_thread is not None:
-            self._location_thread.join(timeout=2 * _GEOIP_TIMEOUT)
+            self._location_thread.join(timeout=_DB_IP_TIMEOUT)
         if self.provider is not None:
             self.provider.shutdown()
         self.provider = None
@@ -265,15 +261,15 @@ class TelemetryHandler:
         self._initialized = False
 
 
-_telemetry_handler: TelemetryHandler | None = None
+_telemetry_handler: _TelemetryHandler | None = None
 
 
-def get_telemetry_handler() -> TelemetryHandler:
+def get_telemetry_handler() -> _TelemetryHandler:
     """Return the process-wide initialized telemetry handler."""
     global _telemetry_handler
 
     if _telemetry_handler is None:
-        _telemetry_handler = TelemetryHandler()
+        _telemetry_handler = _TelemetryHandler()
 
     _telemetry_handler.initialize()
     return _telemetry_handler
