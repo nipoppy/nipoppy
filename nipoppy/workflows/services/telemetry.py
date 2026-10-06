@@ -5,7 +5,6 @@ from __future__ import annotations
 # Shutdown pattern reference:
 # https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
 import atexit
-import os
 import signal
 import sys
 import threading
@@ -70,7 +69,7 @@ class _TelemetryHandler:
         self,
         service_name: str = PROGRAM_NAME,
         service_version: str = PROGRAM_VERSION,
-        otlp_endpoint: str | None = None,
+        otlp_endpoint: str = TELEMETRY_ENDPOINT,
         export_interval_millis: int = TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
         metric_reader: MetricReader | None = None,
     ) -> None:
@@ -82,7 +81,7 @@ class _TelemetryHandler:
             Service name for metrics (default: `nipoppy.env.PROGRAM_NAME`).
         service_version : str
             Version tag (default: `nipoppy.env.PROGRAM_VERSION`).
-        otlp_endpoint : str, optional
+        otlp_endpoint : str
             Collector endpoint (default: `nipoppy.env.TELEMETRY_ENDPOINT`).
         export_interval_millis : int
             Export frequency in milliseconds, capped at
@@ -171,11 +170,6 @@ class _TelemetryHandler:
     def build_default_reader(self) -> MetricReader:
         """Build the default OTLP/HTTP exporting reader."""
         otlp_endpoint = self.otlp_endpoint
-        if otlp_endpoint is None:
-            otlp_endpoint = os.getenv(
-                "OTEL_EXPORTER_OTLP_ENDPOINT",
-                TELEMETRY_ENDPOINT,
-            )
 
         # Make sure the endpoint ends with /v1/metrics
         if not otlp_endpoint.rstrip("/").endswith("/v1/metrics"):

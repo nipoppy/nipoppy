@@ -141,9 +141,8 @@ class TestInitialize:
 class TestBuildDefaultReader:
     """Where metrics are sent, and how often."""
 
-    def test_default_endpoint(self, monkeypatch):
+    def test_default_endpoint(self):
         """Metrics go to the Nipoppy collector by default."""
-        monkeypatch.delenv("OTEL_EXPORTER_OTLP_ENDPOINT", raising=False)
         handler = _TelemetryHandler()
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
@@ -164,12 +163,12 @@ class TestBuildDefaultReader:
         assert reader._exporter._endpoint == "https://collector.example.com/v1/metrics"
         reader.shutdown()
 
-    def test_endpoint_env_var_used_when_not_passed_explicitly(self, monkeypatch):
-        """OTEL_EXPORTER_OTLP_ENDPOINT sets the collector URL."""
+    def test_endpoint_env_var_is_ignored(self, monkeypatch):
+        """OTEL_EXPORTER_OTLP_ENDPOINT cannot change the collector URL."""
         monkeypatch.setenv("OTEL_EXPORTER_OTLP_ENDPOINT", "https://env.example.com")
         handler = _TelemetryHandler()
         reader = handler.build_default_reader()
-        assert reader._exporter._endpoint == "https://env.example.com/v1/metrics"
+        assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
         reader.shutdown()
 
     def test_counters_use_delta_temporality(self, monkeypatch):
