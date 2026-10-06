@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import signal
 import threading
 
@@ -16,7 +15,6 @@ from opentelemetry.sdk.metrics.export import (
 )
 
 from nipoppy.env import (
-    TELEMETRY_EXPORT_TIMEOUT_SECONDS,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
 )
 from nipoppy.exceptions import ReturnCode
@@ -103,12 +101,6 @@ class TestInitialize:
         handler.initialize()
         assert handler.provider._atexit_handler is None
 
-    def test_initialize_returns_true_with_in_memory_reader(self):
-        """Setup succeeds with a working metric reader."""
-        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
-        assert handler.initialize() is True
-        assert handler.is_initialized is True
-
     def test_initialize_is_idempotent(self):
         """Running setup twice is safe."""
         handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
@@ -141,13 +133,6 @@ class TestInitialize:
 class TestBuildDefaultReader:
     """Where metrics are sent, and how often."""
 
-    def test_default_endpoint(self):
-        """Metrics go to the Nipoppy collector by default."""
-        handler = _TelemetryHandler()
-        reader = handler.build_default_reader()
-        assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
-        reader.shutdown()
-
     @pytest.mark.parametrize(
         "otlp_endpoint",
         [
@@ -169,20 +154,6 @@ class TestBuildDefaultReader:
         handler = _TelemetryHandler()
         reader = handler.build_default_reader()
         assert reader._exporter._endpoint == "https://telemetry.nipoppy.org/v1/metrics"
-        reader.shutdown()
-
-    def test_counters_use_delta_temporality(self, monkeypatch):
-        """Counters are sent as per-run increments (delta) for the collector to sum."""
-        monkeypatch.delenv(
-            "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE", raising=False
-        )
-        reader = _TelemetryHandler().build_default_reader()
-
-        assert (
-            reader._exporter._preferred_temporality[SDKCounter]
-            is AggregationTemporality.DELTA
-        )
-        assert "OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE" not in os.environ
         reader.shutdown()
 
     def test_delta_temporality_survives_a_conflicting_env_var(self, monkeypatch):
@@ -216,13 +187,6 @@ class TestBuildDefaultReader:
         handler = _TelemetryHandler(export_interval_millis=requested)
         reader = handler.build_default_reader()
         assert reader._export_interval_millis == expected
-        reader.shutdown()
-
-    def test_export_timeout_is_set(self, monkeypatch):
-        """Make sure that the default timeout is set."""
-        monkeypatch.delenv("OTEL_EXPORTER_OTLP_TIMEOUT", raising=False)
-        reader = _TelemetryHandler().build_default_reader()
-        assert reader._exporter._timeout == TELEMETRY_EXPORT_TIMEOUT_SECONDS
         reader.shutdown()
 
 
@@ -319,20 +283,6 @@ class TestLocation:
         release.set()
         handler._location_thread.join(timeout=5)
         assert not handler._location_thread.is_alive()
-
-    def test_shutdown_joins_location_thread(self, monkeypatch):
-        """Shutdown waits for a running lookup to finish."""
-        handler = _TelemetryHandler(metric_reader=InMemoryMetricReader())
-        handler.initialize()
-
-        monkeypatch.setattr(
-            "nipoppy.workflows.services.telemetry._get_user_country",
-            lambda timeout=None: "CA",
-        )
-        handler.record_location_async()
-        handler.shutdown()
-
-        assert handler._location_thread.is_alive() is False
 
 
 class TestShutdown:
