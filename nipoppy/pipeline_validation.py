@@ -4,7 +4,6 @@ import json
 import logging
 from pathlib import Path
 
-import boutiques
 from pydantic_core import ValidationError
 
 from nipoppy.config.hpc import HpcConfig
@@ -19,6 +18,7 @@ from nipoppy.config.schema import ensure_schema_version_exists
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.integrations.boutiques import boutiques_api
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, load_json
@@ -67,18 +67,17 @@ def _check_descriptor_file(
 ) -> str:
     """Validate a Boutiques descriptor file."""
     fpath_descriptor: Path = Path(fpath_descriptor)
+
     if not fpath_descriptor.exists():
         raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
 
-    descriptor_dict = load_json(fpath_descriptor)
-
-    descriptor_str = json.dumps(descriptor_dict)
+    descriptor_str = json.dumps(load_json(fpath_descriptor, allow_json5=False))
     try:
-        boutiques.validate(descriptor_str)
-    except boutiques.DescriptorValidationError as exception:
+        boutiques_api.validate_descriptor(descriptor_str)
+    except ConfigError as exception:
         raise ConfigError(
-            f"Descriptor file {fpath_descriptor} is invalid:\n{exception}"
-        )
+            f"Descriptor file {fpath_descriptor} is invalid: {str(exception)}"
+        ) from exception
 
     if TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is not None:
         error_message = f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template variables. "  # noqa E501
@@ -103,16 +102,14 @@ def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
     if not fpath_invocation.exists():
         raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
 
-    invocation_dict = load_json(fpath_invocation, allow_json5=True)
+    invocation_str = json.dumps(load_json(fpath_invocation, allow_json5=True))
 
     try:
-        boutiques.invocation(
-            "--invocation", json.dumps(invocation_dict), descriptor_str
-        )
-    except boutiques.InvocationValidationError as exception:
+        boutiques_api.validate_invocation(invocation_str, descriptor=descriptor_str)
+    except ConfigError as exception:
         raise ConfigError(
-            f"Invocation file {fpath_invocation} is invalid:\n{exception}"
-        )
+            f"Invocation file {fpath_invocation} is invalid: {str(exception)}"
+        ) from exception
 
 
 def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
