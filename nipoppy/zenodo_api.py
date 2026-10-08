@@ -255,6 +255,17 @@ class ZenodoAPI:
         if response.status_code != 200:
             raise ZenodoAPIError(f"Failed to authenticate to Zenodo: {response.json()}")
 
+    def _delete_draft(self, record_id: str) -> None:
+        response = self.client.delete(f"/records/{record_id}/draft")
+        if response.status_code == 204:
+            self.logger.info(f"Draft deleted for zenodo.{record_id}")
+        elif response.status_code == 404:
+            self.logger.warning(f"No draft to delete for zenodo.{record_id}")
+        else:
+            raise ZenodoAPIError(
+                f"Failed to delete draft for zenodo.{record_id}: {response.json()}"
+            )
+
     def upload_record(
         self,
         input_dir: Path,
@@ -271,16 +282,16 @@ class ZenodoAPI:
 
         self._check_authentication()
 
-        if record_id:
-            record_id, owner_id = self._create_new_version(
-                self.get_latest_version_id(record_id)
-            )
-            action = "update"
-        else:
-            record_id, owner_id = self._create_draft()
-            action = "creation"
-
+        latest_record_id = None
         try:
+            if record_id:
+                action = "update"
+                latest_record_id = self.get_latest_version_id(record_id)
+                record_id, owner_id = self._create_new_version(latest_record_id)
+            else:
+                action = "creation"
+                record_id, owner_id = self._create_draft()
+
             if not metadata["metadata"].get("creators"):
                 metadata = self._add_creators_to_metadata(owner_id, metadata)
 
@@ -297,22 +308,24 @@ class ZenodoAPI:
 
         except Exception as e:
             # Delete the draft if an error occurs
-            # Prevents issue when retrying to modify the record while a draft exits.
+            # Prevents issue when retrying to modify the record while a draft exists.
             self.logger.info(
                 f"Reverting record {action} for zenodo.{record_id} due to error: {e}"
             )
-            response = self.client.delete(
-                f"/records/{record_id}/draft",
-            )
-            if response.status_code == 204:
-                self.logger.info(f"Record {action} reverted")
-            else:
-                self.logger.warning(
-                    f"Failed to revert record {action} for zenodo.{record_id}: "
-                    f"{response.json()}"
-                )
-
-            raise ZenodoAPIError from e
+            # Depending on where the failure occurred, the draft may be attached
+            # to latest_record_id (e.g. if failure was at _create_new_version)
+            # instead of record_id
+            for draft_record_id in {record_id, latest_record_id} - {None}:
+                try:
+                    self._delete_draft(draft_record_id)
+                except ZenodoAPIError as delete_error:
+                    self.logger.warning(
+                        f"Failed to delete draft for zenodo.{draft_record_id}: "
+                        f"{delete_error}"
+                    )
+            raise ZenodoAPIError(
+                f"Failed to {action} the Zenodo record (zenodo.{record_id}): {e}"
+            ) from e
 
         return doi
 
