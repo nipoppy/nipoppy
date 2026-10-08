@@ -1,9 +1,8 @@
-# Welcome to the Nipoppy documentation website!
+# Welcome to the Nipoppy documentation website
 
 Nipoppy is a lightweight framework for standardized organization and processing of neuroimaging-clinical data. Its goal is to help users adopt the [FAIR](https://www.go-fair.org/fair-principles/) principles and improve the reproducibility of studies.
 
 <img alt="Nipoppy protocol" src="_static/img/nipoppy_protocol.jpg" width=850px>
-
 
 The framework includes three components:
 
@@ -26,7 +25,6 @@ Instructions to set up Nipoppy package
 A user guide to get started
 :::
 ::::
-
 
 ```{toctree}
 ---
@@ -85,7 +83,6 @@ how_to_guides/parallelization/index
 how_to_guides/pipeline_create/index
 Configuring studies <how_to_guides/configuration/index>
 ```
-
 
 ```{toctree}
 ---
