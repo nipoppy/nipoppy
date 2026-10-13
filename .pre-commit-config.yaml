@@ -35,3 +35,5 @@ repos:
     rev: v0.18.1
     hooks:
     -   id: markdownlint
+        # Use installed Ruby to avoid compilation timeouts on pre-commit.ci.
+        language_version: system
