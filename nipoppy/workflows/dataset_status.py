@@ -55,7 +55,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             datatype = (datatype,)
         if datatype is None:
             datatype = ()
-        datatypes = {value.strip() for value in datatype if value.strip()}
+        datatypes = set(datatype)
         self.datatypes: set[str] | None = datatypes or None
 
     def run_main(self) -> pd.DataFrame | None:

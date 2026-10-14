@@ -295,7 +295,6 @@ def extract(**params):
         "Only include imaging manifest rows whose datatype list contains all of the "
         "requested BIDS datatypes. Repeat the option for each datatype, "
         "e.g. '--datatype dwi --datatype anat'."
-        " The manifest is the source of the selection."
     ),
 )
 @global_options
