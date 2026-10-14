@@ -334,6 +334,7 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "--study",
                 "[mocked_dir]",
                 "zenodo.123456",
+                "--skip-container",
             ],
             "nipoppy.workflows.pipeline_store.install.PipelineInstallWorkflow",
         ),
