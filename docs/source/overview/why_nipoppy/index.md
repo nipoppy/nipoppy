@@ -1,4 +1,4 @@
-# Why Nipoppy
+# Why Nipoppy?
 
 *This is why Nipoppy was created.*
 
