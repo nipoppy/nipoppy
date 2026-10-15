@@ -5,4 +5,4 @@ rules '~MD002', # Enforces H1 first; breaks GitHub PR template where PR title is
       '~MD014', # Forbids '$' prompts without output; degrades Pygments syntax highlighting in console blocks.
       '~MD028', # Forbids blank lines in blockquotes; breaks MyST admonition parsing for adjacent alert boxes.
       '~MD029', # Enforces '1. 1. 1.' numbering; churns docs written with explicit sequential numbering.
-      '~MD033'  # Forbids inline HTML; breaks embedded YouTube videos, theme logos, and contributor tables.
+      '~MD033'  # Forbids inline HTML; inline HTML needed for e.g. YouTube videos, some images, team/contributor tables.
