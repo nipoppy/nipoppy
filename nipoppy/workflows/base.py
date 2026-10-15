@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import shlex
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from functools import cached_property
@@ -26,6 +27,10 @@ from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
+)
+from nipoppy.workflows.services.telemetry import (
+    _TelemetryHandler,
+    get_telemetry_handler,
 )
 
 logger = get_logger()
@@ -178,6 +183,8 @@ class BaseWorkflow(Base, ABC):
         # for the CLI
         self.return_code = ReturnCode.SUCCESS
 
+        self._telemetry: _TelemetryHandler | None = None
+
         logger.set_verbose(self.verbose)
 
     def run_setup(self):
@@ -185,6 +192,8 @@ class BaseWorkflow(Base, ABC):
         logger.debug(self)
         if self.dry_run:
             logger.info("Doing a dry run")
+        else:
+            self._telemetry = get_telemetry_handler()
 
     @abstractmethod
     def run_main(self):
@@ -200,10 +209,14 @@ class BaseWorkflow(Base, ABC):
         try:
             self.run_setup()
             self.run_main()
-        except Exception:
-            raise
         finally:
             self.run_cleanup()
+            # for the telemetry to get the correct return code
+            return_code = self.return_code
+            if sys.exc_info()[0] is not None and return_code == ReturnCode.SUCCESS:
+                return_code = ReturnCode.UNKNOWN_FAILURE
+            if self._telemetry is not None:
+                self._telemetry.record_command_completion(self.name, return_code)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
