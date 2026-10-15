@@ -249,7 +249,9 @@ def test_check_tar_conditions_no_tar(runner: ProcessingRunner):
 
 
 @pytest.mark.parametrize("dpath_type", [Path, str])
-def test_tar_directory(tmp_path: Path, dpath_type):
+def test_tar_directory(tmp_path: Path, dpath_type, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("COPYFILE_DISABLE", "1")  # Disable ._ files on macOS
+
     # create dummy files to tar
     dpath_to_tar = tmp_path / "my_data"
     fpaths_to_tar = [
