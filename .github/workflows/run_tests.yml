@@ -19,12 +19,15 @@ jobs:
 
   test:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
+      # keep running other jobs if one fails, to tell OS-specific failures apart
+      fail-fast: false
       matrix:
-        # NOTE: when adding a new version, update the 'if' condition in
+        # NOTE: when adding a new OS or version, update the 'if' condition in
         #       the 'Run API tests' step
+        os: [ubuntu-latest, macos-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     # only trigger on upstream repo
@@ -56,7 +59,7 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
 
     - name: Run API tests
-      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.14'
+      if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && matrix.python-version == '3.14' && matrix.os == 'ubuntu-latest'
       run: |
         uv run python -m pytest -m api
       env:
