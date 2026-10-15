@@ -7,7 +7,6 @@ from abc import ABC
 from functools import cached_property
 from pathlib import Path
 
-from boutiques import bosh
 from typing_extensions import override
 
 from nipoppy.config.boutiques import BoutiquesConfig
@@ -15,6 +14,7 @@ from nipoppy.config.container import ContainerConfig
 from nipoppy.config.hpc import HpcConfig
 from nipoppy.container import ContainerHandler, get_container_handler
 from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.integrations.boutiques import boutiques_api
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
@@ -236,7 +236,7 @@ class Runner(BasePipelineWorkflow, ABC):
         # validate the descriptor
         logger.debug(f"Descriptor string: {descriptor_str}")
         logger.info("Validating the JSON descriptor")
-        bosh(["validate", descriptor_str])
+        boutiques_api.validate_descriptor(descriptor_str)
 
         # process and validate the invocation
         logger.info("Processing the JSON invocation")
@@ -250,7 +250,7 @@ class Runner(BasePipelineWorkflow, ABC):
         )
         logger.debug(f"Invocation string: {invocation_str}")
         logger.info("Validating the JSON invocation")
-        bosh(["invocation", "-i", invocation_str, descriptor_str])
+        boutiques_api.validate_invocation(invocation_str, descriptor=descriptor_str)
 
         # run as a subprocess so that stdout/error are captured in the log
         # by default, this will raise an exception if the command fails

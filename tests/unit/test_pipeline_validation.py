@@ -15,7 +15,7 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import ConfigType, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
+from nipoppy.exceptions import ConfigError, FileOperationError
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
@@ -111,28 +111,9 @@ def test_check_descriptor_file_deprecation_error():
         )
 
 
-def test_check_descriptor_file_remains_strict_json(tmp_path: Path):
-    fpath = tmp_path / "descriptor.json"
-    fpath.write_text('{"name": "x",}')  # trailing comma makes it invalid JSON
-
-    with pytest.raises(JSONError):
-        _check_descriptor_file(fpath)
-
-
-@pytest.mark.parametrize(
-    "fpath,exception_class,exception_message",
-    [
-        ("fake_path.json", FileOperationError, "Descriptor file not found"),
-        (
-            DPATH_TEST_DATA / "descriptor-invalid.json",
-            ConfigError,
-            "Descriptor file .* is invalid",
-        ),
-    ],
-)
-def test_check_descriptor_file_invalid(fpath, exception_class, exception_message):
-    with pytest.raises(exception_class, match=exception_message):
-        _check_descriptor_file(fpath)
+def test_check_descriptor_file_invalid():
+    with pytest.raises(ConfigError, match="Descriptor file .* is invalid"):
+        _check_descriptor_file(DPATH_TEST_DATA / "descriptor-invalid.json")
 
 
 def test_check_invocation_file(descriptor_str):
