@@ -202,6 +202,7 @@ nitpick_ignore = [
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
     ("py:class", "httpx.Client"),
+    ("py:class", "_TelemetryHandler"),
 ]
 
 # -- Sphinx Github Changelog configuration ------------------------------------
