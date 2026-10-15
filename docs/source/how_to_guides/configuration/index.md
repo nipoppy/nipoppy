@@ -11,14 +11,14 @@ It is also possible to set these options using `.env` environment files.
 Nipoppy searches the following locations (in order of decreasing priority):
 
 1. {{dpath_root}}`/.env`: study-level
-2. `~/.nipoppy/.env`: user-level
+1. `~/.nipoppy/.env`: user-level
 
 The overall order for determining the value of options is as follows (highest to lowest priority):
 
 1. Command-line options that are explicitly passed when calling the command
-2. Environment variables that are already defined at runtime
-3. Environment variables loaded from `.env` file(s) (see above)
-4. CLI default values
+1. Environment variables that are already defined at runtime
+1. Environment variables loaded from `.env` file(s) (see above)
+1. CLI default values
 
 (default-config-override)=
 

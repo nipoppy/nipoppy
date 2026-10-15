@@ -8,9 +8,9 @@ The framework includes three components:
 
 1. A **protocol** for data _wrangling_ to standardize generation of analysis-ready datasets
 
-2. A **specification** for study organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/)
+1. A **specification** for study organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/)
 
-3. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
+1. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
 
 ## Next steps
 

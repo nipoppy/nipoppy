@@ -167,10 +167,10 @@ Job scheduling support in the Nipoppy package relies on the [`pysqa`](https://py
 To add support for another job scheduler supported by `pysqa` (e.g., [Flux](https://flux.ly/)), follow these steps:
 
 1. Navigate to {{dpath_hpc}}.
-2. Create a `flux.yaml` file. Refer to the existing `slurm.yaml` and `sge.yaml` for what the content of that file should be.
-3. Update `clusters.yaml` to add `flux` as an additional cluster.
-4. Update `job_script_template.sh` to add a section for Flux configs.
-5. You should now be able to run `nipoppy bidsify`/`process`/`extract` with `--hpc flux`.
+1. Create a `flux.yaml` file. Refer to the existing `slurm.yaml` and `sge.yaml` for what the content of that file should be.
+1. Update `clusters.yaml` to add `flux` as an additional cluster.
+1. Update `job_script_template.sh` to add a section for Flux configs.
+1. You should now be able to run `nipoppy bidsify`/`process`/`extract` with `--hpc flux`.
 
 See also the [`pysqa` documentation](https://pysqa.readthedocs.io) for more information.
 

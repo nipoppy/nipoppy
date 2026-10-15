@@ -3,8 +3,8 @@
 The question of managing tabular (e.g. clinical or behavioural) data is a complex one. The main challenges include:
 
 1. Lack of a standardized vocabulary for naming variables
-2. Asynchrony between tabular and imaging data collection workflows
-3. Difficulty in defining criteria for data validation
+1. Asynchrony between tabular and imaging data collection workflows
+1. Difficulty in defining criteria for data validation
 
 [BIDS extension proposal (BEP) 36](https://bids.neuroimaging.io/extensions/beps/bep_036.html) is one of the major efforts in this space aimed at providing guidelines on standardized naming and organization of tabular data. Nipoppy will support and promote this standard once merged, and therefore we do not have any strong rules or validations for tabular data management the moment. Having said that, we do have a few recommendations that align with the BIDS direction and can be helpful in general.
 

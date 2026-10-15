@@ -5,9 +5,9 @@ In this tutorial, you will learn how to use the Nipoppy {term}`CLI` to run the [
 Concretely, we will:
 
 1. **Initialize** a Nipoppy study from a BIDS dataset
-2. **Install** and set up the MRIQC processing pipeline
-3. **Run** MRIQC on a single participant and session
-4. **Track** the output files to check if processing was successful
+1. **Install** and set up the MRIQC processing pipeline
+1. **Run** MRIQC on a single participant and session
+1. **Track** the output files to check if processing was successful
 
 ```{note}
 If you have not installed Nipoppy yet, instructions are available [here](../../overview/installation).

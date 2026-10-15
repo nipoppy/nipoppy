@@ -5,10 +5,10 @@ In this tutorial, you will learn how to use Nipoppy and the BIDS converter [dcm2
 Concretely, we will:
 
 1. Initialize a Nipoppy study
-2. Reorganize DICOM sourcedata
-3. Install and set up the dcm2bids pipeline
-4. Extract DICOM header information to create the `dcm2bids_config.json` file
-5. Convert the DICOM sourcedata to NIfTI BIDS raw data
+1. Reorganize DICOM sourcedata
+1. Install and set up the dcm2bids pipeline
+1. Extract DICOM header information to create the `dcm2bids_config.json` file
+1. Convert the DICOM sourcedata to NIfTI BIDS raw data
 
 ```{note}
 If you have not installed Nipoppy yet, instructions are available [here](../../overview/installation).

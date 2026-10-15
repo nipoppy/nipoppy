@@ -23,8 +23,8 @@ If your raw BIDS data does not have session-level directories or `ses-` entities
 We believe that having explicitly labelled sessions constitutes best practices:
 
 1. It allows for more consistent organization across cross-sectional and longitudinal studies
-2. It will facilitate the addition of new sessions if follow-up data collection is carried out or if the study design becomes longitudinal
-3. It may help link data between non-imaging and imaging visits
+1. It will facilitate the addition of new sessions if follow-up data collection is carried out or if the study design becomes longitudinal
+1. It may help link data between non-imaging and imaging visits
 
 :::
 
