@@ -15,7 +15,7 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques>=0.5.31",
+    "boutiques>=0.5.31, < 0.6.0",
     "click",
     "httpx",
     "jinja2",
