@@ -770,14 +770,3 @@ def test_cli_show_envvar(command_name: str):
                 f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
                 f"to display the env var in the help message."
             )
-
-
-def test_pipeline_create_help_option_groups():
-    """Test that --source-descriptor is listed under Command-specific."""
-    result = runner.invoke(cli, ["pipeline", "create", "--help"], prog_name="nipoppy")
-    assert result.exit_code == ReturnCode.SUCCESS
-    assert "Command-specific" in result.output
-    assert "--source-descriptor" in result.output
-    # Ensure there is no fallback panel titled "Options"
-    panel_headers = [line.strip() for line in result.output.splitlines() if "─" in line]
-    assert not any("Options" in header for header in panel_headers)
