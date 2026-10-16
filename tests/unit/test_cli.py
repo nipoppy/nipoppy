@@ -169,6 +169,31 @@ def test_study_and_dataset_mutually_exclusive(
 
 
 @pytest.mark.no_xdist
+@pytest.mark.parametrize("command", ["bidsify", "process", "extract"])
+def test_write_subcohort_and_write_list_mutually_exclusive(
+    command: str, tmp_path: Path
+):
+    """Test that providing both --write-subcohort and --write-list raises an error."""
+    result = runner.invoke(
+        cli,
+        [
+            command,
+            "--study",
+            str(tmp_path),
+            "--pipeline",
+            "fake_pipeline",
+            "--write-subcohort",
+            f"{tmp_path}/subcohort.tsv",
+            "--write-list",
+            f"{tmp_path}/list.tsv",
+        ],
+        catch_exceptions=False,
+    )
+    assert result.exit_code != ReturnCode.SUCCESS
+    assert "Cannot specify both --write-subcohort and --write-list" in result.output
+
+
+@pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["doughnut", "run", "track"])
 def test_cli_deprecations(command, caplog: pytest.LogCaptureFixture):
     _assert_command_success(f"{command} -h")
