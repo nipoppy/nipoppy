@@ -64,15 +64,12 @@ class StatusWorkflow(BaseDatasetWorkflow):
             [status_col_dict["manifest"]] + curation_cols + processing_cols
         ]
 
-        logger.debug(f"curation columns: {curation_cols}")
-        logger.debug(f"processing columns: {processing_cols}")
-
         # check if the number of bids participants match the manifest
         # note: not checking participant IDs, just the number of participants
         if curation_cols and status_df[self.curation_status_table.col_in_bids].equals(
             status_df["in_manifest"]
         ):
-            logger.info(
+            logger.debug(
                 "BIDSification completed: hiding counts for pre- and post-reorg stages."
             )
             status_df = status_df.drop(
@@ -90,7 +87,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
-        logger.info("Dataset summary (based on the manifest file):")
 
         manifest = self.study.manifest
 
@@ -109,33 +105,29 @@ class StatusWorkflow(BaseDatasetWorkflow):
         # Get the number of imaging sessions in the manifest
         session_ids = sorted(imaging_manifest[manifest.col_session_id].unique())
 
-        logger.info(
+        logger.debug(
             f"\tNumber of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
         )
-        logger.info(
+        logger.debug(
             f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
         )
-        logger.info(
+        logger.debug(
             f"\tNumber of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
         )
-        logger.info(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
+        logger.debug(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
         ).count()[[imaging_manifest.col_participant_id]]
         manifest_status_df.columns = [nipoppy_checkpoint]
 
-        logger.debug(f"manifest_status_df:\n{manifest_status_df}")
         status_df = pd.concat([status_df, manifest_status_df], axis=1)
         return status_df
 
     def _check_curation_status_table(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the curation status file (if exists)."""
-        nipoppy_checkpoint = "in_curation_status_table"
-
-        logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
         table = self.curation_status_table
 
         if table.empty:
@@ -148,26 +140,13 @@ class StatusWorkflow(BaseDatasetWorkflow):
             table.col_in_bids,
         ]
 
-        # Get the number of participants in the curation status file
-        participant_ids = table[table.col_participant_id].unique()
-        session_ids = table[table.col_session_id].unique()
-
-        logger.debug(
-            f"\tNumber of participants in curation status file: {len(participant_ids)}"
-        )
-        logger.debug(f"\tAvailable sessions (n={len(session_ids)}): {session_ids}")
-
         curation_status_df = table.groupby([table.col_session_id]).sum()[curation_cols]
 
-        logger.debug(f"curation_status_df: {curation_status_df}")
         status_df = pd.concat([status_df, curation_status_df], axis=1)
         return status_df, curation_cols
 
     def _check_processing_status_table(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the processing status file (if exists)."""
-        nipoppy_checkpoint = "in_processing_status_table"
-
-        logger.debug(f"Status at nipoppy_checkpoint: {nipoppy_checkpoint}")
         table = self.processing_status_table
 
         if table.empty:
@@ -177,17 +156,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             )
             return status_df, []
 
-        # Get the number of participants in the processing status file
-        participant_ids = table[table.col_participant_id].unique()
-        session_ids = table[table.col_session_id].unique()
         pipelines = table[table.col_pipeline_name].unique()
-
-        logger.debug(
-            "\tNumber of participants in processing status file: "
-            f"{len(participant_ids)}"
-        )
-        logger.debug(f"\tAvailable visits (n={len(session_ids)}): {session_ids}")
-        logger.debug(f"\tAvailable pipelines (n={len(pipelines)}): {pipelines}")
 
         # Check if at least successful run exists
         if table[table[table.col_status] == STATUS_SUCCESS].empty:
@@ -236,8 +205,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
         processing_status_df = processing_pipeline_df.groupby(
             [table.col_session_id]
         ).count()
-
-        logger.debug(f"processing_status_df: {processing_status_df}")
 
         status_df = pd.concat([status_df, processing_status_df], axis=1)
 
