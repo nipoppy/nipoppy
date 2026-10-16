@@ -13,6 +13,7 @@ import pytest
 import pytest_mock
 import rich_click as click
 from click.testing import CliRunner
+from rich_click import UsageError
 
 from nipoppy.cli import (
     BUG_REPORT_URL,
@@ -166,6 +167,33 @@ def test_study_and_dataset_mutually_exclusive(
         "Cannot specify both --study and --dataset" in record.message
         for record in caplog.records
     )
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize("command", ["bidsify", "process", "extract"])
+def test_write_subcohort_and_write_list_mutually_exclusive(
+    command: str, tmp_path: Path
+):
+    """Test that providing both --write-subcohort and --write-list raises an error."""
+    with pytest.raises(
+        UsageError, match="Cannot specify both --write-subcohort and --write-list."
+    ):
+        runner.invoke(
+            cli,
+            [
+                command,
+                "--study",
+                str(tmp_path),
+                "--pipeline",
+                "fake_pipeline",
+                "--write-subcohort",
+                f"{tmp_path}/subcohort.tsv",
+                "--write-list",
+                f"{tmp_path}/list.tsv",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
 
 
 @pytest.mark.no_xdist

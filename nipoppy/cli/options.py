@@ -49,6 +49,19 @@ def dep_params(**params):
         if study_provided and dataset_provided:
             raise click.UsageError("Cannot specify both --study and --dataset.")
 
+        write_subcohort_provided = (
+            ctx.get_parameter_source("write_subcohort")
+            == click.core.ParameterSource.COMMANDLINE
+        )
+        write_list_provided = (
+            ctx.get_parameter_source("write_list")
+            == click.core.ParameterSource.COMMANDLINE
+        )
+        if write_subcohort_provided and write_list_provided:
+            raise click.UsageError(
+                "Cannot specify both --write-subcohort and --write-list."
+            )
+
     # --dataset is deprecated by --study
     if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):
         logger.warning(
