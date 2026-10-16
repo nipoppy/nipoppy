@@ -370,7 +370,8 @@ def test_download_container_status(
     mocked_run_command = mocker.patch(
         "nipoppy.workflows.pipeline_store.install._run_command"
     )
-    # simulate image not downloaded without requiring docker to be installed
+    # simulate image not downloaded instead of calling `docker image inspect`,
+    # since GitHub macOS runners do not have docker installed by default
     mocker.patch(
         "nipoppy.container.subprocess.run",
         return_value=subprocess.CompletedProcess(args=[], returncode=1),
