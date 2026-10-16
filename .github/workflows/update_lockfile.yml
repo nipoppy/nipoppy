@@ -16,7 +16,7 @@ jobs:
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
+          client-id: ${{ vars.NIPOPPY_BOT_CLIENT_ID }}
           private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
       - uses: peter-evans/create-pull-request@v8
         with:
