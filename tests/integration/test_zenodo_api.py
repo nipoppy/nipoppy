@@ -41,7 +41,7 @@ def metadata():
             "publication_date": "2024-04-04",
             "publisher": "Nipoppy",
             "resource_type": {"id": "software"},
-            "keywords": ["Nipoppy", "processing"],
+            "subjects": [{"subject": "Nipoppy"}, {"subject": "processing"}],
         }
     }
 
@@ -140,6 +140,12 @@ def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
     # verify that the default preview file is set correctly
     response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
     assert response.json()["default_preview"] == DEFAULT_PREVIEW
+
+    # verify that the keywords (subjects) are set correctly
+    record_metadata = zenodo_api.get_record_metadata(new_record_id)
+    expected_keywords = {"Nipoppy", "processing"}
+    actual_keywords = set(record_metadata.get("keywords", []))
+    assert expected_keywords.issubset(actual_keywords)
 
 
 @pytest.mark.api
