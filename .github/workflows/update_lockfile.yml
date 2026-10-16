@@ -11,9 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.2.0
-        with:
-          python-version: 3.14
-      - run: uv lock
+      - run: uv lock --upgrade
       - name: Generate a token
         id: generate-token
         uses: actions/create-github-app-token@v3
@@ -26,4 +24,4 @@ jobs:
           branch: ci/update_lockfile
           labels: 'T.2 - Maintenance,bot'
           commit-message: '[MAINT] Update lockfile'
-          token: $${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}
