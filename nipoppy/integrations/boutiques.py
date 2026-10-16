@@ -127,20 +127,28 @@ class BoutiquesNextAPI(BoutiquesAPI):
     """Boutiques API for versions >= 0.6.0."""
 
     def validate_descriptor(self, descriptor: StrOrPathLike, /) -> None:  # noqa: D102
-        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+        raise NotImplementedError(
+            f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
+        )
 
     def validate_invocation(  # noqa: D102
         self, invocation: StrOrPathLike, *, descriptor: StrOrPathLike
     ) -> None:
-        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+        raise NotImplementedError(
+            f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
+        )
 
     def create_descriptor(self, descriptor_path: Path, /) -> None:  # noqa: D102
-        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+        raise NotImplementedError(
+            f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
+        )
 
     def generate_example_invocation(  # noqa: D102
         self, descriptor_path: Path, /
     ) -> str:
-        raise NotImplementedError("boutiques >= 0.6.0 is not supported yet")
+        raise NotImplementedError(
+            f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
+        )
 
 
 def _create_boutiques_api() -> BoutiquesAPI:
