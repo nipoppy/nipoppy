@@ -107,16 +107,12 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         logger.debug(
             f"\tNumber of participants (imaging and non-imaging): "
-            f"{len(participant_ids)}"
-        )
-        logger.debug(
-            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
-        )
-        logger.debug(
+            f"{len(participant_ids)}\n"
+            f"\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}\n"
             f"\tNumber of participants with imaging data: "
-            f"{len(imaging_participant_ids)}"
+            f"{len(imaging_participant_ids)}\n"
+            f"\tImaging sessions (n={len(session_ids)}): {session_ids}"
         )
-        logger.debug(f"\tImaging sessions (n={len(session_ids)}): {session_ids}")
 
         manifest_status_df = imaging_manifest.groupby(
             [imaging_manifest.col_session_id]
