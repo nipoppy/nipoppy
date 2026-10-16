@@ -106,7 +106,7 @@ sub- and ses- prefix added
 - uncompressed DICOM sourcedata in {{dpath_pre_reorg}}. You can check this by running
 
 ```console
-$ nipoppy status --dataset <NIPOPPY_STUDY_ROOT>
+$ nipoppy status --study <NIPOPPY_STUDY_ROOT>
 ```
 
 The output should list the number of participants that are present in both the {term}`manifest file` and in {{dpath_pre_reorg}} but are not in {{dpath_post_reorg}} yet, according to the {term}`curation status file`. These are the participants and session Nipoppy will loop over when running `nipoppy reorg`. If you feel like the information of `nipoppy status` is outdated, you can run `nipoppy track-curation` to update.
@@ -118,7 +118,7 @@ The output should list the number of participants that are present in both the {
 If all of these requirements are satisfied, you can run
 
 ```console
-$ nipoppy reorg --dataset <NIPOPPY_STUDY_ROOT>
+$ nipoppy reorg --study <NIPOPPY_STUDY_ROOT>
 ```
 
 For each participant-session pair, Nipoppy
@@ -128,7 +128,7 @@ For each participant-session pair, Nipoppy
 You can check the successful reorganization in the {term}`curation status file` or simply by running
 
 ```console
-$ nipoppy status --dataset <NIPOPPY_STUDY_ROOT>
+$ nipoppy status --study <NIPOPPY_STUDY_ROOT>
 ```
 
 ### Customizing the `nipoppy reorg` behavior

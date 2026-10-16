@@ -16,7 +16,7 @@ $ git clone https://github.com/nipoppy/tutorial-dataset.git
 
 **1.** Initialize a Nipoppy study:
 ```{code-block} console
-$ nipoppy init --dataset my-example-study
+$ nipoppy init --study my-example-study
 ```
 
 ```{important}

@@ -8,11 +8,11 @@ from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroup
 from nipoppy.cli.options import (
     assume_yes_option,
-    dataset_option,
     dep_params,
     global_options,
     layout_option,
     password_file_option,
+    study_option,
 )
 from nipoppy.env import PipelineTypeEnum
 from nipoppy.zenodo_api import ZenodoAPI
@@ -122,13 +122,21 @@ def pipeline_create(**params):
     type=str,
 )
 @zenodo_options
-@dataset_option
+@study_option
 @click.option(
     "--force",
     "-f",
     "--overwrite",
     is_flag=True,
     help="Overwrite existing pipeline directory if it exists.",
+)
+@click.option(
+    "--skip-container",
+    is_flag=True,
+    help=(
+        "Skip downloading the pipeline container "
+        "(mutually exclusive with --assume-yes)."
+    ),
 )
 @global_options
 @layout_option
@@ -152,7 +160,7 @@ def pipeline_install(**params):
 
 
 @pipeline.command("list")
-@dataset_option
+@study_option
 @global_options
 @layout_option
 def pipeline_list(**params):

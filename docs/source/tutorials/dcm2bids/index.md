@@ -42,7 +42,7 @@ Unzip once downloaded.
 **1.1.** Run the following command to create a Nipoppy study:
 
 ```console
-$ nipoppy init --dataset nipoppy_study
+$ nipoppy init --study nipoppy_study
 ```
 
 This command creates a folder named `nipoppy_study` with subdirectories for raw data, processed (derivatives) data, pipeline configuration files, logs, etc. The `tree` command can be used to show the directory structure.
@@ -100,13 +100,13 @@ Running `tree nipoppy_study/sourcedata/imaging/pre_reorg/ | head` we can see com
 We need to track this modification in our study by running
 
 ```console
-nipoppy track-curation --dataset nipoppy_study
+nipoppy track-curation --study nipoppy_study
 ```
 
 before we can have an overview of the study status with
 
 ```console
-nipoppy status --dataset nipoppy_study
+nipoppy status --study nipoppy_study
 ```
 
 ```{code-block}
@@ -122,7 +122,7 @@ nipoppy status --dataset nipoppy_study
 **2.2.** We run
 
 ```console
-nipoppy reorg --dataset nipoppy_study
+nipoppy reorg --study nipoppy_study
 ```
 
 Our data was symlinked and reorganized into the `post_reorg` directory. We can see so by running
@@ -186,7 +186,7 @@ By default, this file does not contain any pipeline-specific information, since 
 **3.2.** We can use following command to check which pipelines can be run with the study:
 
 ```console
-$ nipoppy pipeline list --dataset nipoppy_study
+$ nipoppy pipeline list --study nipoppy_study
 ```
 
 The output says that there are no available pipelines to be run:
@@ -198,7 +198,7 @@ INFO     No available extraction pipelines
 
 That is because a newly initialized Nipoppy study does not contain any pipelines. Pipeline configuration files are available on the [Zenodo data repository](https://zenodo.org/search?q=metadata.subjects.subject%3A%22Nipoppy%22&l=list&p=1&s=10&sort=bestmatch) and can be searched for directly from your terminal using the command `nipoppy pipeline search`. The [configuration files for dcm2bids](https://zenodo.org/records/16876754) can be downloaded by running the following:
 ```{code-block} console
-$ nipoppy pipeline install --dataset nipoppy_study {{zenodo_id_dcm2bids_3_2_0}}
+$ nipoppy pipeline install --study nipoppy_study {{zenodo_id_dcm2bids_3_2_0}}
 ```
 
 When running `nipoppy pipeline install`, if using a container engine, you will be asked if you would like to download the dcm2bids container. If you do not already have a download of the container, type `y` and press `Enter` to do so. The download/building process may take ~10 minutes. Apptainer or Singularity container images will be downloaded as `dcm2bids_3.2.0.sif` inside the container store directory (i.e., `nipoppy_study/containers` or the custom path you set in the `global_config.json` file). Docker images are managed centrally and so will not be downloaded to the study.
@@ -248,7 +248,7 @@ dcm2bids is a multi-step pipeline in Nipoppy. The steps are detailed in {{dpath_
 
 **4.1.** We run
 ```console
-nipoppy bidsify --dataset nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step prepare
+nipoppy bidsify --study nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step prepare
 ```
 
 In our scratch directory we should see something like this now:
@@ -310,7 +310,7 @@ In our case, the `dcm2bids_config.json` can look like this:
 **5.1.** We are now ready to run the "convert" step
 
 ```console
-nipoppy bidsify --dataset nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step convert
+nipoppy bidsify --study nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step convert
 ```
 
 After successful conversion, the output of `nipoppy status` should tell us that we have all our participants `in_bids`:
