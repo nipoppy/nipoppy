@@ -1,7 +1,7 @@
 # Nipoppy
 
 [![Discord](https://dcbadge.limes.pink/api/server/https://discord.gg/2VMKFRpjkm?style=flat)](https://discord.gg/2VMKFRpjkm)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.8084759.svg)](https://doi.org/10.5281/zenodo.8084759)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8084759-blue)](https://doi.org/10.5281/zenodo.8084759)
 [![PyPI - Version](https://img.shields.io/pypi/v/nipoppy)](https://pypi.org/project/nipoppy/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/license/mit)
 [![codecov](https://codecov.io/gh/nipoppy/nipoppy/graph/badge.svg?token=SN38ITRO4M)](https://codecov.io/gh/nipoppy/nipoppy)
