@@ -8,6 +8,7 @@ from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroup
 from nipoppy.cli.options import (
     assume_yes_option,
+    basic_pipeline_options,
     dep_params,
     global_options,
     layout_option,
@@ -174,25 +175,11 @@ def pipeline_list(**params):
 
 @pipeline.command("info")
 @study_option
-@click.option(
-    "--pipeline",
-    "pipeline_name",
-    type=str,
-    required=True,
-    help="Pipeline name, as specified in the config file.",
-)
-@click.option(
-    "--pipeline-version",
-    type=str,
-    help=(
-        "Pipeline version, as specified in the pipeline config file "
-        "(default: latest out of the installed versions)."
-    ),
-)
+@basic_pipeline_options
 @global_options
 @layout_option
 def pipeline_info(**params):
-    """Show the file paths of an installed pipeline."""
+    """Show the configuration details of an installed pipeline."""
     from nipoppy.workflows.pipeline_store.info import PipelineInfoWorkflow
 
     params = dep_params(**params)
