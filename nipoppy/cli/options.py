@@ -51,10 +51,7 @@ def check_mutually_exclusive(
 ) -> None:
     """Check that multiple flags are mutually exclusive on the command line."""
     if ctx is None:
-        ctx = click.get_current_context(silent=True)
-    if ctx is None:
-        # Can occur when called outside an active Click context (e.g., in tests)
-        return
+        ctx = click.get_current_context()
 
     provided_flags = [
         flag
