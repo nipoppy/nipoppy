@@ -53,6 +53,7 @@ def check_mutually_exclusive(
     if ctx is None:
         ctx = click.get_current_context(silent=True)
     if ctx is None:
+        # Can occur when called outside an active Click context (e.g., in tests)
         return
 
     provided_flags = [

@@ -214,6 +214,12 @@ def test_check_mutually_exclusive(cli_args: list[str], expected_match: str):
         runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
 
 
+def test_check_mutually_exclusive_no_context():
+    """Test check_mutually_exclusive when called outside an active Click context."""
+    assert check_mutually_exclusive("--flag1", "--flag2") is None
+    assert check_mutually_exclusive("--flag1", "--flag2", ctx=None) is None
+
+
 @pytest.mark.no_xdist
 @pytest.mark.parametrize("command", ["bidsify", "process", "extract"])
 def test_write_subcohort_and_write_list_mutually_exclusive(
