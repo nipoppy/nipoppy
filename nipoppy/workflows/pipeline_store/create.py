@@ -79,7 +79,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 )
             fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
         else:
-            boutiques.create(str(descriptor_path))
+            fileops.copy(
+                TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.DESCRIPTOR_FILE),
+                descriptor_path,
+            )
 
         substitutions = {"version": PROGRAM_VERSION}
 
