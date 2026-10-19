@@ -4,12 +4,9 @@ from pathlib import Path
 import httpx
 import pytest
 
+from nipoppy.utils.utils import get_today
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
-
-from ..conftest import (
-    TEST_PIPELINE,
-    datetime_fixture,  # noqa F401
-)
+from tests.conftest import TEST_PIPELINE
 
 ZENODO_SANDBOX = True
 SANDBOX_COMMUNITY_ID = "6bea0505-4b7e-4340-93a4-8275e747748e"
@@ -38,7 +35,7 @@ def metadata():
                     }
                 }
             ],
-            "publication_date": "2024-04-04",
+            "publication_date": get_today(),
             "publisher": "Nipoppy",
             "resource_type": {"id": "software"},
             "keywords": ["Nipoppy", "processing"],
