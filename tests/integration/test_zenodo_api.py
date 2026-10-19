@@ -145,7 +145,7 @@ def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
     record_metadata = zenodo_api.get_record_metadata(new_record_id)
     expected_keywords = {"Nipoppy", "processing"}
     actual_keywords = set(record_metadata.get("keywords", []))
-    assert expected_keywords.issubset(actual_keywords)
+    assert actual_keywords == expected_keywords
 
 
 @pytest.mark.api
