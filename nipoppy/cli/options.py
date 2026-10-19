@@ -62,11 +62,8 @@ def check_mutually_exclusive(
         == click.core.ParameterSource.COMMANDLINE
     ]
     if len(provided_flags) > 1:
-        if len(provided_flags) == 2:
-            flags_str = f"both {provided_flags[0]} and {provided_flags[1]}"
-        else:
-            flags_str = f"more than one of: {', '.join(provided_flags)}"
-        raise click.UsageError(f"Cannot specify {flags_str}.")
+        flags_str = ", ".join(provided_flags)
+        raise click.UsageError(f"Cannot specify more than one of: {flags_str}.")
 
 
 def dep_params(**params):

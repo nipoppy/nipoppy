@@ -156,7 +156,9 @@ def test_study_and_dataset_mutually_exclusive(
     tmp_path: Path,
 ):
     """Test that providing both --study and --dataset raises an error."""
-    with pytest.raises(UsageError, match="Cannot specify both --study and --dataset."):
+    with pytest.raises(
+        UsageError, match="Cannot specify more than one of: --study, --dataset."
+    ):
         runner.invoke(
             cli,
             [
@@ -190,7 +192,7 @@ def test_get_param_name(flag: str, ctx: click.Context | None, expected_param: st
     [
         (
             ["--flag1", "1", "--flag2", "2"],
-            "Cannot specify both --flag1 and --flag2.",
+            "Cannot specify more than one of: --flag1, --flag2.",
         ),
         (
             ["--flag1", "1", "--flag2", "2", "--flag3", "3"],
@@ -219,7 +221,8 @@ def test_write_subcohort_and_write_list_mutually_exclusive(
 ):
     """Test that providing both --write-subcohort and --write-list raises an error."""
     with pytest.raises(
-        UsageError, match="Cannot specify both --write-subcohort and --write-list."
+        UsageError,
+        match="Cannot specify more than one of: --write-subcohort, --write-list.",
     ):
         runner.invoke(
             cli,
