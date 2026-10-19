@@ -60,6 +60,5 @@ def test_cli_all_options_grouped(command_name: str):
     for param in command.params:
         if isinstance(param, click.Option) and not param.hidden:
             assert any(opt in grouped_options for opt in param.opts), (
-                f"Option {param.opts} of '{command_name}' is not in any option group. "
-                "Add it to the OPTION_GROUPS in nipoppy/cli/cli.py."
+                f"Option {param.opts} of '{command_name}' is not in any option group."
             )
