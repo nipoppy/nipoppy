@@ -700,7 +700,10 @@ def test_upload_record_not_a_dir(tmp_path: Path, zenodo_api: ZenodoAPI):
 
 @pytest.mark.parametrize(
     "delete_request_status_code,expected_log_message",
-    [(204, "Record creation reverted"), (500, "Failed to revert record")],
+    [
+        (204, "Draft deleted"),
+        (500, "Failed to delete draft"),
+    ],
 )
 @pytest.mark.no_xdist
 def test_upload_record_delete_draft(
@@ -734,6 +737,89 @@ def test_upload_record_delete_draft(
 
     assert "Reverting record creation" in caplog.text
     assert expected_log_message in caplog.text
+
+
+@pytest.mark.no_xdist
+def test_upload_record_deletes_draft_when_create_new_version_fails(
+    tmp_path: Path,
+    zenodo_api: ZenodoAPI,
+    mocker: pytest_mock.MockerFixture,
+    httpx_mock: pytest_httpx.HTTPXMock,
+    caplog: pytest.LogCaptureFixture,
+):
+    record_id = "123456"
+    latest_record_id = "654321"
+
+    mocker.patch.object(zenodo_api, "_check_authentication")
+    mocker.patch.object(
+        zenodo_api, "get_latest_version_id", return_value=latest_record_id
+    )
+    mocker.patch.object(
+        zenodo_api,
+        "_create_new_version",
+        side_effect=ZenodoAPIError("Failed to create a new version"),
+    )
+    for draft_record_id in (record_id, latest_record_id):
+        httpx_mock.add_response(
+            url=f"{zenodo_api.api_endpoint}/records/{draft_record_id}/draft",
+            method="DELETE",
+            status_code=204,
+            json={},
+        )
+
+    with pytest.raises(
+        ZenodoAPIError,
+        match=f"Failed to update the Zenodo record \\(zenodo.{record_id}\\)",
+    ):
+        zenodo_api.upload_record(
+            input_dir=tmp_path, metadata={"metadata": {}}, record_id=record_id
+        )
+
+    assert "Reverting record update" in caplog.text
+    assert "Draft deleted for zenodo.123456" in caplog.text
+    assert "Draft deleted for zenodo.654321" in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("status_code", "response_body", "should_raise"),
+    [
+        (204, {}, False),
+        (404, {}, False),
+        (500, {"message": "Internal server error"}, True),
+    ],
+)
+@pytest.mark.no_xdist
+def test_delete_draft(
+    status_code: int,
+    response_body: dict | None,
+    should_raise: bool,
+    zenodo_api: ZenodoAPI,
+    httpx_mock: pytest_httpx.HTTPXMock,
+    caplog: pytest.LogCaptureFixture,
+):
+    record_id = "123456"
+    httpx_mock.add_response(
+        url=f"{zenodo_api.api_endpoint}/records/{record_id}/draft",
+        method="DELETE",
+        status_code=status_code,
+        content=None,
+        json=response_body,
+    )
+
+    if should_raise:
+        with pytest.raises(
+            ZenodoAPIError,
+            match=f"Failed to delete draft for zenodo.{record_id}",
+        ):
+            zenodo_api._delete_draft(record_id)
+    else:
+        zenodo_api._delete_draft(record_id)
+        expected_log = (
+            "Draft deleted for zenodo.123456"
+            if status_code == 204
+            else "No draft to delete for zenodo.123456"
+        )
+        assert expected_log in caplog.text
 
 
 @pytest.mark.parametrize(
