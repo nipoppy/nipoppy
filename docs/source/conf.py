@@ -197,6 +197,8 @@ nitpick_ignore = [
     ("py:class", "argparse.HelpFormatter"),
     ("py:class", "argparse._SubParsersAction"),
     ("py:class", "argparse._ActionsContainer"),
+    ("py:class", "click.Context"),
+    ("py:class", "rich_click.Context"),
     ("py:class", "StrOrPathLike"),
     ("py:class", "nipoppy.env.StrOrPathLike"),
     ("py:class", "typing_extensions.Self"),
