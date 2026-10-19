@@ -36,6 +36,8 @@ def study_option(func):
 
 def _get_param_name(flag: str, ctx: click.Context | None = None) -> str:
     """Get the parameter name associated with a flag."""
+    # Look up in the command's declared params first, in case the parameter name
+    # was overridden (e.g., '--study' maps to 'dpath_root').
     if ctx is not None and ctx.command is not None:
         for param in ctx.command.params:
             if flag in param.opts or flag in param.secondary_opts:
@@ -44,27 +46,27 @@ def _get_param_name(flag: str, ctx: click.Context | None = None) -> str:
 
 
 def check_mutually_exclusive(
-    flag1: str,
-    flag2: str,
+    *flags: str,
     ctx: click.Context | None = None,
 ) -> None:
-    """Check that two flags are not both specified on the command line."""
+    """Check that multiple flags are mutually exclusive on the command line."""
     if ctx is None:
         ctx = click.get_current_context(silent=True)
     if ctx is None:
         return
 
-    param1 = _get_param_name(flag1, ctx)
-    param2 = _get_param_name(flag2, ctx)
-
-    flag1_provided = (
-        ctx.get_parameter_source(param1) == click.core.ParameterSource.COMMANDLINE
-    )
-    flag2_provided = (
-        ctx.get_parameter_source(param2) == click.core.ParameterSource.COMMANDLINE
-    )
-    if flag1_provided and flag2_provided:
-        raise click.UsageError(f"Cannot specify both {flag1} and {flag2}.")
+    provided_flags = [
+        flag
+        for flag in flags
+        if ctx.get_parameter_source(_get_param_name(flag, ctx))
+        == click.core.ParameterSource.COMMANDLINE
+    ]
+    if len(provided_flags) > 1:
+        if len(provided_flags) == 2:
+            flags_str = f"both {provided_flags[0]} and {provided_flags[1]}"
+        else:
+            flags_str = f"more than one of: {', '.join(provided_flags)}"
+        raise click.UsageError(f"Cannot specify {flags_str}.")
 
 
 def dep_params(**params):

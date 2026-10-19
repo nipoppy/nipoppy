@@ -171,17 +171,45 @@ def test_study_and_dataset_mutually_exclusive(
         )
 
 
-def test_get_param_name():
+@pytest.mark.parametrize(
+    ("flag", "ctx", "expected_param"),
+    [
+        ("--write-subcohort", None, "write_subcohort"),
+        ("--write-list", None, "write_list"),
+        ("--study", None, "study"),
+        ("--study", click.Context(cli.commands["init"]), "dpath_root"),
+    ],
+)
+def test_get_param_name(flag: str, ctx: click.Context | None, expected_param: str):
     """Test _get_param_name helper function."""
-    assert _get_param_name("--write-subcohort") == "write_subcohort"
-    assert _get_param_name("--write-list") == "write_list"
-    assert _get_param_name("--study") == "study"
+    assert _get_param_name(flag, ctx=ctx) == expected_param
 
 
-def test_check_mutually_exclusive_no_context():
-    """Test check_mutually_exclusive when outside a Click context."""
-    # Should not raise when outside a Click context
-    check_mutually_exclusive("--flag1", "--flag2")
+@pytest.mark.parametrize(
+    ("cli_args", "expected_match"),
+    [
+        (
+            ["--flag1", "1", "--flag2", "2"],
+            "Cannot specify both --flag1 and --flag2.",
+        ),
+        (
+            ["--flag1", "1", "--flag2", "2", "--flag3", "3"],
+            "Cannot specify more than one of: --flag1, --flag2, --flag3.",
+        ),
+    ],
+)
+def test_check_mutually_exclusive(cli_args: list[str], expected_match: str):
+    """Test check_mutually_exclusive with multiple flags."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2")
+    @click.option("--flag3")
+    def cmd(**kwargs):
+        check_mutually_exclusive("--flag1", "--flag2", "--flag3")
+
+    with pytest.raises(UsageError, match=expected_match):
+        runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
 
 
 @pytest.mark.no_xdist
