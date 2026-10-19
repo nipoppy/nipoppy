@@ -69,7 +69,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         if curation_cols and status_df[self.curation_status_table.col_in_bids].equals(
             status_df["in_manifest"]
         ):
-            logger.debug(
+            logger.info(
                 "BIDSification completed: hiding counts for pre- and post-reorg stages."
             )
             status_df = status_df.drop(
@@ -87,6 +87,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _check_manifest(self, status_df: pd.DataFrame) -> pd.DataFrame:
         """Check the manifest file."""
         nipoppy_checkpoint = "in_manifest"
+        logger.info("Dataset summary (based on the manifest file):")
 
         manifest = self.study.manifest
 
