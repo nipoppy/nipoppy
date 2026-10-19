@@ -22,7 +22,7 @@ from nipoppy.cli import (
 )
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
-from nipoppy.cli.options import study_option
+from nipoppy.cli.options import _get_param_name, check_mutually_exclusive, study_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
@@ -154,19 +154,34 @@ def test_dep_params(
 @pytest.mark.no_xdist
 def test_study_and_dataset_mutually_exclusive(
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ):
     """Test that providing both --study and --dataset raises an error."""
-    result = runner.invoke(
-        cli,
-        ["init", "--study", f"{tmp_path}/study1", "--dataset", f"{tmp_path}/study2"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code != ReturnCode.SUCCESS
-    assert not any(
-        "Cannot specify both --study and --dataset" in record.message
-        for record in caplog.records
-    )
+    with pytest.raises(UsageError, match="Cannot specify both --study and --dataset."):
+        runner.invoke(
+            cli,
+            [
+                "init",
+                "--study",
+                f"{tmp_path}/study1",
+                "--dataset",
+                f"{tmp_path}/study2",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
+
+
+def test_get_param_name():
+    """Test _get_param_name helper function."""
+    assert _get_param_name("--write-subcohort") == "write_subcohort"
+    assert _get_param_name("--write-list") == "write_list"
+    assert _get_param_name("--study") == "study"
+
+
+def test_check_mutually_exclusive_no_context():
+    """Test check_mutually_exclusive when outside a Click context."""
+    # Should not raise when outside a Click context
+    check_mutually_exclusive("--flag1", "--flag2")
 
 
 @pytest.mark.no_xdist

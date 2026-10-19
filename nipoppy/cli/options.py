@@ -34,33 +34,43 @@ def study_option(func):
     return func
 
 
+def _get_param_name(flag: str, ctx: click.Context | None = None) -> str:
+    """Get the parameter name associated with a flag."""
+    if ctx is not None and ctx.command is not None:
+        for param in ctx.command.params:
+            if flag in param.opts or flag in param.secondary_opts:
+                return param.name
+    return click.Option([flag]).name
+
+
+def check_mutually_exclusive(
+    flag1: str,
+    flag2: str,
+    ctx: click.Context | None = None,
+) -> None:
+    """Check that two flags are not both specified on the command line."""
+    if ctx is None:
+        ctx = click.get_current_context(silent=True)
+    if ctx is None:
+        return
+
+    param1 = _get_param_name(flag1, ctx)
+    param2 = _get_param_name(flag2, ctx)
+
+    flag1_provided = (
+        ctx.get_parameter_source(param1) == click.core.ParameterSource.COMMANDLINE
+    )
+    flag2_provided = (
+        ctx.get_parameter_source(param2) == click.core.ParameterSource.COMMANDLINE
+    )
+    if flag1_provided and flag2_provided:
+        raise click.UsageError(f"Cannot specify both {flag1} and {flag2}.")
+
+
 def dep_params(**params):
     """Handle deprecated parameters."""
-    ctx = click.get_current_context(silent=True)
-    if ctx is not None:
-        study_provided = (
-            ctx.get_parameter_source("dpath_root")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        dataset_provided = (
-            ctx.get_parameter_source("dataset")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        if study_provided and dataset_provided:
-            raise click.UsageError("Cannot specify both --study and --dataset.")
-
-        write_subcohort_provided = (
-            ctx.get_parameter_source("write_subcohort")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        write_list_provided = (
-            ctx.get_parameter_source("write_list")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        if write_subcohort_provided and write_list_provided:
-            raise click.UsageError(
-                "Cannot specify both --write-subcohort and --write-list."
-            )
+    check_mutually_exclusive("--study", "--dataset")
+    check_mutually_exclusive("--write-subcohort", "--write-list")
 
     # --dataset is deprecated by --study
     if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):
