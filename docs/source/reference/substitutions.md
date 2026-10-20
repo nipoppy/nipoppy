@@ -2,6 +2,7 @@
 
 Nipoppy allows string substitutions when loading configuration files.
 These serve two purposes:
+
 - Dynamically resolving values that are unknown prior to runtime (e.g., directory path, pipeline name, participant ID)
 - Avoiding duplication and manual user errors from copy-pasting
 
