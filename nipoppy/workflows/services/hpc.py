@@ -86,7 +86,7 @@ class HPCRunner:
     ) -> list[str]:
         """Generate the CLI command for a participant-session combination.
 
-        Skips the --simulate, --hpc, --write-list and --dry-run options.
+        Skips the --simulate, --hpc, --write-subcohort and --dry-run options.
 
         Parameters
         ----------
