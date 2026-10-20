@@ -7,13 +7,22 @@ import shlex
 import subprocess
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
+from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 from typing import Protocol
 
+from pydantic_core import ValidationError
+
 from nipoppy.base import Base
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
-from nipoppy.exceptions import FileOperationError, ReturnCode
+from nipoppy.env import (
+    BUG_REPORT_URL,
+    DISCORD_URL,
+    EXT_LOG,
+    PROGRAM_NAME,
+    StrOrPathLike,
+)
+from nipoppy.exceptions import FileOperationError, NipoppyError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
@@ -27,6 +36,7 @@ from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
+from nipoppy.zenodo_api import ZenodoAPIError
 
 logger = get_logger()
 
@@ -156,6 +166,44 @@ def _run_command(
     return run_output
 
 
+@contextmanager
+def _handle_exception(workflow):
+    """Handle exceptions raised during workflow execution."""
+    try:
+        yield workflow
+    except NipoppyError as e:
+        workflow.return_code = e.code
+        logger.error(e)
+        hint = e.troubleshooting_hint
+        if hint is not None:
+            logger.info(f"Troubleshooting: {hint}")
+        raise
+    except ValidationError as e:
+        workflow.return_code = ReturnCode.INVALID_CONFIG
+        logger.error(e)
+        logger.info(
+            "Troubleshooting: Review your configuration fields and value types."
+        )
+        raise
+    except ZenodoAPIError as e:
+        workflow.return_code = ReturnCode.KNOWN_FAILURE
+        logger.error(e)
+        raise
+    except SystemExit as e:
+        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
+        logger.error(e)
+        raise
+    except Exception:
+        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
+        logger.exception("Unexpected error occurred")
+        logger.info(
+            "This failure was unexpected. Please report it with the command you ran "
+            f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
+            f"{DISCORD_URL}"
+        )
+        raise
+
+
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
@@ -197,13 +245,14 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        try:
-            self.run_setup()
-            self.run_main()
-        except Exception:
-            raise
-        finally:
-            self.run_cleanup()
+        with _handle_exception(self):
+            try:
+                self.run_setup()
+                self.run_main()
+            except Exception:
+                raise
+            finally:
+                self.run_cleanup()
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
