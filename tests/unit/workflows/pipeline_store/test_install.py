@@ -12,7 +12,7 @@ import pytest_mock
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
 from nipoppy.config.schema import get_current_schema_version
-from nipoppy.container import ApptainerHandler
+from nipoppy.container import ApptainerHandler, DockerHandler
 from nipoppy.env import (
     ConfigType,
     ContainerCommandEnum,
@@ -370,6 +370,9 @@ def test_download_container_status(
     mocked_run_command = mocker.patch(
         "nipoppy.workflows.pipeline_store.install._run_command"
     )
+    # simulate image not downloaded, since GitHub macOS runners do not have
+    # docker installed by default
+    mocker.patch.object(DockerHandler, "is_image_downloaded", return_value=False)
 
     workflow.study.config.CONTAINER_CONFIG.COMMAND = command
     workflow._download_container(pipeline_config)
