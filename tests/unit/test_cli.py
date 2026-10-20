@@ -506,6 +506,20 @@ def test_context_manager_nipoppy_exception_logs_default_hint(
     )
 
 
+def test_context_manager_nipoppy_exception_without_hint_logs_no_troubleshooting(
+    mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Known NipoppyError without any hint should not emit a troubleshooting log."""
+    mocker.patch("sys.exit")
+
+    workflow = mocker.Mock()
+    with exception_handler(workflow):
+        raise NipoppyError("Failure message")
+
+    assert not any("Troubleshooting:" in record.message for record in caplog.records)
+
+
 def test_context_manager_json_error(
     mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
 ):
