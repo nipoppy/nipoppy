@@ -770,3 +770,27 @@ def test_cli_show_envvar(command_name: str):
                 f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
                 f"to display the env var in the help message."
             )
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    list_cli_commands(cli, include_hidden=False, include_group=False),
+)
+def test_cli_all_options_grouped(command_name: str):
+    """Test that all non-hidden CLI options are assigned to an option group."""
+    grouped_options = {
+        opt
+        for group in click.rich_click.OPTION_GROUPS["nipoppy *"]
+        for opt in group["options"]
+    }
+
+    # get Click Command object
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    for param in command.params:
+        if isinstance(param, click.Option) and not param.hidden:
+            assert any(opt in grouped_options for opt in param.opts), (
+                f"Option {param.opts} of '{command_name}' is not in any option group."
+            )
