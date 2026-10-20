@@ -3,8 +3,8 @@
 # See https://pre-commit.com/hooks.html for more hooks
 
 # To use to configure behavior of pre-commit ci
-# ci:
-#     skip: [hadolint-docker]
+ci:
+    autoupdate_schedule: monthly
 
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
