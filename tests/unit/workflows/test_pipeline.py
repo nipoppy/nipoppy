@@ -1,10 +1,7 @@
 """Tests for BasePipelineWorkflow."""
 
-import builtins
-import importlib
 import json
 import re
-from collections.abc import Generator
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -38,6 +35,7 @@ from nipoppy.exceptions import (
     WorkflowError,
 )
 from nipoppy.logger import get_logger
+from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
@@ -58,7 +56,8 @@ class PipelineWorkflow(BasePipelineWorkflow):
     """Dummy pipeline workflow for testing."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, name="test", **kwargs)
+        executor = LocalExecutor(self.run_single, lambda item: "Error")
+        super().__init__(*args, executor=executor, name="test", **kwargs)
 
     def get_participants_sessions_to_run(
         self, participant_id: str | None, session_id: str | None
@@ -137,49 +136,6 @@ def workflow(tmp_path: Path):
     return workflow
 
 
-@pytest.fixture(scope="function")
-def reimport_joblib(mocker: pytest_mock.MockerFixture):
-    """Fixture for tests where joblib import was manipulated."""
-    yield
-
-    # fmt: off
-    mocker.stopall()
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
-    from nipoppy.workflows.pipeline import BasePipelineWorkflow  # noqa F401
-    from nipoppy.workflows.pipeline import (
-        JOBLIB_INSTALLED,
-    )
-    assert JOBLIB_INSTALLED
-    # fmt: on
-
-
-def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "joblib":
-            raise ImportError(error_message)
-        return real_import(name, *args, **kwargs)
-
-    mocker.patch("builtins.__import__", side_effect=fake_import)
-
-
-def test_joblib_import_fails(
-    mocker: pytest_mock.MockFixture,
-):
-    """Test that ImportError is propagated if joblib exists but import fails."""
-    # pretend that joblib is not installed
-    error_message = "Unexpected exception during import"
-    _mock_joblib_import_error(mocker, error_message)
-
-    # reload the module
-    import nipoppy.workflows.pipeline
-
-    with pytest.raises(ImportError, match=error_message):
-        importlib.reload(nipoppy.workflows.pipeline)
-
-
 @pytest.mark.parametrize(
     "analysis_level,expected",
     [
@@ -255,37 +211,6 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_output, Path)
     assert isinstance(workflow.dpath_pipeline_work, Path)
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
-
-
-@pytest.mark.no_xdist
-def test_init_n_jobs_but_no_joblib(
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    reimport_joblib,
-):
-    """Test that an error is raised when joblib is not installed and n_jobs > 1."""
-    dpath_root = tmp_path / "my_dataset"
-    mocker.patch("nipoppy.workflows.pipeline.JOBLIB_INSTALLED", False)
-    with pytest.raises(SystemExit):
-        PipelineWorkflow(
-            dpath_root=dpath_root,
-            pipeline_name="my_pipeline",
-            n_jobs=2,
-            _skip_logfile=True,
-        )
-
-    assert any(
-        [
-            record.levelname == "ERROR"
-            and (
-                "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
-            )
-            in record.message
-            for record in caplog.records
-        ]
-    )
 
 
 def test_init_hpc_write_subcohort():
@@ -996,71 +921,6 @@ def test_run_setup_check_filter_args_compatibility_called(
     workflow.run_setup()
 
     mocked_check.assert_called_once_with()
-
-
-@pytest.mark.parametrize("show_progress", [True, False])
-def test_get_results_generator_no_joblib(
-    workflow: PipelineWorkflow,
-    show_progress: bool,
-    mocker: pytest_mock.MockFixture,
-    reimport_joblib,
-):
-    workflow.n_jobs = 1
-    workflow._show_progress = show_progress
-    participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
-
-    # pretend that joblib is not installed
-    _mock_joblib_import_error(mocker, "No module named 'joblib'")
-
-    # also mock joblib.delayed which is not supposed to be called
-    # when joblib is not installed
-    mocked_delayed = mocker.patch("nipoppy.workflows.pipeline.delayed")
-
-    # reload the module
-    # fmt: off
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
-    # check that mocking/reloading worked
-    from nipoppy.workflows.pipeline import (  # noqa: F401
-        JOBLIB_INSTALLED,
-        BasePipelineWorkflow,
-    )
-    assert not JOBLIB_INSTALLED
-    # fmt: on
-
-    results = workflow._get_results_generator(participants_sessions)
-    mocked_delayed.assert_not_called()
-    assert isinstance(results, Generator)
-    assert len(list(results)) == len(participants_sessions)
-
-
-def test_get_results_generator_with_progress_bar(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    workflow._show_progress = True
-    participants_sessions = [("001", "1")]
-
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
-
-    workflow._get_results_generator(participants_sessions)
-    mocked_track.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "show_progress,participants_sessions", [(False, [("001", "1")]), (True, [])]
-)
-def test_get_results_generator_no_progress_bar(
-    workflow: PipelineWorkflow,
-    show_progress,
-    participants_sessions,
-    mocker: pytest_mock.MockFixture,
-):
-    workflow._show_progress = show_progress
-
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
-
-    workflow._get_results_generator(participants_sessions)
-    mocked_track.assert_not_called()
 
 
 @pytest.mark.parametrize(
