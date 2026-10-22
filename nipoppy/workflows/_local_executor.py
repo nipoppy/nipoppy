@@ -27,19 +27,18 @@ logger = get_logger()
 class LocalExecutor(Executor):
     def __init__(
         self,
-        items: Iterable[WorkItem],
         work_fn: Callable[[WorkItem], Any],
         error_message_builder: Callable[[WorkItem], str],
         n_jobs: int = 1,
+        show_progress: bool = False,
         progress_bar_description: str = "Working...",  # default used by rich
-        _show_progress: bool = False,
     ):
-        super().__init__(items)
+        super().__init__()
 
         self.work_fn = work_fn
         self.n_jobs = n_jobs
         self.error_message_builder = error_message_builder
-        self._show_progress = _show_progress
+        self.show_progress = show_progress
         self.progress_bar_description = progress_bar_description
         self.results: list[Any] | None = None
 
@@ -59,14 +58,14 @@ class LocalExecutor(Executor):
                 hint=None,
             )
 
-    def execute(self) -> tuple[list[WorkItem], list[WorkItem]]:
+    def execute(
+        self, items: Iterable[WorkItem]
+    ) -> tuple[list[WorkItem], list[WorkItem]]:
         """Run pipeline locally and collect results."""
         self.results = []
         successful_items = []
         failed_items = []
-        for (status, result), item in zip(
-            self._get_statuses_and_results(self.items), self.items
-        ):
+        for (status, result), item in zip(self._get_statuses_and_results(items), items):
             if status is True:
                 successful_items.append(item)
             else:
@@ -75,7 +74,7 @@ class LocalExecutor(Executor):
 
         return successful_items, failed_items
 
-    def _work_fn_wrapper(self, participant_id, session_id) -> bool:
+    def _work_fn_wrapper(self, item: WorkItem) -> bool:
         """
         Run a single participant/session and handle exceptions.
 
@@ -84,12 +83,9 @@ class LocalExecutor(Executor):
         """
         try:
             # success
-            return True, self.work_fn(participant_id, session_id)
+            return True, self.work_fn(*item)
         except Exception as exception:
-            logger.error(
-                self.error_message_builder(WorkItem(participant_id, session_id))
-                + f": {exception}"
-            )
+            logger.error(f"{self.error_message_builder(item)}: {exception}")
 
         # failure
         return False, None
@@ -113,7 +109,7 @@ class LocalExecutor(Executor):
                 return_as="generator",
             )(results_generator)
 
-        if self._show_progress and n_total != 0:
+        if self.show_progress and n_total != 0:
             results_generator = rich.progress.track(
                 results_generator,
                 description=f"{' ' * _INDENT}{self.progress_bar_description}",

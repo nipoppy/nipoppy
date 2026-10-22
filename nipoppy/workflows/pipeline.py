@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import cached_property
@@ -12,7 +11,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-import rich
 from packaging.version import Version
 from pydantic import ValidationError
 
@@ -28,7 +26,6 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
 from nipoppy.config.tracker import TrackerConfig
-from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.container import get_container_handler
 from nipoppy.env import (
     BIDS_SESSION_PREFIX,
@@ -62,20 +59,12 @@ from nipoppy.utils.utils import (
     load_json,
     process_template_str,
 )
+from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.executor import WorkItem
 
 if TYPE_CHECKING:
     import bids
-try:
-    from joblib import Parallel, delayed
-
-    JOBLIB_INSTALLED = True
-
-except ImportError as error:
-    if str(error).startswith("No module named 'joblib'"):
-        JOBLIB_INSTALLED = False
-    else:
-        raise
 
 logger = get_logger()
 
@@ -147,6 +136,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
+        executor: LocalExecutor,
         pipeline_version: str | None = None,
         pipeline_step: str | None = None,
         participant_id: str = None,
@@ -154,12 +144,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         use_subcohort: StrOrPathLike | None = None,
         hpc: str | None = None,
         write_subcohort: StrOrPathLike | None = None,
-        n_jobs: int | None = None,
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run=False,
         _skip_logfile: bool = False,
-        _show_progress: bool = False,
     ):
         if hpc is not None and write_subcohort is not None:
             raise WorkflowError(
@@ -167,12 +155,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 "are mutually exclusive."
             )
 
-        if n_jobs is not None and not _skip_logfile:
-            raise WorkflowError("n_jobs is not supported when _skip_logfile is False.")
-        if n_jobs is None:
-            n_jobs = 1
-
         self.pipeline_name = pipeline_name
+        self.executor = executor
         self.pipeline_version = pipeline_version
         self.pipeline_step = pipeline_step
         self.participant_id = check_participant_id(participant_id)
@@ -180,8 +164,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.use_subcohort = use_subcohort
         self.hpc = hpc
         self.write_subcohort = write_subcohort
-        self.n_jobs = n_jobs
-        self._show_progress = _show_progress
 
         super().__init__(
             dpath_root=dpath_root,
@@ -196,16 +178,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         # the final values for these attributes (updated in run_main)
         self.n_success = 0
         self.n_total = 0
-
-        self.run_single_results = None
-
-        if not JOBLIB_INSTALLED and self.n_jobs not in (None, 1):
-            logger.error(
-                "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]",
-                extra={"markup": False},
-            )
-            sys.exit(ReturnCode.MISSING_DEPENDENCY)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -608,56 +580,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return to_return
 
-    def _run_single_wrapper(self, participant_id, session_id) -> bool:
-        """
-        Run a single participant/session and handle exceptions.
-
-        This is a helper function for parallelization with joblib.
-        Returns (True, <result>) if the run was successful, (False, None) otherwise.
-        """
-        try:
-            # success
-            return True, self.run_single(participant_id, session_id)
-        except Exception as exception:
-            logger.error(
-                f"Error running {self.pipeline_name} {self.pipeline_version}"
-                f" on participant {participant_id}, session {session_id}"
-                f": {exception}"
-            )
-
-        # failure
-        return False, None
-
-    def _get_results_generator(self, participants_sessions: Iterable[tuple[str, str]]):
-        participants_sessions = list(participants_sessions)
-        n_total = len(participants_sessions)
-        if JOBLIB_INSTALLED:
-            wrapper_func = delayed(self._run_single_wrapper)
-        else:
-            wrapper_func = self._run_single_wrapper
-
-        results_generator = (
-            wrapper_func(participant_id, session_id)
-            for participant_id, session_id in participants_sessions
-        )
-
-        if JOBLIB_INSTALLED:
-            results_generator = Parallel(
-                n_jobs=self.n_jobs,
-                backend="threading",
-                return_as="generator",
-            )(results_generator)
-
-        if self._show_progress and n_total != 0:
-            results_generator = rich.progress.track(
-                results_generator,
-                description=f"{' ' * _INDENT}{self.progress_bar_description}",
-                total=n_total,
-                console=CONSOLE_STDOUT,
-            )
-
-        return results_generator
-
     @staticmethod
     def apply_analysis_level(
         participants_sessions: Iterable[str],
@@ -756,22 +678,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             )
 
     def _run_locally(self, participants_sessions: list) -> None:
-        """Run pipeline locally and collect results."""
-        results = list(self._get_results_generator(participants_sessions))
-
-        if len(results) == 0:
-            run_statuses = []
-            run_single_results = []
-        else:
-            run_statuses, run_single_results = zip(*results)
-
-        self.n_success += sum(run_statuses)
-        self.n_total += len(run_statuses)
-        self.run_single_results = run_single_results
-
-        # update return code if needed
-        if (self.n_success != self.n_total) and (self.n_total != 0):
-            self.return_code = ReturnCode.PARTIAL_SUCCESS
+        """Run locally."""
+        self.executor.execute(
+            items=[WorkItem(p, s) for p, s in participants_sessions],
+        )
 
     def _log_summary_message(self):
         """Log a summary message."""
@@ -812,14 +722,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     ):
         """
         Return participant-session pairs to loop over with run_single().
-
-        This is an abstract method that should be defined explicitly in subclasses.
-        """
-
-    @abstractmethod
-    def run_single(self, participant_id: str | None, session_id: str | None):
-        """
-        Run on a single participant/session.
 
         This is an abstract method that should be defined explicitly in subclasses.
         """
