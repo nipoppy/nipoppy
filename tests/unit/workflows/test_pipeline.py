@@ -1210,3 +1210,18 @@ def test_generate_fpath_log(
         fpath_log
         == workflow.study.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
     )
+
+
+@pytest.mark.parametrize("expected_return_code", [0, 1, 2])
+def test_run_locally(
+    expected_return_code, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    mocked_execute = mocker.patch.object(workflow.executor, "execute")
+    mocked_execute.return_value = (expected_return_code, [], [])
+
+    workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])
+    mocked_execute.assert_called_once_with(
+        [WorkItem("01", "1"), WorkItem("01", "2"), WorkItem("02", "1")]
+    )
+
+    assert workflow.return_code == expected_return_code

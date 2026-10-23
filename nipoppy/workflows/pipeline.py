@@ -678,9 +678,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def _run_locally(self, participants_sessions: list) -> None:
         """Run locally."""
-        self.executor.execute(
-            items=[WorkItem(p, s) for p, s in participants_sessions],
+        return_code, _, _ = self.executor.execute(
+            [WorkItem(p, s) for p, s in participants_sessions],
         )
+        self.return_code = return_code
 
     def _log_summary_message(self):
         """Log a summary message."""
