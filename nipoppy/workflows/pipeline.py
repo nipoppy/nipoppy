@@ -653,7 +653,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         self._log_summary_message()
 
-    def _filter_by_subcohort(self, participants_sessions: Iterable) -> set:
+    def _filter_by_subcohort(self, participants_sessions: Iterable) -> list:
         """Filter participants/sessions by subcohort file."""
         try:
             df_participants_sessions = pd.read_csv(
@@ -666,9 +666,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         except pd.errors.EmptyDataError as e:
             raise WorkflowError(f"Subcohort file {self.use_subcohort} is empty") from e
 
-        return set(participants_sessions) & set(
-            df_participants_sessions.itertuples(index=False, name=None)
-        )
+        subcohort = set(df_participants_sessions.itertuples(index=False, name=None))
+        return list(filter(lambda x: x in subcohort, participants_sessions))
 
     def _write_subcohort_to_file(self, participants_sessions: list) -> None:
         """Write participants/sessions to file."""
@@ -685,20 +684,18 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def _log_summary_message(self):
         """Log a summary message."""
-        if isinstance(self.executor, LocalExecutor):
-            return
         if self.write_subcohort is not None:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
-        elif self.n_total == 0:
-            logger.warning(
-                "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, and/or "
-                "check the curation status file at "
-                f"{self.study.layout.fpath_curation_status}"
-            )
-            self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
         elif self.hpc is not None:
-            if self.n_success == 0:
+            if self.n_total == 0:
+                logger.warning(
+                    "No participants or sessions to run. Make sure there are no "
+                    "mistakes in the input arguments, the dataset's manifest or config "
+                    "file, and/or check the curation status file at "
+                    f"{self.study.layout.fpath_curation_status}"
+                )
+                self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
+            elif self.n_success == 0:
                 logger.failure("Failed to submit HPC jobs")
             else:
                 logger.success(f"Successfully submitted {self.n_success} HPC job(s)")
