@@ -297,7 +297,7 @@ def test_run_single(
 
     assert not dpath_to_tar.exists()
     assert (
-        tracker.run_single(participant_id, session_id)[ProcessingStatusTable.col_status]
+        tracker._track(participant_id, session_id)[ProcessingStatusTable.col_status]
         == expected_status
     )
 
@@ -305,7 +305,7 @@ def test_run_single(
 def test_run_single_no_config(tracker: PipelineTracker):
     tracker.pipeline_config.STEPS[0].TRACKER_CONFIG_FILE = None
     with pytest.raises(ValueError, match="No tracker config file specified for"):
-        tracker.run_single("01", "1")
+        tracker._track("01", "1")
 
 
 @pytest.mark.parametrize(
@@ -343,8 +343,7 @@ def test_update_status_file(
     records,
     expected_processing_status_table: ProcessingStatusTable,
 ):
-    tracker.run_single_results = records
-    tracker._update_status_file()
+    tracker._update_status_file(records)
 
     assert tracker.study.layout.fpath_processing_status.exists()
     assert ProcessingStatusTable.load(
