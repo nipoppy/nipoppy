@@ -685,6 +685,8 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
     def _log_summary_message(self):
         """Log a summary message."""
+        if isinstance(self.executor, LocalExecutor):
+            return
         if self.write_subcohort is not None:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
         elif self.n_total == 0:
@@ -700,21 +702,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 logger.failure("Failed to submit HPC jobs")
             else:
                 logger.success(f"Successfully submitted {self.n_success} HPC job(s)")
-        else:
-            if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
-                log_msg = "Ran on the entire study"
-            else:
-                log_msg = (
-                    f"Ran for {self.n_success} out of "
-                    f"{self.n_total} participants or sessions"
-                )
-
-            if self.n_success == 0:
-                logger.error(log_msg)
-            elif self.n_success == self.n_total:
-                logger.success(log_msg)
-            else:
-                logger.warning(log_msg)
 
     @abstractmethod
     def get_participants_sessions_to_run(

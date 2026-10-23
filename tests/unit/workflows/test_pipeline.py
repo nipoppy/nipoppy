@@ -16,7 +16,7 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.schema import get_current_schema_version
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import ApptainerHandler
@@ -31,11 +31,11 @@ from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
     InvalidArgumentError,
-    ReturnCode,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
 from nipoppy.workflows._local_executor import LocalExecutor
+from nipoppy.workflows.executor import WorkItem
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
@@ -246,18 +246,6 @@ def test_init_participant_session(
     )
     assert workflow.participant_id == participant_expected
     assert workflow.session_id == session_expected
-
-
-def test_init_n_jobs_logfile():
-    with pytest.raises(
-        WorkflowError, match="n_jobs is not supported when _skip_logfile is False."
-    ):
-        PipelineWorkflow(
-            dpath_root="my_dataset",
-            pipeline_name="my_pipeline",
-            n_jobs=2,
-            _skip_logfile=False,
-        )
 
 
 def test_pipeline_version_optional():
@@ -923,37 +911,6 @@ def test_run_setup_check_filter_args_compatibility_called(
     mocked_check.assert_called_once_with()
 
 
-@pytest.mark.parametrize(
-    "participant_id,session_id,expected_count",
-    [(None, None, 4), ("01", None, 3), ("01", "2", 1)],
-)
-def test_run_main(
-    workflow: PipelineWorkflow,
-    participant_id,
-    session_id,
-    expected_count,
-    mocker: pytest_mock.MockFixture,
-):
-    workflow.participant_id = participant_id
-    workflow.session_id = session_id
-
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-
-    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
-
-    workflow.run_main()
-    assert workflow.n_total == expected_count
-    assert workflow.n_success == expected_count
-    assert workflow.run_single_results == tuple(["SUCCESS"] * expected_count)
-    mocked_log_summary_message.assert_called_once()
-
-
 def test_run_main_analysis_level(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
@@ -966,43 +923,6 @@ def test_run_main_analysis_level(
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert mocked.call_count == 1
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2, 4])
-def test_run_main_n_jobs(workflow: PipelineWorkflow, n_jobs: int):
-    """Smoke test for parallel execution (with joblib installed)."""
-    # fmt: off
-    # make sure joblib is installed
-    from nipoppy.workflows.pipeline import JOBLIB_INSTALLED
-    assert JOBLIB_INSTALLED, "joblib must be installed"
-    # fmt: on
-
-    workflow.n_jobs = n_jobs
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-    workflow.run_main()
-
-
-def test_run_main_catch_errors(workflow: PipelineWorkflow):
-    workflow.participant_id = "FAIL"
-    workflow.session_id = "1"
-
-    participants_and_sessions = {workflow.participant_id: [workflow.session_id]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-    workflow.run_main()
-    assert workflow.n_total == 1
-    assert workflow.n_success == 0
-    assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
 
 
 @pytest.mark.parametrize("write_subcohort", ["list.tsv", "to_run.tsv"])
@@ -1074,12 +994,16 @@ def test_run_main_use_subcohort(
         "get_participants_sessions_to_run",
         return_value=original_participants_sessions_to_run,
     )
-    mocked_run_single = mocker.patch.object(workflow, "run_single")
+    mocked_execute = mocker.spy(workflow.executor, "execute")
 
     workflow.run_main()
 
-    for participant_id, session_id in final_participants_sessions_to_run:
-        mocked_run_single.assert_any_call(participant_id, session_id)
+    mocked_execute.assert_called_once_with(
+        [
+            WorkItem(participant_id, session_id)
+            for participant_id, session_id in final_participants_sessions_to_run
+        ]
+    )
 
 
 def test_run_main_use_subcohort_not_found(
@@ -1121,74 +1045,6 @@ def test_run_main_use_subcohort_empty_file(
 
     with pytest.raises(RuntimeError, match=f"Subcohort file {fpath_list} is empty"):
         workflow.run_main()
-
-
-@pytest.mark.parametrize(
-    "n_success,n_total,analysis_level,expected_message",
-    [
-        (0, 0, "participant_session", "No participants or sessions to run"),
-        (
-            1,
-            2,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            0,
-            1,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            2,
-            2,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            1,
-            1,
-            "group",
-            "Ran on the entire study",
-        ),
-    ],
-)
-@pytest.mark.no_xdist
-def test_log_summary_message(
-    n_success,
-    n_total,
-    analysis_level,
-    expected_message: str,
-    workflow: PipelineWorkflow,
-    caplog: pytest.LogCaptureFixture,
-):
-    workflow.n_success = n_success
-    workflow.n_total = n_total
-
-    workflow.pipeline_config.STEPS = [
-        ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
-    ]
-
-    workflow._log_summary_message()
-
-    assert expected_message.format(n_success, n_total) in caplog.text
-
-
-@pytest.mark.no_xdist
-def test_log_summary_message_no_participants_warning(
-    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
-):
-    workflow.n_success = 0
-    workflow.n_total = 0
-    workflow._log_summary_message()
-    assert any(
-        record.levelname == "WARNING"
-        and "No participants or sessions to run" in record.message
-        for record in caplog.records
-    ), "Wrong log message or level"
-    assert workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, (
-        "Wrong return code"
-    )
 
 
 @pytest.mark.parametrize(
