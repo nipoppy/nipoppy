@@ -59,9 +59,8 @@ from nipoppy.utils.utils import (
     load_json,
     process_template_str,
 )
-from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.base import BaseDatasetWorkflow
-from nipoppy.workflows.executor import WorkItem
+from nipoppy.workflows.executor import Executor, WorkItem
 
 if TYPE_CHECKING:
     import bids
@@ -136,7 +135,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         dpath_root: StrOrPathLike,
         name: str,
         pipeline_name: str,
-        executor: LocalExecutor,
+        executor: Executor,
         pipeline_version: str | None = None,
         pipeline_step: str | None = None,
         participant_id: str = None,
