@@ -34,20 +34,41 @@ def study_option(func):
     return func
 
 
+def _get_param_name(flag: str, ctx: click.Context | None = None) -> str:
+    """Get the parameter name associated with a flag."""
+    # Look up in the command's declared params first, in case the parameter name
+    # was overridden (e.g., '--study' maps to 'dpath_root').
+    if ctx is not None and ctx.command is not None:
+        for param in ctx.command.params:
+            if flag in param.opts or flag in param.secondary_opts:
+                return param.name
+    return click.Option([flag]).name
+
+
+def check_mutually_exclusive(
+    *flags: str,
+    ctx: click.Context | None = None,
+) -> None:
+    """Check that multiple flags are mutually exclusive on the command line."""
+    if ctx is None:
+        ctx = click.get_current_context()
+
+    provided_flags = [
+        flag
+        for flag in flags
+        if ctx.get_parameter_source(_get_param_name(flag, ctx))
+        == click.core.ParameterSource.COMMANDLINE
+    ]
+    if len(provided_flags) > 1:
+        raise click.UsageError(
+            f"Cannot specify more than one of: {', '.join(provided_flags)}."
+        )
+
+
 def dep_params(**params):
     """Handle deprecated parameters."""
-    ctx = click.get_current_context(silent=True)
-    if ctx is not None:
-        study_provided = (
-            ctx.get_parameter_source("dpath_root")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        dataset_provided = (
-            ctx.get_parameter_source("dataset")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        if study_provided and dataset_provided:
-            raise click.UsageError("Cannot specify both --study and --dataset.")
+    check_mutually_exclusive("--study", "--dataset")
+    check_mutually_exclusive("--write-subcohort", "--write-list")
 
     # --dataset is deprecated by --study
     if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):
