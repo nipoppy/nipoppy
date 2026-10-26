@@ -174,13 +174,13 @@ By default, this file does not contain any pipeline-specific information, since 
     - `"docker"` if you have Docker installed
     - `"null"` if you have dcm2bids installed locally ("baremetal" install)
 - If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. For example:
-    ```json
-    "SUBSTITUTIONS": {
-        "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
-        "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_SHARED_DIRECTORY>",
-        "[[HPC_ACCOUNT_NAME]]": ""
-    },
-    ```
+  ```json
+  "SUBSTITUTIONS": {
+      "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
+      "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_SHARED_DIRECTORY>",
+      "[[HPC_ACCOUNT_NAME]]": ""
+  },
+  ```
     - Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted) (recommended).
 
 **3.2.** We can use following command to check which pipelines can be run with the study:
