@@ -352,6 +352,42 @@ def test_update_status_file(
     ).equals(expected_processing_status_table)
 
 
+@pytest.mark.parametrize("dry_run", [True, False])
+def test_update_status_file_prints_changes(
+    tracker: PipelineTracker, dry_run: bool, mocker: pytest_mock.MockFixture
+):
+    mocked_print = mocker.patch("nipoppy.workflows.tracker.CONSOLE_STDOUT").print
+    tracker.dry_run = dry_run
+    tracker.run_single_results = [
+        {
+            ProcessingStatusTable.col_participant_id: "01",
+            ProcessingStatusTable.col_session_id: "1",
+            ProcessingStatusTable.col_pipeline_name: tracker.pipeline_name,
+            ProcessingStatusTable.col_pipeline_version: tracker.pipeline_version,
+            ProcessingStatusTable.col_pipeline_step: tracker.pipeline_step,
+            ProcessingStatusTable.col_status: ProcessingStatusTable.status_success,
+        }
+    ]
+    tracker._update_status_file()
+
+    if dry_run:
+        mocked_print.assert_not_called()
+    else:
+        table = mocked_print.call_args.args[0]
+        changes = dict(zip(table.columns[0].cells, table.columns[1].cells))
+        assert changes == {"New SUCCESS": "1"}
+
+
+def test_update_status_file_no_changes(
+    tracker: PipelineTracker, mocker: pytest_mock.MockFixture
+):
+    mocked_print = mocker.patch("nipoppy.workflows.tracker.CONSOLE_STDOUT").print
+    tracker.run_single_results = []
+    tracker._update_status_file()
+
+    mocked_print.assert_not_called()
+
+
 def test_run_main(tracker: PipelineTracker, mocker: pytest_mock.MockFixture):
     mocked_update_status_file = mocker.patch.object(tracker, "_update_status_file")
     tracker.run_main()
