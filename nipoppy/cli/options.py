@@ -103,8 +103,28 @@ def layout_option(func):
     return func
 
 
-def pipeline_options(func):
+def basic_pipeline_options(func):
     """Define pipeline options for the CLI."""
+    func = click.option(
+        "--pipeline-version",
+        type=str,
+        help=(
+            "Pipeline version, as specified in the pipeline config file "
+            "(default: latest out of the installed versions)."
+        ),
+    )(func)
+    func = click.option(
+        "--pipeline",
+        "pipeline_name",
+        type=str,
+        required=True,
+        help="Pipeline name, as specified in the config file.",
+    )(func)
+    return func
+
+
+def pipeline_options(func):
+    """Extend pipeline options for the CLI."""
     func = click.option(
         "--session-id",
         type=str,
@@ -123,21 +143,7 @@ def pipeline_options(func):
             "(default: first step)."
         ),
     )(func)
-    func = click.option(
-        "--pipeline-version",
-        type=str,
-        help=(
-            "Pipeline version, as specified in the pipeline config file "
-            "(default: latest out of the installed versions)."
-        ),
-    )(func)
-    func = click.option(
-        "--pipeline",
-        "pipeline_name",
-        type=str,
-        required=True,
-        help="Pipeline name, as specified in the config file.",
-    )(func)
+    func = basic_pipeline_options(func)
     return func
 
 
