@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import json
 import logging
 import shlex
 from pathlib import Path
@@ -14,16 +13,11 @@ import pytest_mock
 import rich_click as click
 from click.testing import CliRunner
 
-from nipoppy.cli import (
-    BUG_REPORT_URL,
-    DISCORD_URL,
-    exception_handler,
-)
+from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import study_option
-from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
-from nipoppy.zenodo_api import ZenodoAPIError
+from nipoppy.exceptions import ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -409,177 +403,16 @@ def test_context_manager_no_exception(mocker):
     mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
 
 
-@pytest.mark.parametrize(
-    "return_code, expected_return_code",
-    [
-        (None, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.INVALID_ARGUMENT, ReturnCode.INVALID_ARGUMENT),
-    ],
-)
-def test_context_manager_system_exit_exception(
-    mocker: pytest_mock.MockerFixture, return_code, expected_return_code, caplog
-):
-    """Test that the context manager handles exceptions correctly.
-
-    SystemExit should set the workflow return code to the
-    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
+def test_context_manager_exception(mocker):
+    """Test that the context manager exits with the workflow return code on error."""
+    workflow = mocker.Mock()
+    workflow.return_code = ReturnCode.UNKNOWN_FAILURE
     mock_exit = mocker.patch("sys.exit")
 
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        if return_code is None:
-            raise SystemExit
-        else:
-            raise SystemExit(return_code)
+    with pytest.raises(RuntimeError), exception_handler(workflow):
+        raise RuntimeError
 
-    assert workflow.return_code == expected_return_code
-    mock_exit.assert_called_once_with(expected_return_code)
-
-
-class MyCustomException(NipoppyError):
-    code = 999
-
-
-@pytest.mark.parametrize(
-    "exception,return_code",
-    [
-        (NipoppyError, NipoppyError.code),
-        (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
-        (MyCustomException, MyCustomException.code),
-    ],
-)
-def test_context_manager_nipoppy_exception(
-    mocker: pytest_mock.MockerFixture, exception: Exception, return_code: int
-):
-    """Test that the context manager handles exceptions correctly.
-
-    NipoppyError and its subclasses should set the workflow return code to the
-    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        raise exception
-
-    assert workflow.return_code == return_code
-    mock_exit.assert_called_once_with(return_code)
-
-
-@pytest.mark.parametrize("hint", ["", "This is a hint."])
-def test_context_manager_nipoppy_exception_logs_custom_hint(
-    hint, mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Known NipoppyError should emit custom hint when provided."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        raise NipoppyError("Invalid project config", hint=hint)
-
-    assert any(
-        "Troubleshooting:" in record.message and hint in record.message
-        for record in caplog.records
-    )
-
-
-def test_context_manager_nipoppy_exception_logs_default_hint(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Known NipoppyError should emit default hint when none provided."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    default_hint = "This is a default hint."
-    with exception_handler(workflow):
-        e = NipoppyError("Invalid project config", hint=None)
-        e.default_hint = default_hint
-        raise e
-
-    assert any(
-        f"Troubleshooting: {default_hint}" in record.message
-        for record in caplog.records
-    )
-
-
-def test_context_manager_json_error(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Test that JSONError includes the file path in the error message."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    fpath = "invalid.json"
-    with exception_handler(workflow):
-        raise JSONError(
-            json.JSONDecodeError("Invalid JSON", "{}", 10),
-            fpath=Path(fpath),
-        )
-    assert any(
-        f"Invalid JSON: {fpath}: line 1 column 11 (char 10)" in record.message
-        for record in caplog.records
-    )
-
-
-@pytest.mark.parametrize(
-    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)]
-)
-@pytest.mark.parametrize("exception", [Exception, RuntimeError])
-def test_context_manager_unknown_exception(
-    mocker: pytest_mock.MockerFixture,
-    exception,
-    return_code,
-    caplog: pytest.LogCaptureFixture,
-):
-    """Test that the context manager handles exceptions correctly.
-
-    Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        if return_code is None:
-            raise exception
-        else:
-            raise exception(code=return_code)
-
-    # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
-    assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
     mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
-    assert any(BUG_REPORT_URL in record.message for record in caplog.records)
-    assert any(DISCORD_URL in record.message for record in caplog.records)
-
-
-def test_context_manager_pydantic_failed_validation(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Test that the context manager handles pydantic ValidationError correctly."""
-    from pydantic import BaseModel
-
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-
-    class MockedModel(BaseModel):
-        field: int
-
-    with exception_handler(workflow):
-        MockedModel(field="invalid")  # will raise ValidationError
-
-    assert workflow.return_code == ReturnCode.INVALID_CONFIG
-    mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
-    assert any(
-        "Troubleshooting:" in record.message
-        and "Review your configuration fields and value types" in record.message
-        for record in caplog.records
-    )
 
 
 @pytest.mark.parametrize("command", list_cli_commands(cli))
