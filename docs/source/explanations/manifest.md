@@ -15,8 +15,9 @@ delim: tab
 ## Inspiration
 
 Those who are familiar with {term}`BIDS` might notice that this file seems similar to the `participants.tsv` file in BIDS datasets. Indeed, the manifest file is heavily inspired by BIDS' `participant.tsv`, though there are some notable differences:
-* The manifest can contain longitudinal information, i.e. a single participant can have multiple rows representing different (imaging or non-imaging visits).
-* The manifest file is **mandatory** (`participants.tsv` is optional).
+
+- The manifest can contain longitudinal information, i.e. a single participant can have multiple rows representing different (imaging or non-imaging visits).
+- The manifest file is **mandatory** (`participants.tsv` is optional).
 
 ## In the Nipoppy protocol
 
