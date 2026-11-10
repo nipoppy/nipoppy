@@ -31,3 +31,9 @@ repos:
     -   id: codespell
         args: [--toml=pyproject.toml]
         additional_dependencies: [tomli]
+-   repo: https://github.com/markdownlint/markdownlint
+    rev: v0.18.1
+    hooks:
+    -   id: markdownlint
+        # Use installed Ruby to avoid compilation timeouts on pre-commit.ci.
+        language_version: system
