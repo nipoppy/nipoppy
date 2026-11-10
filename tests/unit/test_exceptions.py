@@ -1,6 +1,6 @@
 """Tests for custom exceptions."""
 
-from nipoppy.exceptions import ConfigError, NipoppyError
+from nipoppy.exceptions import NipoppyError
 
 
 def test_troubleshooting_hint_none_without_default():
@@ -19,6 +19,10 @@ def test_troubleshooting_hint_custom():
 
 def test_troubleshooting_hint_subclass_default():
     """Subclasses with a default_hint should use it when no hint is given."""
-    err = ConfigError("test message")
-    assert err.troubleshooting_hint == ConfigError.default_hint
-    assert err.troubleshooting_hint is not None
+
+    class SubclassError(NipoppyError):
+        default_hint = "default hint"
+
+    err = SubclassError("test message")
+    assert err.hint is None
+    assert err.troubleshooting_hint == err.default_hint
