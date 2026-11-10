@@ -10,6 +10,7 @@ from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import ProcessingStatusTable
+from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 logger = get_logger()
@@ -18,16 +19,14 @@ logger = get_logger()
 class PipelineTracker(BasePipelineWorkflow):
     """Pipeline tracker."""
 
-    progress_bar_description = "Tracking..."
-
     def __init__(
         self,
         dpath_root: StrOrPathLike,
         pipeline_name: str,
         pipeline_version: str | None = None,
         pipeline_step: str | None = None,
-        participant_id: str = None,
-        session_id: str = None,
+        participant_id: str | None = None,
+        session_id: str | None = None,
         n_jobs: int = 1,
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
@@ -37,17 +36,26 @@ class PipelineTracker(BasePipelineWorkflow):
             dpath_root=dpath_root,
             name="track_processing",
             pipeline_name=pipeline_name,
+            executor=LocalExecutor(
+                work_fn=self._track,
+                error_message_builder=lambda item: (
+                    f"Error tracking {self.pipeline_name} {self.pipeline_version}"
+                    f" for participant {item.participant_id}, session {item.session_id}"
+                ),
+                n_jobs=n_jobs,
+                progress_bar_description="Tracking...",
+                show_progress=True,
+            ),
             pipeline_version=pipeline_version,
             pipeline_step=pipeline_step,
             participant_id=participant_id,
             session_id=session_id,
-            n_jobs=n_jobs,
             fpath_layout=fpath_layout,
             verbose=verbose,
             dry_run=dry_run,
             _skip_logfile=True,
-            _show_progress=True,
         )
+        self.n_jobs = n_jobs
 
     def run_setup(self):
         """Load/initialize the processing status file."""
@@ -140,7 +148,7 @@ class PipelineTracker(BasePipelineWorkflow):
         """Tracker: level is always participant-session."""
         return list(participants_sessions)
 
-    def run_single(self, participant_id: str, session_id: str):
+    def _track(self, participant_id: str, session_id: str) -> dict:
         """Run tracker on a single participant/session."""
         # replace template strings in the tracker config
         tracker_config = TrackerConfig(
@@ -166,10 +174,10 @@ class PipelineTracker(BasePipelineWorkflow):
         }
         return processing_status_record
 
-    def _update_status_file(self):
+    def _update_status_file(self, results):
         """Update the processing status file."""
         self.processing_status_table = (
-            self.processing_status_table.add_or_update_records(self.run_single_results)
+            self.processing_status_table.add_or_update_records(results)
         )
         logger.info(
             "New/updated processing status table shape: "
@@ -183,4 +191,5 @@ class PipelineTracker(BasePipelineWorkflow):
     def run_main(self):
         """Run the tracker workflow."""
         super().run_main()
-        self._update_status_file()
+        if isinstance(self.executor, LocalExecutor):
+            self._update_status_file(self.executor.results)

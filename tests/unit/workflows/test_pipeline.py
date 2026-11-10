@@ -1,10 +1,7 @@
 """Tests for BasePipelineWorkflow."""
 
-import builtins
-import importlib
 import json
 import re
-from collections.abc import Generator
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -19,7 +16,7 @@ from nipoppy.config.pipeline import (
     ExtractionPipelineConfig,
     ProcessingPipelineConfig,
 )
-from nipoppy.config.pipeline_step import AnalysisLevelType, ProcPipelineStepConfig
+from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.schema import get_current_schema_version
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.container import ApptainerHandler
@@ -34,10 +31,11 @@ from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
     InvalidArgumentError,
-    ReturnCode,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
+from nipoppy.workflows._local_executor import LocalExecutor
+from nipoppy.workflows.executor import WorkItem
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
@@ -58,7 +56,8 @@ class PipelineWorkflow(BasePipelineWorkflow):
     """Dummy pipeline workflow for testing."""
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, name="test", **kwargs)
+        executor = LocalExecutor(self.run_single, lambda item: "Error")
+        super().__init__(*args, executor=executor, name="test", **kwargs)
 
     def get_participants_sessions_to_run(
         self, participant_id: str | None, session_id: str | None
@@ -135,49 +134,6 @@ def workflow(tmp_path: Path):
         ],
     )
     return workflow
-
-
-@pytest.fixture(scope="function")
-def reimport_joblib(mocker: pytest_mock.MockerFixture):
-    """Fixture for tests where joblib import was manipulated."""
-    yield
-
-    # fmt: off
-    mocker.stopall()
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
-    from nipoppy.workflows.pipeline import BasePipelineWorkflow  # noqa F401
-    from nipoppy.workflows.pipeline import (
-        JOBLIB_INSTALLED,
-    )
-    assert JOBLIB_INSTALLED
-    # fmt: on
-
-
-def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
-    real_import = builtins.__import__
-
-    def fake_import(name, *args, **kwargs):
-        if name == "joblib":
-            raise ImportError(error_message)
-        return real_import(name, *args, **kwargs)
-
-    mocker.patch("builtins.__import__", side_effect=fake_import)
-
-
-def test_joblib_import_fails(
-    mocker: pytest_mock.MockFixture,
-):
-    """Test that ImportError is propagated if joblib exists but import fails."""
-    # pretend that joblib is not installed
-    error_message = "Unexpected exception during import"
-    _mock_joblib_import_error(mocker, error_message)
-
-    # reload the module
-    import nipoppy.workflows.pipeline
-
-    with pytest.raises(ImportError, match=error_message):
-        importlib.reload(nipoppy.workflows.pipeline)
 
 
 @pytest.mark.parametrize(
@@ -257,37 +213,6 @@ def test_init(args):
     assert isinstance(workflow.dpath_pipeline_bids_db, Path)
 
 
-@pytest.mark.no_xdist
-def test_init_n_jobs_but_no_joblib(
-    tmp_path: Path,
-    mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
-    reimport_joblib,
-):
-    """Test that an error is raised when joblib is not installed and n_jobs > 1."""
-    dpath_root = tmp_path / "my_dataset"
-    mocker.patch("nipoppy.workflows.pipeline.JOBLIB_INSTALLED", False)
-    with pytest.raises(SystemExit):
-        PipelineWorkflow(
-            dpath_root=dpath_root,
-            pipeline_name="my_pipeline",
-            n_jobs=2,
-            _skip_logfile=True,
-        )
-
-    assert any(
-        [
-            record.levelname == "ERROR"
-            and (
-                "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
-            )
-            in record.message
-            for record in caplog.records
-        ]
-    )
-
-
 def test_init_hpc_write_subcohort():
     args = {
         "dpath_root": "my_dataset",
@@ -321,18 +246,6 @@ def test_init_participant_session(
     )
     assert workflow.participant_id == participant_expected
     assert workflow.session_id == session_expected
-
-
-def test_init_n_jobs_logfile():
-    with pytest.raises(
-        WorkflowError, match="n_jobs is not supported when _skip_logfile is False."
-    ):
-        PipelineWorkflow(
-            dpath_root="my_dataset",
-            pipeline_name="my_pipeline",
-            n_jobs=2,
-            _skip_logfile=False,
-        )
 
 
 def test_pipeline_version_optional():
@@ -998,102 +911,6 @@ def test_run_setup_check_filter_args_compatibility_called(
     mocked_check.assert_called_once_with()
 
 
-@pytest.mark.parametrize("show_progress", [True, False])
-def test_get_results_generator_no_joblib(
-    workflow: PipelineWorkflow,
-    show_progress: bool,
-    mocker: pytest_mock.MockFixture,
-    reimport_joblib,
-):
-    workflow.n_jobs = 1
-    workflow._show_progress = show_progress
-    participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
-
-    # pretend that joblib is not installed
-    _mock_joblib_import_error(mocker, "No module named 'joblib'")
-
-    # also mock joblib.delayed which is not supposed to be called
-    # when joblib is not installed
-    mocked_delayed = mocker.patch("nipoppy.workflows.pipeline.delayed")
-
-    # reload the module
-    # fmt: off
-    import nipoppy.workflows.pipeline
-    importlib.reload(nipoppy.workflows.pipeline)
-    # check that mocking/reloading worked
-    from nipoppy.workflows.pipeline import (  # noqa: F401
-        JOBLIB_INSTALLED,
-        BasePipelineWorkflow,
-    )
-    assert not JOBLIB_INSTALLED
-    # fmt: on
-
-    results = workflow._get_results_generator(participants_sessions)
-    mocked_delayed.assert_not_called()
-    assert isinstance(results, Generator)
-    assert len(list(results)) == len(participants_sessions)
-
-
-def test_get_results_generator_with_progress_bar(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    workflow._show_progress = True
-    participants_sessions = [("001", "1")]
-
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
-
-    workflow._get_results_generator(participants_sessions)
-    mocked_track.assert_called_once()
-
-
-@pytest.mark.parametrize(
-    "show_progress,participants_sessions", [(False, [("001", "1")]), (True, [])]
-)
-def test_get_results_generator_no_progress_bar(
-    workflow: PipelineWorkflow,
-    show_progress,
-    participants_sessions,
-    mocker: pytest_mock.MockFixture,
-):
-    workflow._show_progress = show_progress
-
-    mocked_track = mocker.patch("nipoppy.workflows.pipeline.rich.progress.track")
-
-    workflow._get_results_generator(participants_sessions)
-    mocked_track.assert_not_called()
-
-
-@pytest.mark.parametrize(
-    "participant_id,session_id,expected_count",
-    [(None, None, 4), ("01", None, 3), ("01", "2", 1)],
-)
-def test_run_main(
-    workflow: PipelineWorkflow,
-    participant_id,
-    session_id,
-    expected_count,
-    mocker: pytest_mock.MockFixture,
-):
-    workflow.participant_id = participant_id
-    workflow.session_id = session_id
-
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-
-    mocked_log_summary_message = mocker.patch.object(workflow, "_log_summary_message")
-
-    workflow.run_main()
-    assert workflow.n_total == expected_count
-    assert workflow.n_success == expected_count
-    assert workflow.run_single_results == tuple(["SUCCESS"] * expected_count)
-    mocked_log_summary_message.assert_called_once()
-
-
 def test_run_main_analysis_level(
     workflow: PipelineWorkflow,
     mocker: pytest_mock.MockFixture,
@@ -1106,43 +923,6 @@ def test_run_main_analysis_level(
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert mocked.call_count == 1
-
-
-@pytest.mark.parametrize("n_jobs", [1, 2, 4])
-def test_run_main_n_jobs(workflow: PipelineWorkflow, n_jobs: int):
-    """Smoke test for parallel execution (with joblib installed)."""
-    # fmt: off
-    # make sure joblib is installed
-    from nipoppy.workflows.pipeline import JOBLIB_INSTALLED
-    assert JOBLIB_INSTALLED, "joblib must be installed"
-    # fmt: on
-
-    workflow.n_jobs = n_jobs
-    participants_and_sessions = {"01": ["1", "2", "3"], "02": ["1"]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-    workflow.run_main()
-
-
-def test_run_main_catch_errors(workflow: PipelineWorkflow):
-    workflow.participant_id = "FAIL"
-    workflow.session_id = "1"
-
-    participants_and_sessions = {workflow.participant_id: [workflow.session_id]}
-    manifest = prepare_dataset(
-        participants_and_sessions_manifest=participants_and_sessions,
-        participants_and_sessions_bidsified=participants_and_sessions,
-        dpath_bidsified=workflow.study.layout.dpath_bids,
-    )
-    manifest.save_with_backup(workflow.study.layout.fpath_manifest)
-    workflow.run_main()
-    assert workflow.n_total == 1
-    assert workflow.n_success == 0
-    assert workflow.return_code == ReturnCode.PARTIAL_SUCCESS
 
 
 @pytest.mark.parametrize("write_subcohort", ["list.tsv", "to_run.tsv"])
@@ -1214,12 +994,16 @@ def test_run_main_use_subcohort(
         "get_participants_sessions_to_run",
         return_value=original_participants_sessions_to_run,
     )
-    mocked_run_single = mocker.patch.object(workflow, "run_single")
+    mocked_execute = mocker.spy(workflow.executor, "execute")
 
     workflow.run_main()
 
-    for participant_id, session_id in final_participants_sessions_to_run:
-        mocked_run_single.assert_any_call(participant_id, session_id)
+    mocked_execute.assert_called_once_with(
+        [
+            WorkItem(participant_id, session_id)
+            for participant_id, session_id in final_participants_sessions_to_run
+        ]
+    )
 
 
 def test_run_main_use_subcohort_not_found(
@@ -1261,74 +1045,6 @@ def test_run_main_use_subcohort_empty_file(
 
     with pytest.raises(RuntimeError, match=f"Subcohort file {fpath_list} is empty"):
         workflow.run_main()
-
-
-@pytest.mark.parametrize(
-    "n_success,n_total,analysis_level,expected_message",
-    [
-        (0, 0, "participant_session", "No participants or sessions to run"),
-        (
-            1,
-            2,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            0,
-            1,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            2,
-            2,
-            "participant_session",
-            "Ran for {0} out of {1} participants or sessions",
-        ),
-        (
-            1,
-            1,
-            "group",
-            "Ran on the entire study",
-        ),
-    ],
-)
-@pytest.mark.no_xdist
-def test_log_summary_message(
-    n_success,
-    n_total,
-    analysis_level,
-    expected_message: str,
-    workflow: PipelineWorkflow,
-    caplog: pytest.LogCaptureFixture,
-):
-    workflow.n_success = n_success
-    workflow.n_total = n_total
-
-    workflow.pipeline_config.STEPS = [
-        ProcPipelineStepConfig(ANALYSIS_LEVEL=analysis_level)
-    ]
-
-    workflow._log_summary_message()
-
-    assert expected_message.format(n_success, n_total) in caplog.text
-
-
-@pytest.mark.no_xdist
-def test_log_summary_message_no_participants_warning(
-    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
-):
-    workflow.n_success = 0
-    workflow.n_total = 0
-    workflow._log_summary_message()
-    assert any(
-        record.levelname == "WARNING"
-        and "No participants or sessions to run" in record.message
-        for record in caplog.records
-    ), "Wrong log message or level"
-    assert workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, (
-        "Wrong return code"
-    )
 
 
 @pytest.mark.parametrize(
@@ -1494,3 +1210,18 @@ def test_generate_fpath_log(
         fpath_log
         == workflow.study.layout.dpath_logs / f"{expected_stem}-20240404_1234.log"
     )
+
+
+@pytest.mark.parametrize("expected_return_code", [0, 1, 2])
+def test_run_locally(
+    expected_return_code, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    mocked_execute = mocker.patch.object(workflow.executor, "execute")
+    mocked_execute.return_value = (expected_return_code, [], [])
+
+    workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])
+    mocked_execute.assert_called_once_with(
+        [WorkItem("01", "1"), WorkItem("01", "2"), WorkItem("02", "1")]
+    )
+
+    assert workflow.return_code == expected_return_code
