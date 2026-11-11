@@ -54,6 +54,10 @@ COMMAND_WORKFLOW_MAP = {
         "nipoppy.workflows.pipeline_store.list",
         "PipelineListWorkflow",
     ),
+    "pipeline info": (
+        "nipoppy.workflows.pipeline_store.info",
+        "PipelineInfoWorkflow",
+    ),
     "pipeline validate": (
         "nipoppy.workflows.pipeline_store.validate",
         "PipelineValidateWorkflow",
@@ -358,6 +362,17 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "[mocked_dir]",
             ],
             "nipoppy.workflows.pipeline_store.list.PipelineListWorkflow",
+        ),
+        (
+            [
+                "pipeline",
+                "info",
+                "--study",
+                "[mocked_dir]",
+                "--pipeline",
+                "my_pipeline",
+            ],
+            "nipoppy.workflows.pipeline_store.info.PipelineInfoWorkflow",
         ),
         (
             ["pipeline", "validate", "[mocked_dir]"],
