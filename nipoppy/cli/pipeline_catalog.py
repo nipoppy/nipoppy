@@ -4,7 +4,6 @@ from pathlib import Path
 
 import rich_click as click
 
-from nipoppy.cli import exception_handler
 from nipoppy.cli.groups import OrderedAliasedGroup
 from nipoppy.cli.options import (
     assume_yes_option,
@@ -77,8 +76,7 @@ def pipeline_search(**params):
         sandbox=params.pop("sandbox"),
         password_file=params.pop("password_file", None),
     )
-    with exception_handler(PipelineSearchWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineSearchWorkflow(**params).run_and_exit()
 
 
 @pipeline.command("create")
@@ -112,8 +110,7 @@ def pipeline_create(**params):
     """Create a template pipeline config directory."""
     from nipoppy.workflows.pipeline_store.create import PipelineCreateWorkflow
 
-    with exception_handler(PipelineCreateWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineCreateWorkflow(**params).run_and_exit()
 
 
 @pipeline.command("install")
@@ -155,8 +152,7 @@ def pipeline_install(**params):
         sandbox=params.pop("sandbox"),
         password_file=params.pop("password_file", None),
     )
-    with exception_handler(PipelineInstallWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineInstallWorkflow(**params).run_and_exit()
 
 
 @pipeline.command("list")
@@ -168,8 +164,7 @@ def pipeline_list(**params):
     from nipoppy.workflows.pipeline_store.list import PipelineListWorkflow
 
     params = dep_params(**params)
-    with exception_handler(PipelineListWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineListWorkflow(**params).run_and_exit()
 
 
 @pipeline.command("validate")
@@ -184,8 +179,7 @@ def pipeline_validate(**params):
     from nipoppy.workflows.pipeline_store.validate import PipelineValidateWorkflow
 
     params["dpath_pipeline"] = params.pop("path")
-    with exception_handler(PipelineValidateWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineValidateWorkflow(**params).run_and_exit()
 
 
 @pipeline.command("upload")
@@ -224,5 +218,4 @@ def pipeline_upload(**params):
         password_file=params.pop("password_file"),
     )
     params["dpath_pipeline"] = params.pop("pipeline_dir")
-    with exception_handler(PipelineUploadWorkflow(**params)) as workflow:
-        workflow.run()
+    PipelineUploadWorkflow(**params).run_and_exit()

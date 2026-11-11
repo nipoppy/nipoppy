@@ -13,7 +13,6 @@ import pytest_mock
 import rich_click as click
 from click.testing import CliRunner
 
-from nipoppy.cli import exception_handler
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import study_option
@@ -389,30 +388,6 @@ def test_cli_command(
     if workflow is not None:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
-
-
-def test_context_manager_no_exception(mocker):
-    """Test that the context manager exits with SUCCESS when no exception occurs."""
-    workflow = mocker.Mock()
-    workflow.return_code = ReturnCode.SUCCESS
-    mock_exit = mocker.patch("sys.exit")
-
-    with exception_handler(workflow):
-        pass
-
-    mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
-
-
-def test_context_manager_exception(mocker):
-    """Test that the context manager exits with the workflow return code on error."""
-    workflow = mocker.Mock()
-    workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-    mock_exit = mocker.patch("sys.exit")
-
-    with pytest.raises(RuntimeError), exception_handler(workflow):
-        raise RuntimeError
-
-    mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
 
 
 @pytest.mark.parametrize("command", list_cli_commands(cli))

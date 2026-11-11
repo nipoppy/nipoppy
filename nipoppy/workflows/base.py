@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 import shlex
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
-from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
 from typing import Protocol
@@ -166,44 +166,6 @@ def _run_command(
     return run_output
 
 
-@contextmanager
-def _handle_exception(workflow):
-    """Handle exceptions raised during workflow execution."""
-    try:
-        yield workflow
-    except NipoppyError as e:
-        workflow.return_code = e.code
-        logger.error(e)
-        hint = e.troubleshooting_hint
-        if hint is not None:
-            logger.info(f"Troubleshooting: {hint}")
-        raise
-    except ValidationError as e:
-        workflow.return_code = ReturnCode.INVALID_CONFIG
-        logger.error(e)
-        logger.info(
-            "Troubleshooting: Review your configuration fields and value types."
-        )
-        raise
-    except ZenodoAPIError as e:
-        workflow.return_code = ReturnCode.KNOWN_FAILURE
-        logger.error(e)
-        raise
-    except SystemExit as e:
-        workflow.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
-        logger.error(e)
-        raise
-    except Exception:
-        workflow.return_code = ReturnCode.UNKNOWN_FAILURE
-        logger.exception("Unexpected error occurred")
-        logger.info(
-            "This failure was unexpected. Please report it with the command you ran "
-            f"and relevant logs on GitHub: {BUG_REPORT_URL} or ask on Discord: "
-            f"{DISCORD_URL}"
-        )
-        raise
-
-
 class BaseWorkflow(Base, ABC):
     """Base workflow class with logging/subprocess/filesystem utilities."""
 
@@ -245,14 +207,50 @@ class BaseWorkflow(Base, ABC):
 
     def run(self):
         """Run the workflow."""
-        with _handle_exception(self):
+        try:
             try:
                 self.run_setup()
                 self.run_main()
-            except Exception:
-                raise
             finally:
                 self.run_cleanup()
+        except NipoppyError as e:
+            self.return_code = e.code
+            logger.error(e)
+            hint = e.troubleshooting_hint
+            if hint is not None:
+                logger.info(f"Troubleshooting: {hint}")
+            raise
+        except ValidationError as e:
+            self.return_code = ReturnCode.INVALID_CONFIG
+            logger.error(e)
+            logger.info(
+                "Troubleshooting: Review your configuration fields and value types."
+            )
+            raise
+        except ZenodoAPIError as e:
+            self.return_code = ReturnCode.KNOWN_FAILURE
+            logger.error(e)
+            raise
+        except SystemExit as e:
+            self.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
+            logger.error(e)
+            raise
+        except Exception:
+            self.return_code = ReturnCode.UNKNOWN_FAILURE
+            logger.exception("Unexpected error occurred")
+            logger.info(
+                "This failure was unexpected. Please report it with the command "
+                f"you ran and relevant logs on GitHub: {BUG_REPORT_URL} or ask on "
+                f"Discord: {DISCORD_URL}"
+            )
+            raise
+
+    def run_and_exit(self):
+        """Run the workflow and exit the process with its return code."""
+        try:
+            self.run()
+        finally:
+            sys.exit(self.return_code)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
