@@ -5,15 +5,24 @@ from __future__ import annotations
 import logging
 import shlex
 import subprocess
+import sys
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
 from typing import Protocol
 
+from pydantic_core import ValidationError
+
 from nipoppy.base import Base
-from nipoppy.env import EXT_LOG, PROGRAM_NAME, StrOrPathLike
-from nipoppy.exceptions import FileOperationError, ReturnCode
+from nipoppy.env import (
+    BUG_REPORT_URL,
+    DISCORD_URL,
+    EXT_LOG,
+    PROGRAM_NAME,
+    StrOrPathLike,
+)
+from nipoppy.exceptions import FileOperationError, NipoppyError, ReturnCode
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.study import Study
@@ -27,6 +36,7 @@ from nipoppy.utils.utils import (
     add_path_timestamp,
     is_nipoppy_project,
 )
+from nipoppy.zenodo_api import ZenodoAPIError
 
 logger = get_logger()
 
@@ -198,12 +208,49 @@ class BaseWorkflow(Base, ABC):
     def run(self):
         """Run the workflow."""
         try:
-            self.run_setup()
-            self.run_main()
-        except Exception:
+            try:
+                self.run_setup()
+                self.run_main()
+            finally:
+                self.run_cleanup()
+        except NipoppyError as e:
+            self.return_code = e.code
+            logger.error(e)
+            hint = e.troubleshooting_hint
+            if hint is not None:
+                logger.info(f"Troubleshooting: {hint}")
             raise
+        except ValidationError as e:
+            self.return_code = ReturnCode.INVALID_CONFIG
+            logger.error(e)
+            logger.info(
+                "Troubleshooting: Review your configuration fields and value types."
+            )
+            raise
+        except ZenodoAPIError as e:
+            self.return_code = ReturnCode.KNOWN_FAILURE
+            logger.error(e)
+            raise
+        except SystemExit as e:
+            self.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
+            logger.error(e)
+            raise
+        except Exception:
+            self.return_code = ReturnCode.UNKNOWN_FAILURE
+            logger.exception("Unexpected error occurred")
+            logger.info(
+                "This failure was unexpected. Please report it with the command "
+                f"you ran and relevant logs on GitHub: {BUG_REPORT_URL} or ask on "
+                f"Discord: {DISCORD_URL}"
+            )
+            raise
+
+    def run_and_exit(self):
+        """Run the workflow and exit the process with its return code."""
+        try:
+            self.run()
         finally:
-            self.run_cleanup()
+            sys.exit(self.return_code)
 
 
 class BaseDatasetWorkflow(BaseWorkflow, ABC):
