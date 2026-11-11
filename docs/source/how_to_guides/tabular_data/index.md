@@ -28,7 +28,11 @@ delim: tab
 :::
 
 ## Behavioural and clinical data
-For the behavioural or clinical assessments, we create a {{dpath_assessments}} directory and then generate single TSV file (e.g. `assessment_A.tsv`) per assessment/instrument. This file contains separate row per `participant_id` and `visit_id` (or `session_id` if identical). This modularity at the level of assessment is helpful for quality checks and making corrections or updates. This file organization is also **not** validated by Nippopy, so one can come up alternative ways to organize / split clinical assessment information into separate files as preferred.
+Behavioural or clinical assessment data are also stored in {{dpath_tabular}}.
+We recommend generating a single TSV file (e.g. `assessment_A.tsv`) per assessment/instrument.
+This file contains separate row per `participant_id` and `visit_id` (or `session_id` if identical).
+This modularity at the level of assessment is helpful for quality checks and making corrections or updates.
+This file organization is also **not** validated by Nippopy, so one can come up alternative ways to organize / split clinical assessment information into separate files as preferred.
 
 ### Example assessment TSV file
 
