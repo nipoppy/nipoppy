@@ -43,7 +43,7 @@ class NipoppyError(Exception):
     """Base exception class for all nipoppy errors."""
 
     code = ReturnCode.KNOWN_FAILURE
-    default_hint = ""
+    default_hint: str | None = None
 
     def __init__(self, message: str = "", hint: str | None = None):
         self.message = message
@@ -54,7 +54,7 @@ class NipoppyError(Exception):
         return self.message
 
     @property
-    def troubleshooting_hint(self) -> str:
+    def troubleshooting_hint(self) -> str | None:
         """Return the troubleshooting hint attached to this error."""
         return self.default_hint if self.hint is None else self.hint
 
