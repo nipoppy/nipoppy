@@ -32,7 +32,7 @@ LONG_STATUS_COLUMNS = [
 class StatusWorkflow(BaseDatasetWorkflow):
     """Workflow for status command."""
 
-    INDEX_COLS = [Manifest.col_participant_id, Manifest.col_session_id]
+    index_cols = [Manifest.col_participant_id, Manifest.col_session_id]
 
     def __init__(
         self,
@@ -51,6 +51,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
+        self.datatype = datatype
         if isinstance(datatype, str):
             datatype = (datatype,)
         if datatype is None:
@@ -63,16 +64,24 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
         Returns
         -------
-        pd.DataFrame
-            Status dataframe with completed checkpoint counts by session.
+        pd.DataFrame or None
+            Status dataframe with completed checkpoint counts by session, or
+            None if the manifest has no imaging data or no record matches the
+            requested datatypes.
         """
-        status_df = self._filter_status_df(self._build_status_df())
+        status_df = self._build_status_df()
+        if status_df.empty:
+            logger.warning(
+                "No imaging participant-session pairs found in the manifest."
+            )
+            return None
 
+        status_df = self._filter_status_df(status_df, datatypes=self.datatypes)
         if status_df.empty:
             logger.warning(
                 f"No imaging manifest rows matched datatype: {self.datatypes}."
             )
-            return
+            return None
 
         curation_cols = CurationStatusTable.status_cols
         processing_cols = sorted(
@@ -89,10 +98,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
             session_ids=session_ids,
             checkpoint_cols=checkpoint_cols,
         )
-
-        logger.debug(f"curation columns: {curation_cols}")
-        logger.debug(f"processing columns: {processing_cols}")
-        logger.debug(f"status_counts_df:\n{status_counts_df}")
 
         if status_counts_df[CurationStatusTable.col_in_bids].equals(
             status_counts_df[CHECKPOINT_MANIFEST]
@@ -131,13 +136,11 @@ class StatusWorkflow(BaseDatasetWorkflow):
         logger.debug(f"Long-form status table:\n{status_df}")
         return status_df
 
-    @staticmethod
-    def _get_manifest_datatypes(imaging_manifest: pd.DataFrame) -> pd.DataFrame:
+    @classmethod
+    def _get_manifest_datatypes(cls, imaging_manifest: pd.DataFrame) -> pd.DataFrame:
         """Get the union of manifest datatypes for each participant-session pair."""
         if imaging_manifest.empty:
-            return pd.DataFrame(
-                columns=[*StatusWorkflow.INDEX_COLS, Manifest.col_datatype]
-            )
+            return pd.DataFrame(columns=[*cls.index_cols, Manifest.col_datatype])
 
         def combine_datatypes(values: pd.Series) -> list[str]:
             return sorted(
@@ -150,9 +153,9 @@ class StatusWorkflow(BaseDatasetWorkflow):
             )
 
         return (
-            imaging_manifest.groupby(
-                StatusWorkflow.INDEX_COLS, as_index=False, sort=False
-            )[Manifest.col_datatype]
+            imaging_manifest.groupby(cls.index_cols, as_index=False, sort=False)[
+                Manifest.col_datatype
+            ]
             .agg(combine_datatypes)
             .reset_index(drop=True)
         )
@@ -166,17 +169,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
             logger.warning("No curation status file found.")
             return self._empty_status_df()
 
-        status_df = table[
-            [
-                CurationStatusTable.col_participant_id,
-                CurationStatusTable.col_session_id,
-                *CurationStatusTable.status_cols,
-            ]
-        ].melt(
-            id_vars=[
-                CurationStatusTable.col_participant_id,
-                CurationStatusTable.col_session_id,
-            ],
+        status_df = table[[*self.index_cols, *CurationStatusTable.status_cols]].melt(
+            id_vars=self.index_cols,
             value_vars=CurationStatusTable.status_cols,
             var_name=COL_CHECKPOINT,
             value_name="complete",
@@ -226,28 +220,31 @@ class StatusWorkflow(BaseDatasetWorkflow):
         )
         return self._attach_manifest_datatypes(successful, manifest_datatypes)
 
-    @staticmethod
+    @classmethod
     def _attach_manifest_datatypes(
-        status_df: pd.DataFrame, manifest_datatypes: pd.DataFrame
+        cls, status_df: pd.DataFrame, manifest_datatypes: pd.DataFrame
     ) -> pd.DataFrame:
         """Attach manifest datatypes and discard status-only records."""
         if status_df.empty or manifest_datatypes.empty:
-            return StatusWorkflow._empty_status_df()
+            return cls._empty_status_df()
 
         return status_df.drop(columns=Manifest.col_datatype, errors="ignore").merge(
             manifest_datatypes,
-            on=StatusWorkflow.INDEX_COLS,
+            on=cls.index_cols,
             how="inner",
             validate="many_to_one",
         )[LONG_STATUS_COLUMNS]
 
-    def _filter_status_df(self, status_df: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def _filter_status_df(
+        status_df: pd.DataFrame, *, datatypes: set[str] | None = None
+    ) -> pd.DataFrame:
         """Filter long-form records by exact manifest datatype membership."""
-        if self.datatypes is None:
+        if datatypes is None:
             return status_df.copy()
 
         return status_df.loc[
-            status_df[Manifest.col_datatype].apply(self.datatypes.issubset)
+            status_df[Manifest.col_datatype].apply(datatypes.issubset)
         ].copy()
 
     def _log_dataset_summary(self, status_df: pd.DataFrame, session_ids: list[str]):
@@ -256,12 +253,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         participant_ids = manifest[Manifest.col_participant_id].unique()
         visit_ids = sorted(manifest[Manifest.col_visit_id].unique())
 
-        imaging_status_df = status_df.loc[
-            status_df[COL_CHECKPOINT] == CHECKPOINT_MANIFEST
-        ]
-        imaging_participant_ids = imaging_status_df[
-            Manifest.col_participant_id
-        ].unique()
+        imaging_participant_ids = status_df[Manifest.col_participant_id].unique()
         logger.info(
             "Dataset summary (based on the manifest file):"
             f"\n\tNumber of participants (imaging and non-imaging): "
@@ -274,13 +266,8 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
     @staticmethod
     def _get_session_ids(status_df: pd.DataFrame) -> list[str]:
-        """Get deterministic session ordering from selected manifest records."""
-        return sorted(
-            status_df.loc[
-                status_df[COL_CHECKPOINT] == CHECKPOINT_MANIFEST,
-                Manifest.col_session_id,
-            ].unique()
-        )
+        """Get deterministic session ordering from the selected status records."""
+        return sorted(status_df[Manifest.col_session_id].unique())
 
     @staticmethod
     def _count_by_session(

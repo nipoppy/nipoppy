@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -23,221 +22,35 @@ def dpath_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def make_manifest(
-    n_participants=10, session_ids=("BL", "M12"), randomize_counts=False
-) -> Manifest:
+def make_manifest(n_participants=10, session_ids=("BL", "M12")) -> Manifest:
     datatypes = ["anat", "dwi"]
-
     participant_ids = [str(i) for i in range(1, n_participants + 1)]
 
-    # generate participants per session (potentially randomizing the number of participants)
-    _df = pd.DataFrame(
-        data={
-            Manifest.col_session_id: session_ids[0],
-            Manifest.col_participant_id: participant_ids,
-            Manifest.col_visit_id: session_ids[0],
-            Manifest.col_datatype: [datatypes for _ in range(n_participants)],
-        }
-    )
-
-    _df_list = [_df]
-    participant_counts = [len(participant_ids)]
-
-    for session_id in session_ids[1:]:
-        if randomize_counts:
-            participant_count_for_session = np.random.randint(1, n_participants + 1)
-        else:
-            participant_count_for_session = n_participants
-
-        _df = pd.DataFrame(
-            data={
-                Manifest.col_session_id: session_id,
-                Manifest.col_participant_id: participant_ids[
-                    :participant_count_for_session
-                ],
-                Manifest.col_visit_id: session_id,
-                Manifest.col_datatype: [
-                    datatypes for _ in range(participant_count_for_session)
-                ],
-            }
-        )
-
-        _df_list.append(_df)
-        participant_counts.append(participant_count_for_session)
-
-    _df = Manifest(pd.concat(_df_list))
-
-    session_participant_counts_df = pd.DataFrame(
-        data=zip(session_ids, participant_counts),
-        columns=[Manifest.col_session_id, "participant_count"],
-    )
-
-    return _df, session_participant_counts_df
-
-
-def make_curation_status_table(
-    n_participants=10,
-    session_ids=("BL", "M12"),
-    n_success_percents=(80, 60, 40),
-    randomize_counts=False,
-    from_bids=False,
-) -> CurationStatusTable:
-    # reuse manifest generation
-    manifest, session_participant_counts_df = make_manifest(
-        n_participants, session_ids, randomize_counts
-    )
-
-    participant_ids = manifest["participant_id"].unique()
-
-    # add pre_reorg, post_reorg, and bids status columns
-    # always keep the first session as complete
-    table = manifest.copy()
-    table[
-        [
-            CurationStatusTable.col_in_pre_reorg,
-            CurationStatusTable.col_in_post_reorg,
-            CurationStatusTable.col_in_bids,
-        ]
-    ] = False  # sets dtype to bool and avoids pandas warnings
-
-    table.loc[
-        table[Manifest.col_session_id] == session_ids[0],
-        CurationStatusTable.col_in_bids,
-    ] = True
-
-    if from_bids:
-        # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
-        participant_counts = [(0, 0, len(participant_ids))]
-    else:
-        table.loc[
-            table[Manifest.col_session_id] == session_ids[0],
-            CurationStatusTable.col_in_pre_reorg,
-        ] = True
-        table.loc[
-            table[Manifest.col_session_id] == session_ids[0],
-            CurationStatusTable.col_in_post_reorg,
-        ] = True
-
-        # participant_counts contains a tuple of (pre_reorg, post_reorg, bids)
-        participant_counts = [
-            (len(participant_ids), len(participant_ids), len(participant_ids))
-        ]
-
-    # add the rest of the sessions
-    for session_id in session_ids[1:]:
-        n_session_participants = session_participant_counts_df[
-            session_participant_counts_df[Manifest.col_session_id] == session_id
-        ]["participant_count"].values[0]
-        n_success_pre_reorg = int(n_session_participants * n_success_percents[0] / 100)
-        n_success_post_reorg = int(n_session_participants * n_success_percents[1] / 100)
-        n_success_bids = int(n_session_participants * n_success_percents[2] / 100)
-        participant_counts.append(
-            (n_success_pre_reorg, n_success_post_reorg, n_success_bids)
-        )
-
-        table.loc[
-            table[Manifest.col_session_id] == session_id,
-            CurationStatusTable.col_in_pre_reorg,
-        ] = [True] * n_success_pre_reorg + [False] * (
-            n_session_participants - n_success_pre_reorg
-        )
-        table.loc[
-            table[Manifest.col_session_id] == session_id,
-            CurationStatusTable.col_in_post_reorg,
-        ] = [True] * n_success_post_reorg + [False] * (
-            n_session_participants - n_success_post_reorg
-        )
-        table.loc[
-            table[Manifest.col_session_id] == session_id,
-            CurationStatusTable.col_in_bids,
-        ] = [True] * n_success_bids + [False] * (
-            n_session_participants - n_success_bids
-        )
-
-    session_participant_counts_df = pd.DataFrame(
-        data=zip(session_ids, participant_counts),
-        columns=["session_id", "participant_count"],
-    )
-
-    return CurationStatusTable(table), session_participant_counts_df
-
-
-def make_processing_status_table(
-    n_participants=10,
-    session_ids=("BL", "M12"),
-    n_success_percent=50,
-    pipeline_configs=(
-        ("dcm2bids", "1.0.0", "prepare"),
-        ("dcm2bids", "1.0.0", "convert"),
-        ("fmriprep", "1.0.0", "default"),
-    ),
-    randomize_counts=False,
-) -> ProcessingStatusTable:
-    manifest, session_participant_counts_df = make_manifest(
-        n_participants, session_ids, randomize_counts
-    )
-
-    participant_ids = manifest["participant_id"].unique()
-    n_configs = len(pipeline_configs)
-    # add pipeline columns
-    _df_list = []
-    for config in pipeline_configs:
-        _df = manifest.copy()
-        _df[
+    return Manifest(
+        pd.concat(
             [
-                ProcessingStatusTable.col_pipeline_name,
-                ProcessingStatusTable.col_pipeline_version,
-                ProcessingStatusTable.col_pipeline_step,
+                pd.DataFrame(
+                    data={
+                        Manifest.col_session_id: session_id,
+                        Manifest.col_participant_id: participant_ids,
+                        Manifest.col_visit_id: session_id,
+                        Manifest.col_datatype: [datatypes for _ in participant_ids],
+                    }
+                )
+                for session_id in session_ids
             ]
-        ] = config
-        _df_list.append(_df)
-
-    table = ProcessingStatusTable(pd.concat(_df_list))
-
-    # repeated participants for each pipeline config
-    participant_counts = [n_configs * len(participant_ids)]
-
-    # add pipeline status columns
-    # always keep the first session as complete for all pipelines
-    # except when testing 0% success
-    if n_success_percent == 0:
-        table[ProcessingStatusTable.col_status] = "FAIL"
-    else:
-        table[[ProcessingStatusTable.col_status]] = "INCOMPLETE"
-        table.loc[
-            table[Manifest.col_session_id] == session_ids[0],
-            ProcessingStatusTable.col_status,
-        ] = "SUCCESS"
-
-        # add the rest of the sessions
-        for session_id in session_ids[1:]:
-            n_session_participants = (
-                n_configs
-                * session_participant_counts_df[
-                    session_participant_counts_df[Manifest.col_session_id] == session_id
-                ]["participant_count"].values[0]
-            )
-            n_success_pipeline = int(n_session_participants * n_success_percent / 100)
-            participant_counts.append(n_success_pipeline)
-
-            table.loc[
-                table[Manifest.col_session_id] == session_id,
-                ProcessingStatusTable.col_status,
-            ] = ["SUCCESS"] * n_success_pipeline + ["INCOMPLETE"] * (
-                n_session_participants - n_success_pipeline
-            )
-
-    # participant_count column contains an int which is the sum of successful
-    # rows across all processing pipelines for a given session
-    session_participant_counts_df = pd.DataFrame(
-        data=zip(session_ids, participant_counts),
-        columns=["session_id", "participant_count"],
+        )
     )
 
-    return table, session_participant_counts_df
 
+def make_mixed_datatype_status_tables(
+    curation: str = "partial", processing: str = "non_empty"
+):
+    """Make a manifest and status tables with mixed datatypes.
 
-def make_mixed_datatype_status_tables():
+    curation: "partial", "bids_complete" or "empty".
+    processing: "non_empty" or "empty".
+    """
     manifest = Manifest(
         pd.DataFrame(
             [
@@ -256,48 +69,68 @@ def make_mixed_datatype_status_tables():
             ],
         )
     )
-    curation_status_table = CurationStatusTable(
-        pd.DataFrame(
-            [
-                ("01", "BL", True, True, True),
-                ("02", "BL", False, False, False),
-                ("03", "BL", True, True, True),
-                ("01", "M12", True, True, False),
-                ("02", "M12", False, False, False),
-            ],
-            columns=[
-                CurationStatusTable.col_participant_id,
-                CurationStatusTable.col_session_id,
-                CurationStatusTable.col_in_pre_reorg,
-                CurationStatusTable.col_in_post_reorg,
-                CurationStatusTable.col_in_bids,
-            ],
-        )
-    )
+    curation_columns = [
+        CurationStatusTable.col_participant_id,
+        CurationStatusTable.col_session_id,
+        CurationStatusTable.col_in_pre_reorg,
+        CurationStatusTable.col_in_post_reorg,
+        CurationStatusTable.col_in_bids,
+    ]
+    curation_tables = {
+        "partial": CurationStatusTable(
+            pd.DataFrame(
+                [
+                    ("01", "BL", True, True, True),
+                    ("02", "BL", False, False, False),
+                    ("03", "BL", True, True, True),
+                    ("01", "M12", True, True, False),
+                    ("02", "M12", False, False, False),
+                ],
+                columns=curation_columns,
+            )
+        ),
+        # mirrors a BIDS-initialised dataset: only in_bids is set
+        "bids_complete": CurationStatusTable(
+            pd.DataFrame(
+                [
+                    ("01", "BL", False, False, True),
+                    ("02", "BL", False, False, True),
+                    ("03", "BL", False, False, True),
+                    ("01", "M12", False, False, True),
+                    ("02", "M12", False, False, True),
+                ],
+                columns=curation_columns,
+            )
+        ),
+        "empty": CurationStatusTable(),
+    }
 
-    processing_status_table = ProcessingStatusTable(
-        pd.DataFrame(
-            [
-                ("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                ("02", "BL", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                ("03", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                ("01", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                ("02", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                ("orphan", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                ("orphan", "ML12", "pipeline", "1.0.0", "default", "SUCCESS"),
-            ],
-            columns=[
-                ProcessingStatusTable.col_participant_id,
-                ProcessingStatusTable.col_session_id,
-                ProcessingStatusTable.col_pipeline_name,
-                ProcessingStatusTable.col_pipeline_version,
-                ProcessingStatusTable.col_pipeline_step,
-                ProcessingStatusTable.col_status,
-            ],
-        )
-    )
+    processing_tables = {
+        "non_empty": ProcessingStatusTable(
+            pd.DataFrame(
+                [
+                    ("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                    ("02", "BL", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                    ("03", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                    ("01", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                    ("02", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                    ("orphan", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                    ("orphan", "ML12", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ],
+                columns=[
+                    ProcessingStatusTable.col_participant_id,
+                    ProcessingStatusTable.col_session_id,
+                    ProcessingStatusTable.col_pipeline_name,
+                    ProcessingStatusTable.col_pipeline_version,
+                    ProcessingStatusTable.col_pipeline_step,
+                    ProcessingStatusTable.col_status,
+                ],
+            )
+        ),
+        "empty": ProcessingStatusTable(),
+    }
 
-    return manifest, curation_status_table, processing_status_table
+    return manifest, curation_tables[curation], processing_tables[processing]
 
 
 @pytest.mark.parametrize(
@@ -384,7 +217,7 @@ def test_filtering_hide_pipeline_without_success(
     )
 
 
-def test_unmatched_datatype_returns_empty_table(
+def test_unmatched_datatype_returns_none(
     dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
 ):
@@ -407,17 +240,43 @@ def test_unmatched_datatype_returns_empty_table(
 @pytest.mark.parametrize(
     "datatype,expected",
     [
-        ((" dwi ", "anat "), {"anat", "dwi"}),
+        (("dwi", "anat"), {"anat", "dwi"}),
+        ("dwi", {"dwi"}),
         (("fake",), {"fake"}),
-        (("", " "), None),
+        (None, None),
+        ((), None),
     ],
 )
 def test_datatype_values_are_normalized(
-    dpath_root: Path, datatype: tuple[str, ...], expected: set[str] | None
+    dpath_root: Path,
+    datatype: tuple[str, ...] | str | None,
+    expected: set[str] | None,
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
 
     assert workflow.datatypes == expected
+    assert workflow.datatype == datatype
+
+
+def test_str_with_datatype(dpath_root: Path):
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("anat",))
+
+    assert "datatype" in str(workflow)
+
+
+def test_empty_imaging_manifest_without_datatype(
+    dpath_root: Path, caplog: pytest.LogCaptureFixture
+):
+    workflow = StatusWorkflow(dpath_root=dpath_root)
+    workflow.study.manifest = Manifest()
+    workflow.curation_status_table = CurationStatusTable()
+    workflow.processing_status_table = ProcessingStatusTable()
+
+    assert workflow.run_main() is None
+    assert "No imaging participant-session pairs found in the manifest." in (
+        caplog.text
+    )
+    assert "matched datatype" not in caplog.text
 
 
 def test_build_status_df(dpath_root: Path):
@@ -451,7 +310,7 @@ def test_get_manifest_datatypes_with_empty_imaging_manifest():
 
     assert manifest_datatypes.empty
     assert manifest_datatypes.columns.tolist() == [
-        *StatusWorkflow.INDEX_COLS,
+        *StatusWorkflow.index_cols,
         Manifest.col_datatype,
     ]
 
@@ -460,11 +319,11 @@ def test_get_manifest_datatypes_with_empty_imaging_manifest():
 def test_attach_manifest_datatypes_with_empty_input(empty_status, empty_manifest):
     status_df = pd.DataFrame(
         [("01", "BL", CurationStatusTable.col_in_bids)],
-        columns=[*StatusWorkflow.INDEX_COLS, COL_CHECKPOINT],
+        columns=[*StatusWorkflow.index_cols, COL_CHECKPOINT],
     )
     manifest_datatypes = pd.DataFrame(
         [("01", "BL", ["anat"])],
-        columns=[*StatusWorkflow.INDEX_COLS, Manifest.col_datatype],
+        columns=[*StatusWorkflow.index_cols, Manifest.col_datatype],
     )
     if empty_status:
         status_df = status_df.iloc[:0]
@@ -560,7 +419,9 @@ def test_filter_uses_manifest_datatypes(dpath_root: Path):
         )
     )
 
-    status_df = workflow._filter_status_df(workflow._build_status_df())
+    status_df = StatusWorkflow._filter_status_df(
+        workflow._build_status_df(), datatypes=workflow.datatypes
+    )
 
     # Both datatypes are present across visits for the same session.
     assert status_df[COL_CHECKPOINT].value_counts().to_dict() == {
@@ -631,7 +492,7 @@ def test_datatype_filter_bids_completion_drops_curation_stages(
 ):
     """When BIDS count equals manifest count under datatype filter, hide pre/post reorg."""
     workflow = StatusWorkflow(dpath_root=dpath_root, datatype="dwi")
-    workflow.study.manifest = make_manifest(n_participants=1, session_ids=["BL"])[0]
+    workflow.study.manifest = make_manifest(n_participants=1, session_ids=["BL"])
     workflow.curation_status_table = CurationStatusTable(
         pd.DataFrame(
             [("1", "BL", True, True, True)],
@@ -657,7 +518,7 @@ def test_empty_processing_table_has_only_missing_file_warning(
     caplog: pytest.LogCaptureFixture,
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.study.manifest = make_manifest(n_participants=1)[0]
+    workflow.study.manifest = make_manifest(n_participants=1)
     workflow.curation_status_table = CurationStatusTable()
     workflow.processing_status_table = ProcessingStatusTable()
 
@@ -672,70 +533,49 @@ def test_empty_processing_table_has_only_missing_file_warning(
     )
 
 
-# Check col_in_pre_reorg and col_in_post_reorg are not shown when all values are False
-@pytest.mark.parametrize(
-    "n_participants,session_ids,n_success_percents,randomize_counts",
-    [
-        (10, ["BL", "M12"], (0, 0, 100), False),
-    ],
-)
-def test_check_curation_status_table_from_bids_init(
-    dpath_root: Path,
-    n_participants: int,
-    session_ids: list,
-    n_success_percents: tuple,
-    randomize_counts: bool,
-):
+# Check col_in_pre_reorg and col_in_post_reorg are not shown when BIDS is complete
+def test_check_curation_status_table_from_bids_init(dpath_root: Path):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.study.manifest = make_manifest(n_participants=10)[0]
-    workflow.curation_status_table, session_participant_counts_df = (
-        make_curation_status_table(
-            n_participants=n_participants,
-            session_ids=session_ids,
-            n_success_percents=n_success_percents,
-            randomize_counts=randomize_counts,
-            from_bids=True,  # Simulate BIDS initialization
-        )
-    )
+    (
+        workflow.study.manifest,
+        workflow.curation_status_table,
+        workflow.processing_status_table,
+    ) = make_mixed_datatype_status_tables(curation="bids_complete")
 
     status_df = workflow.run_main()
 
-    # Check that col_in_pre_reorg and col_in_post_reorg are not in the status_df
     assert CurationStatusTable.col_in_pre_reorg not in status_df.columns
     assert CurationStatusTable.col_in_post_reorg not in status_df.columns
     assert CurationStatusTable.col_in_bids in status_df.columns
 
 
-@pytest.mark.parametrize(
-    "processing_status_table",
-    [ProcessingStatusTable(), make_processing_status_table()[0]],
-)
-def test_run(dpath_root: Path, processing_status_table: ProcessingStatusTable):
+@pytest.mark.parametrize("curation", ["partial", "bids_complete", "empty"])
+@pytest.mark.parametrize("processing", ["empty", "non_empty"])
+def test_run(dpath_root: Path, curation: str, processing: str):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.study.config = get_config()
-    workflow.study.manifest = make_manifest(n_participants=10)[0]
-    workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
-    workflow.processing_status_table = processing_status_table
+    (
+        workflow.study.manifest,
+        workflow.curation_status_table,
+        workflow.processing_status_table,
+    ) = make_mixed_datatype_status_tables(curation=curation, processing=processing)
     status_df = workflow.run_main()
 
     assert status_df is not None
 
 
-@pytest.mark.parametrize(
-    "processing_status_table",
-    [ProcessingStatusTable(), make_processing_status_table()[0]],
-)
-def test_run_sub_directory(
-    dpath_root: Path, processing_status_table: ProcessingStatusTable
-):
+@pytest.mark.parametrize("processing", ["empty", "non_empty"])
+def test_run_sub_directory(dpath_root: Path, processing: str):
     derivatives = dpath_root.joinpath("derivatives")
     derivatives.mkdir(parents=True, exist_ok=True)
 
     workflow = StatusWorkflow(dpath_root=derivatives)
     workflow.study.config = get_config()
-    workflow.study.manifest = make_manifest(n_participants=10)[0]
-    workflow.curation_status_table = CurationStatusTable()  # Checks for empty table
-    workflow.processing_status_table = processing_status_table
+    (
+        workflow.study.manifest,
+        workflow.curation_status_table,
+        workflow.processing_status_table,
+    ) = make_mixed_datatype_status_tables(processing=processing)
     status_df = workflow.run_main()
 
     assert status_df is not None
