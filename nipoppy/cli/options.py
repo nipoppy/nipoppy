@@ -34,20 +34,34 @@ def study_option(func):
     return func
 
 
+def check_at_most_one_flag_specified(*flags: str) -> None:
+    """Raise a UsageError if more than one of the flags is given on the command line."""
+    ctx = click.get_current_context()
+    # Map each declared flag to its parameter name, which can differ from the flag
+    # (e.g., '--study' maps to 'dpath_root'). Flags not declared by the command
+    # cannot have been specified, so they are ignored.
+    flag_to_param = {
+        flag: param.name
+        for param in ctx.command.params
+        for flag in (*param.opts, *param.secondary_opts)
+    }
+    specified_flags = [
+        flag
+        for flag in flags
+        if flag in flag_to_param
+        and ctx.get_parameter_source(flag_to_param[flag])
+        == click.core.ParameterSource.COMMANDLINE
+    ]
+    if len(specified_flags) > 1:
+        raise click.UsageError(
+            f"Cannot specify more than one of: {', '.join(specified_flags)}."
+        )
+
+
 def dep_params(**params):
     """Handle deprecated parameters."""
-    ctx = click.get_current_context(silent=True)
-    if ctx is not None:
-        study_provided = (
-            ctx.get_parameter_source("dpath_root")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        dataset_provided = (
-            ctx.get_parameter_source("dataset")
-            == click.core.ParameterSource.COMMANDLINE
-        )
-        if study_provided and dataset_provided:
-            raise click.UsageError("Cannot specify both --study and --dataset.")
+    check_at_most_one_flag_specified("--study", "--dataset")
+    check_at_most_one_flag_specified("--write-subcohort", "--write-list")
 
     # --dataset is deprecated by --study
     if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):

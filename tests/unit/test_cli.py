@@ -13,6 +13,7 @@ import pytest
 import pytest_mock
 import rich_click as click
 from click.testing import CliRunner
+from rich_click import UsageError
 
 from nipoppy.cli import (
     BUG_REPORT_URL,
@@ -21,7 +22,7 @@ from nipoppy.cli import (
 )
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
-from nipoppy.cli.options import study_option
+from nipoppy.cli.options import check_at_most_one_flag_specified, study_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
@@ -153,19 +154,97 @@ def test_dep_params(
 @pytest.mark.no_xdist
 def test_study_and_dataset_mutually_exclusive(
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ):
     """Test that providing both --study and --dataset raises an error."""
-    result = runner.invoke(
-        cli,
-        ["init", "--study", f"{tmp_path}/study1", "--dataset", f"{tmp_path}/study2"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code != ReturnCode.SUCCESS
-    assert not any(
-        "Cannot specify both --study and --dataset" in record.message
-        for record in caplog.records
-    )
+    with pytest.raises(
+        UsageError, match="Cannot specify more than one of: --study, --dataset."
+    ):
+        runner.invoke(
+            cli,
+            [
+                "init",
+                "--study",
+                f"{tmp_path}/study1",
+                "--dataset",
+                f"{tmp_path}/study2",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
+
+
+@pytest.mark.parametrize(
+    ("cli_args", "expected_match"),
+    [
+        (
+            ["--flag1", "1", "--flag2", "2"],
+            "Cannot specify more than one of: --flag1, --flag2.",
+        ),
+        (
+            ["--flag1", "1", "--flag2", "2", "--flag3", "3"],
+            "Cannot specify more than one of: --flag1, --flag2, --flag3.",
+        ),
+    ],
+)
+def test_check_at_most_one_flag_specified(cli_args: list[str], expected_match: str):
+    """Test that an error is raised when more than one flag is specified."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2", "renamed")
+    @click.option("--flag3")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified(
+            "--flag1", "--flag2", "--flag3", "--undeclared"
+        )
+
+    with pytest.raises(UsageError, match=expected_match):
+        runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+
+
+@pytest.mark.parametrize(
+    "cli_args",
+    [[], ["--flag1", "1"], ["--flag2", "2"]],
+)
+def test_check_at_most_one_flag_specified_no_error(cli_args: list[str]):
+    """Test that no error is raised when at most one flag is specified."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2", "renamed")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--flag2", "--undeclared")
+
+    result = runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+    assert result.exception is None
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize("command", ["bidsify", "process", "extract"])
+def test_write_subcohort_and_write_list_mutually_exclusive(
+    command: str, tmp_path: Path
+):
+    """Test that providing both --write-subcohort and --write-list raises an error."""
+    with pytest.raises(
+        UsageError,
+        match="Cannot specify more than one of: --write-subcohort, --write-list.",
+    ):
+        runner.invoke(
+            cli,
+            [
+                command,
+                "--study",
+                str(tmp_path),
+                "--pipeline",
+                "fake_pipeline",
+                "--write-subcohort",
+                f"{tmp_path}/subcohort.tsv",
+                "--write-list",
+                f"{tmp_path}/list.tsv",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
 
 
 @pytest.mark.no_xdist
