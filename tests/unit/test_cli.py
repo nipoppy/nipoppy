@@ -22,7 +22,7 @@ from nipoppy.cli import (
 )
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
-from nipoppy.cli.options import _get_param_name, check_mutually_exclusive, study_option
+from nipoppy.cli.options import check_at_most_one_flag_specified, study_option
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from nipoppy.zenodo_api import ZenodoAPIError
 from tests.conftest import PASSWORD_FILE, list_cli_commands
@@ -174,20 +174,6 @@ def test_study_and_dataset_mutually_exclusive(
 
 
 @pytest.mark.parametrize(
-    ("flag", "ctx", "expected_param"),
-    [
-        ("--write-subcohort", None, "write_subcohort"),
-        ("--write-list", None, "write_list"),
-        ("--study", None, "study"),
-        ("--study", click.Context(cli.commands["init"]), "dpath_root"),
-    ],
-)
-def test_get_param_name(flag: str, ctx: click.Context | None, expected_param: str):
-    """Test _get_param_name helper function."""
-    assert _get_param_name(flag, ctx=ctx) == expected_param
-
-
-@pytest.mark.parametrize(
     ("cli_args", "expected_match"),
     [
         (
@@ -200,18 +186,37 @@ def test_get_param_name(flag: str, ctx: click.Context | None, expected_param: st
         ),
     ],
 )
-def test_check_mutually_exclusive(cli_args: list[str], expected_match: str):
-    """Test check_mutually_exclusive with multiple flags."""
+def test_check_at_most_one_flag_specified(cli_args: list[str], expected_match: str):
+    """Test that an error is raised when more than one flag is specified."""
 
     @click.command()
     @click.option("--flag1")
-    @click.option("--flag2")
+    @click.option("--flag2", "renamed")
     @click.option("--flag3")
     def cmd(**kwargs):
-        check_mutually_exclusive("--flag1", "--flag2", "--flag3")
+        check_at_most_one_flag_specified(
+            "--flag1", "--flag2", "--flag3", "--undeclared"
+        )
 
     with pytest.raises(UsageError, match=expected_match):
         runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+
+
+@pytest.mark.parametrize(
+    "cli_args",
+    [[], ["--flag1", "1"], ["--flag2", "2"]],
+)
+def test_check_at_most_one_flag_specified_no_error(cli_args: list[str]):
+    """Test that no error is raised when at most one flag is specified."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2", "renamed")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--flag2", "--undeclared")
+
+    result = runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+    assert result.exception is None
 
 
 @pytest.mark.no_xdist

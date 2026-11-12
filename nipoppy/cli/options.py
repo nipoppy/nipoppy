@@ -34,41 +34,34 @@ def study_option(func):
     return func
 
 
-def _get_param_name(flag: str, ctx: click.Context | None = None) -> str:
-    """Get the parameter name associated with a flag."""
-    # Look up in the command's declared params first, in case the parameter name
-    # was overridden (e.g., '--study' maps to 'dpath_root').
-    if ctx is not None and ctx.command is not None:
-        for param in ctx.command.params:
-            if flag in param.opts or flag in param.secondary_opts:
-                return param.name
-    return click.Option([flag]).name
-
-
-def check_mutually_exclusive(
-    *flags: str,
-    ctx: click.Context | None = None,
-) -> None:
-    """Check that multiple flags are mutually exclusive on the command line."""
-    if ctx is None:
-        ctx = click.get_current_context()
-
-    provided_flags = [
+def check_at_most_one_flag_specified(*flags: str) -> None:
+    """Raise a UsageError if more than one of the flags is given on the command line."""
+    ctx = click.get_current_context()
+    # Map each declared flag to its parameter name, which can differ from the flag
+    # (e.g., '--study' maps to 'dpath_root'). Flags not declared by the command
+    # cannot have been specified, so they are ignored.
+    flag_to_param = {
+        flag: param.name
+        for param in ctx.command.params
+        for flag in (*param.opts, *param.secondary_opts)
+    }
+    specified_flags = [
         flag
         for flag in flags
-        if ctx.get_parameter_source(_get_param_name(flag, ctx))
+        if flag in flag_to_param
+        and ctx.get_parameter_source(flag_to_param[flag])
         == click.core.ParameterSource.COMMANDLINE
     ]
-    if len(provided_flags) > 1:
+    if len(specified_flags) > 1:
         raise click.UsageError(
-            f"Cannot specify more than one of: {', '.join(provided_flags)}."
+            f"Cannot specify more than one of: {', '.join(specified_flags)}."
         )
 
 
 def dep_params(**params):
     """Handle deprecated parameters."""
-    check_mutually_exclusive("--study", "--dataset")
-    check_mutually_exclusive("--write-subcohort", "--write-list")
+    check_at_most_one_flag_specified("--study", "--dataset")
+    check_at_most_one_flag_specified("--write-subcohort", "--write-list")
 
     # --dataset is deprecated by --study
     if "dpath_root" in params and (_dep_dataset := params.pop("dataset")):
