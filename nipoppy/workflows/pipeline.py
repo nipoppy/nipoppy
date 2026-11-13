@@ -41,6 +41,7 @@ from nipoppy.exceptions import (
     ConfigError,
     ContainerError,
     FileOperationError,
+    InvalidArgumentError,
     ReturnCode,
     WorkflowError,
 )
@@ -600,6 +601,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.check_pipeline_version()
         self._check_pipeline_variables()
         self.check_pipeline_step()
+        self._check_filter_args_compatibility()
 
         for dpath in self.dpaths_to_check:
             fileops.mkdir(dpath, dry_run=self.dry_run)
@@ -687,6 +689,30 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             self._write_subcohort_to_file(participants_sessions)
         else:
             self._run_locally(participants_sessions)
+
+    def _check_filter_args_compatibility(self):
+        """Warn if participant/session ID filters cannot be applied."""
+        analysis_level = self.pipeline_step_config.ANALYSIS_LEVEL
+        ignored_flags = []
+        if self.participant_id is not None and analysis_level in (
+            AnalysisLevelType.group,
+            AnalysisLevelType.session,
+        ):
+            ignored_flags.append("--participant-id")
+        if self.session_id is not None and analysis_level in (
+            AnalysisLevelType.group,
+            AnalysisLevelType.participant,
+        ):
+            ignored_flags.append("--session-id")
+
+        if len(ignored_flags) > 0:
+            raise InvalidArgumentError(
+                (
+                    f"The {' and '.join(ignored_flags)} flag(s) are given, "
+                    f"but the pipeline is run at the {analysis_level.value} level"
+                ),
+                hint="Remove the incompatible flag(s)",
+            )
 
     def run_main(self):
         """Run the pipeline."""

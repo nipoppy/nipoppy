@@ -33,6 +33,7 @@ from nipoppy.env import (
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    InvalidArgumentError,
     ReturnCode,
     WorkflowError,
 )
@@ -985,6 +986,18 @@ def test_run_setup_create_directories(workflow: PipelineWorkflow, dry_run: bool)
     workflow.run_setup()
 
 
+def test_run_setup_check_filter_args_compatibility_called(
+    workflow: PipelineWorkflow,
+    mocker: pytest_mock.MockFixture,
+):
+    create_empty_dataset(workflow.study.layout.dpath_root)
+    mocked_check = mocker.patch.object(workflow, "_check_filter_args_compatibility")
+
+    workflow.run_setup()
+
+    mocked_check.assert_called_once_with()
+
+
 @pytest.mark.parametrize("show_progress", [True, False])
 def test_get_results_generator_no_joblib(
     workflow: PipelineWorkflow,
@@ -1341,6 +1354,81 @@ def test_log_summary_message_hpc(
     workflow._log_summary_message()
 
     assert expected_message in caplog.text
+
+
+@pytest.mark.parametrize(
+    "analysis_level,participant_id,session_id",
+    [
+        (AnalysisLevelType.participant_session, "01", "1"),
+        (AnalysisLevelType.participant_session, None, None),
+        (AnalysisLevelType.participant, "01", None),
+        (AnalysisLevelType.session, None, "1"),
+        (AnalysisLevelType.group, None, None),
+    ],
+)
+def test_check_filter_args_compatibility(
+    analysis_level, participant_id, session_id, workflow: PipelineWorkflow
+):
+    workflow.pipeline_step_config.ANALYSIS_LEVEL = analysis_level
+    workflow.participant_id = participant_id
+    workflow.session_id = session_id
+
+    workflow._check_filter_args_compatibility()
+
+
+@pytest.mark.parametrize(
+    "analysis_level,participant_id,session_id,expected_message",
+    [
+        (
+            AnalysisLevelType.group,
+            "01",
+            None,
+            "The --participant-id flag(s) are given, "
+            "but the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.group,
+            None,
+            "1",
+            "The --session-id flag(s) are given, "
+            "but the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.group,
+            "01",
+            "1",
+            "The --participant-id and --session-id flag(s) are given, "
+            "but the pipeline is run at the group level",
+        ),
+        (
+            AnalysisLevelType.session,
+            "01",
+            None,
+            "The --participant-id flag(s) are given, "
+            "but the pipeline is run at the session level",
+        ),
+        (
+            AnalysisLevelType.participant,
+            None,
+            "1",
+            "The --session-id flag(s) are given, "
+            "but the pipeline is run at the participant level",
+        ),
+    ],
+)
+def test_check_filter_args_compatibility_error(
+    analysis_level,
+    participant_id,
+    session_id,
+    expected_message,
+    workflow: PipelineWorkflow,
+):
+    workflow.pipeline_step_config.ANALYSIS_LEVEL = analysis_level
+    workflow.participant_id = participant_id
+    workflow.session_id = session_id
+
+    with pytest.raises(InvalidArgumentError, match=re.escape(expected_message)):
+        workflow._check_filter_args_compatibility()
 
 
 @pytest.mark.no_xdist

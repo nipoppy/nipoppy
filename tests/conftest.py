@@ -205,7 +205,7 @@ def create_pipeline_config_files(
             )
             fpath_config = (
                 dpath_pipelines
-                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
+                / pipeline_type.value
                 / f"{pipeline_config['NAME']}-{pipeline_config['VERSION']}"
                 / DatasetLayout.fname_pipeline_config
             )

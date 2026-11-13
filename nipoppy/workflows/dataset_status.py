@@ -278,7 +278,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         imaging_participant_ids = status_df[Manifest.col_participant_id].unique()
         logger.info(
             "Dataset summary (based on the manifest file):"
-            f"\n\tNumber of participants (imaging and non-imaging): "
+            f"\tNumber of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
             f"\n\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
             f"\n\tNumber of participants with imaging data: "

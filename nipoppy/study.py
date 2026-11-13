@@ -96,10 +96,7 @@ class Study(Base):
         pipeline_type_to_info_map = {}
         for pipeline_type in PipelineTypeEnum:
             pipeline_names_to_versions_map = defaultdict(list)
-            dpath_pipeline_bundles = (
-                self.layout.dpath_pipelines
-                / DatasetLayout.pipeline_type_to_dname_map[pipeline_type]
-            )
+            dpath_pipeline_bundles = self.layout.dpath_pipelines / pipeline_type.value
             for fpath_config in sorted(
                 dpath_pipeline_bundles.glob(f"*/{self.layout.fname_pipeline_config}")
             ):

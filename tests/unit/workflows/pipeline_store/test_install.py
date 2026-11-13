@@ -12,14 +12,18 @@ import pytest_mock
 from nipoppy.config.main import Config
 from nipoppy.config.pipeline import ProcessingPipelineConfig
 from nipoppy.config.schema import get_current_schema_version
-from nipoppy.container import ApptainerHandler
+from nipoppy.container import ApptainerHandler, DockerHandler
 from nipoppy.env import (
     ConfigType,
     ContainerCommandEnum,
     PipelineTypeEnum,
 )
-from nipoppy.exceptions import ConfigError, FileOperationError, WorkflowError
-from nipoppy.layout import DatasetLayout
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    InvalidArgumentError,
+    WorkflowError,
+)
 from nipoppy.workflows.pipeline_store.install import PipelineInstallWorkflow
 from nipoppy.zenodo_api import ZenodoAPI
 from tests.conftest import TEST_PIPELINE, create_pipeline_config_files, get_config
@@ -54,11 +58,7 @@ def workflow(
     )
     workflow = PipelineInstallWorkflow(
         dpath_root=dpath_root,
-        source=(
-            tmp_path
-            / DatasetLayout.pipeline_type_to_dname_map[PipelineTypeEnum.PROCESSING]
-            / "my_pipeline-1.0.0"
-        ),
+        source=(tmp_path / PipelineTypeEnum.PROCESSING.value / "my_pipeline-1.0.0"),
         zenodo_api=mocker.MagicMock(),
         assume_yes=True,
     )
@@ -116,6 +116,19 @@ def test_warning_not_path_or_zenodo(tmp_path: Path, caplog: pytest.LogCaptureFix
             for record in caplog.records
         ]
     )
+
+
+def test_init_assume_yes_and_skip_container_are_mutually_exclusive(tmp_path: Path):
+    with pytest.raises(
+        InvalidArgumentError,
+        match="--assume-yes and --skip-container are mutually exclusive",
+    ):
+        PipelineInstallWorkflow(
+            dpath_root=tmp_path / "my_dataset",
+            source="not_a_path",
+            assume_yes=True,
+            skip_container=True,
+        )
 
 
 def test_run_cleanup(workflow: PipelineInstallWorkflow):
@@ -282,6 +295,23 @@ def test_download_container(
     assert not isinstance(mocked_run_command.call_args[0][0][0], ContainerCommandEnum)
 
 
+def test_download_container_skipped(
+    workflow: PipelineInstallWorkflow,
+    pipeline_config: ProcessingPipelineConfig,
+    mocker: pytest_mock.MockFixture,
+):
+    workflow.assume_yes = False
+    workflow.skip_container = True
+
+    mocked_run_command = mocker.patch(
+        "nipoppy.workflows.pipeline_store.install._run_command"
+    )
+
+    workflow._download_container(pipeline_config)
+
+    mocked_run_command.assert_not_called()
+
+
 @pytest.mark.parametrize("confirm_download", [True, False])
 def test_download_container_confirm_true(
     confirm_download: bool,
@@ -340,6 +370,9 @@ def test_download_container_status(
     mocked_run_command = mocker.patch(
         "nipoppy.workflows.pipeline_store.install._run_command"
     )
+    # simulate image not downloaded, since GitHub macOS runners do not have
+    # docker installed by default
+    mocker.patch.object(DockerHandler, "is_image_downloaded", return_value=False)
 
     workflow.study.config.CONTAINER_CONFIG.COMMAND = command
     workflow._download_container(pipeline_config)

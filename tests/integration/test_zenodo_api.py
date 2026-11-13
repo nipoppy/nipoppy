@@ -4,12 +4,9 @@ from pathlib import Path
 import httpx
 import pytest
 
+from nipoppy.utils.utils import get_today
 from nipoppy.zenodo_api import ZenodoAPI, ZenodoAPIError
-
-from ..conftest import (
-    TEST_PIPELINE,
-    datetime_fixture,  # noqa F401
-)
+from tests.conftest import TEST_PIPELINE
 
 ZENODO_SANDBOX = True
 SANDBOX_COMMUNITY_ID = "6bea0505-4b7e-4340-93a4-8275e747748e"
@@ -38,10 +35,10 @@ def metadata():
                     }
                 }
             ],
-            "publication_date": "2024-04-04",
+            "publication_date": get_today(),
             "publisher": "Nipoppy",
             "resource_type": {"id": "software"},
-            "keywords": ["Nipoppy", "processing"],
+            "subjects": [{"subject": "Nipoppy"}, {"subject": "processing"}],
         }
     }
 
@@ -140,6 +137,12 @@ def test_create_new_record(zenodo_api: ZenodoAPI, metadata: dict):
     # verify that the default preview file is set correctly
     response = httpx.get(f"{zenodo_api.api_endpoint}/records/{new_record_id}/files")
     assert response.json()["default_preview"] == DEFAULT_PREVIEW
+
+    # verify that the keywords (subjects) are set correctly
+    record_metadata = zenodo_api.get_record_metadata(new_record_id)
+    expected_keywords = {"Nipoppy", "processing"}
+    actual_keywords = set(record_metadata.get("keywords", []))
+    assert actual_keywords == expected_keywords
 
 
 @pytest.mark.api
