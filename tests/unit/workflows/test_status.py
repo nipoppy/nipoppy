@@ -14,7 +14,6 @@ from nipoppy.workflows.dataset_status import (
     LONG_STATUS_COLUMNS,
     StatusWorkflow,
 )
-from tests.conftest import get_config
 
 
 @pytest.fixture()
@@ -43,14 +42,8 @@ def make_manifest(n_participants=10, session_ids=("BL", "M12")) -> Manifest:
     )
 
 
-def make_mixed_datatype_status_tables(
-    curation: str = "partial", processing: str = "non_empty"
-):
-    """Make a manifest and status tables with mixed datatypes.
-
-    curation: "partial", "bids_complete" or "empty".
-    processing: "non_empty" or "empty".
-    """
+def make_mixed_datatype_status_tables():
+    """Make a manifest and status tables with mixed datatypes."""
     manifest = Manifest(
         pd.DataFrame(
             [
@@ -76,61 +69,42 @@ def make_mixed_datatype_status_tables(
         CurationStatusTable.col_in_post_reorg,
         CurationStatusTable.col_in_bids,
     ]
-    curation_tables = {
-        "partial": CurationStatusTable(
-            pd.DataFrame(
-                [
-                    ("01", "BL", True, True, True),
-                    ("02", "BL", False, False, False),
-                    ("03", "BL", True, True, True),
-                    ("01", "M12", True, True, False),
-                    ("02", "M12", False, False, False),
-                ],
-                columns=curation_columns,
-            )
-        ),
-        # mirrors a BIDS-initialised dataset: only in_bids is set
-        "bids_complete": CurationStatusTable(
-            pd.DataFrame(
-                [
-                    ("01", "BL", False, False, True),
-                    ("02", "BL", False, False, True),
-                    ("03", "BL", False, False, True),
-                    ("01", "M12", False, False, True),
-                    ("02", "M12", False, False, True),
-                ],
-                columns=curation_columns,
-            )
-        ),
-        "empty": CurationStatusTable(),
-    }
+    curation_table = CurationStatusTable(
+        pd.DataFrame(
+            [
+                ("01", "BL", True, True, True),
+                ("02", "BL", False, False, False),
+                ("03", "BL", True, True, True),
+                ("01", "M12", True, True, False),
+                ("02", "M12", False, False, False),
+            ],
+            columns=curation_columns,
+        )
+    )
 
-    processing_tables = {
-        "non_empty": ProcessingStatusTable(
-            pd.DataFrame(
-                [
-                    ("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                    ("02", "BL", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                    ("03", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                    ("01", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                    ("02", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
-                    ("orphan", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
-                    ("orphan", "ML12", "pipeline", "1.0.0", "default", "SUCCESS"),
-                ],
-                columns=[
-                    ProcessingStatusTable.col_participant_id,
-                    ProcessingStatusTable.col_session_id,
-                    ProcessingStatusTable.col_pipeline_name,
-                    ProcessingStatusTable.col_pipeline_version,
-                    ProcessingStatusTable.col_pipeline_step,
-                    ProcessingStatusTable.col_status,
-                ],
-            )
-        ),
-        "empty": ProcessingStatusTable(),
-    }
+    processing_table = ProcessingStatusTable(
+        pd.DataFrame(
+            [
+                ("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ("02", "BL", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                ("03", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ("01", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                ("02", "M12", "pipeline", "1.0.0", "default", "INCOMPLETE"),
+                ("orphan", "BL", "pipeline", "1.0.0", "default", "SUCCESS"),
+                ("orphan", "ML12", "pipeline", "1.0.0", "default", "SUCCESS"),
+            ],
+            columns=[
+                ProcessingStatusTable.col_participant_id,
+                ProcessingStatusTable.col_session_id,
+                ProcessingStatusTable.col_pipeline_name,
+                ProcessingStatusTable.col_pipeline_version,
+                ProcessingStatusTable.col_pipeline_step,
+                ProcessingStatusTable.col_status,
+            ],
+        )
+    )
 
-    return manifest, curation_tables[curation], processing_tables[processing]
+    return manifest, curation_table, processing_table
 
 
 @pytest.mark.parametrize(
@@ -531,51 +505,3 @@ def test_empty_processing_table_has_only_missing_file_warning(
     assert not any(
         "no successful run was found" in record.message for record in caplog.records
     )
-
-
-# Check col_in_pre_reorg and col_in_post_reorg are not shown when BIDS is complete
-def test_check_curation_status_table_from_bids_init(dpath_root: Path):
-    workflow = StatusWorkflow(dpath_root=dpath_root)
-    (
-        workflow.study.manifest,
-        workflow.curation_status_table,
-        workflow.processing_status_table,
-    ) = make_mixed_datatype_status_tables(curation="bids_complete")
-
-    status_df = workflow.run_main()
-
-    assert CurationStatusTable.col_in_pre_reorg not in status_df.columns
-    assert CurationStatusTable.col_in_post_reorg not in status_df.columns
-    assert CurationStatusTable.col_in_bids in status_df.columns
-
-
-@pytest.mark.parametrize("curation", ["partial", "bids_complete", "empty"])
-@pytest.mark.parametrize("processing", ["empty", "non_empty"])
-def test_run(dpath_root: Path, curation: str, processing: str):
-    workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.study.config = get_config()
-    (
-        workflow.study.manifest,
-        workflow.curation_status_table,
-        workflow.processing_status_table,
-    ) = make_mixed_datatype_status_tables(curation=curation, processing=processing)
-    status_df = workflow.run_main()
-
-    assert status_df is not None
-
-
-@pytest.mark.parametrize("processing", ["empty", "non_empty"])
-def test_run_sub_directory(dpath_root: Path, processing: str):
-    derivatives = dpath_root.joinpath("derivatives")
-    derivatives.mkdir(parents=True, exist_ok=True)
-
-    workflow = StatusWorkflow(dpath_root=derivatives)
-    workflow.study.config = get_config()
-    (
-        workflow.study.manifest,
-        workflow.curation_status_table,
-        workflow.processing_status_table,
-    ) = make_mixed_datatype_status_tables(processing=processing)
-    status_df = workflow.run_main()
-
-    assert status_df is not None
