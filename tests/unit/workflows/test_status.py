@@ -11,8 +11,12 @@ from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.workflows.dataset_status import (
     CHECKPOINT_MANIFEST,
     COL_CHECKPOINT,
+    INDEX_COLS,
     LONG_STATUS_COLUMNS,
     StatusWorkflow,
+    _attach_manifest_datatypes,
+    _filter_status_df,
+    _get_manifest_datatypes,
 )
 
 
@@ -280,11 +284,11 @@ def test_build_status_df(dpath_root: Path):
 
 
 def test_get_manifest_datatypes_with_empty_imaging_manifest():
-    manifest_datatypes = StatusWorkflow._get_manifest_datatypes(pd.DataFrame())
+    manifest_datatypes = _get_manifest_datatypes(pd.DataFrame())
 
     assert manifest_datatypes.empty
     assert manifest_datatypes.columns.tolist() == [
-        *StatusWorkflow.index_cols,
+        *INDEX_COLS,
         Manifest.col_datatype,
     ]
 
@@ -293,18 +297,18 @@ def test_get_manifest_datatypes_with_empty_imaging_manifest():
 def test_attach_manifest_datatypes_with_empty_input(empty_status, empty_manifest):
     status_df = pd.DataFrame(
         [("01", "BL", CurationStatusTable.col_in_bids)],
-        columns=[*StatusWorkflow.index_cols, COL_CHECKPOINT],
+        columns=[*INDEX_COLS, COL_CHECKPOINT],
     )
     manifest_datatypes = pd.DataFrame(
         [("01", "BL", ["anat"])],
-        columns=[*StatusWorkflow.index_cols, Manifest.col_datatype],
+        columns=[*INDEX_COLS, Manifest.col_datatype],
     )
     if empty_status:
         status_df = status_df.iloc[:0]
     if empty_manifest:
         manifest_datatypes = manifest_datatypes.iloc[:0]
 
-    result = StatusWorkflow._attach_manifest_datatypes(status_df, manifest_datatypes)
+    result = _attach_manifest_datatypes(status_df, manifest_datatypes)
 
     pd.testing.assert_frame_equal(result, pd.DataFrame(columns=LONG_STATUS_COLUMNS))
 
@@ -393,7 +397,7 @@ def test_filter_uses_manifest_datatypes(dpath_root: Path):
         )
     )
 
-    status_df = StatusWorkflow._filter_status_df(
+    status_df = _filter_status_df(
         workflow._build_status_df(), datatypes=workflow.datatypes
     )
 

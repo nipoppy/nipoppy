@@ -21,18 +21,155 @@ logger = get_logger()
 COL_CHECKPOINT = "checkpoint"
 CHECKPOINT_MANIFEST = "in_manifest"
 
-LONG_STATUS_COLUMNS = [
-    Manifest.col_participant_id,
-    Manifest.col_session_id,
-    Manifest.col_datatype,
-    COL_CHECKPOINT,
-]
+INDEX_COLS = CurationStatusTable.index_cols
+
+LONG_STATUS_COLUMNS = [*INDEX_COLS, Manifest.col_datatype, COL_CHECKPOINT]
+
+
+def _empty_status_df() -> pd.DataFrame:
+    """Create an empty long-form status table with the canonical schema."""
+    return pd.DataFrame(columns=LONG_STATUS_COLUMNS)
+
+
+def _get_manifest_datatypes(imaging_manifest: pd.DataFrame) -> pd.DataFrame:
+    """Get the union of manifest datatypes for each participant-session pair."""
+    if imaging_manifest.empty:
+        return pd.DataFrame(columns=[*INDEX_COLS, Manifest.col_datatype])
+
+    def combine_datatypes(values: pd.Series) -> list[str]:
+        return sorted(
+            {
+                datatype
+                for datatypes in values
+                if isinstance(datatypes, list)
+                for datatype in datatypes
+            }
+        )
+
+    return (
+        imaging_manifest.groupby(INDEX_COLS, as_index=False, sort=False)[
+            Manifest.col_datatype
+        ]
+        .agg(combine_datatypes)
+        .reset_index(drop=True)
+    )
+
+
+def _attach_manifest_datatypes(
+    status_df: pd.DataFrame, manifest_datatypes: pd.DataFrame
+) -> pd.DataFrame:
+    """Attach manifest datatypes and discard status-only records."""
+    if status_df.empty or manifest_datatypes.empty:
+        return _empty_status_df()
+
+    return status_df.drop(columns=Manifest.col_datatype, errors="ignore").merge(
+        manifest_datatypes,
+        on=INDEX_COLS,
+        how="inner",
+        validate="many_to_one",
+    )[LONG_STATUS_COLUMNS]
+
+
+def _curation_status_to_long(
+    table: CurationStatusTable, manifest_datatypes: pd.DataFrame
+) -> pd.DataFrame:
+    """Normalize completed curation checkpoints to the long-form schema."""
+    if table.empty:
+        logger.warning("No curation status file found.")
+        return _empty_status_df()
+
+    status_df = table[[*INDEX_COLS, *CurationStatusTable.status_cols]].melt(
+        id_vars=INDEX_COLS,
+        value_vars=CurationStatusTable.status_cols,
+        var_name=COL_CHECKPOINT,
+        value_name="complete",
+    )
+    status_df = status_df.loc[status_df.pop("complete")]
+    return _attach_manifest_datatypes(status_df, manifest_datatypes)
+
+
+def _processing_status_to_long(
+    table: ProcessingStatusTable, manifest_datatypes: pd.DataFrame
+) -> pd.DataFrame:
+    """Normalize successful processing checkpoints to the long-form schema."""
+    if table.empty:
+        logger.warning(
+            "No imaging processing status file found. Run "
+            "'nipoppy track-processing' to generate a processing status file"
+        )
+        return _empty_status_df()
+
+    successful = table.loc[
+        table[ProcessingStatusTable.col_status] == STATUS_SUCCESS
+    ].copy()
+    if successful.empty:
+        pipeline_names = sorted(table[ProcessingStatusTable.col_pipeline_name].unique())
+        logger.warning(
+            "The processing status file exists, but no successful run was found in"
+            " the imaging processing status file for pipeline(s): "
+            f"{pipeline_names}."
+            " If you have run a pipeline followed by 'nipoppy track-processing', it"
+            " is likely that your pipeline output does not meet the criteria in the"
+            f" '{DEFAULT_LAYOUT_INFO.dpath_pipelines}/<PIPELINE_NAME>-"
+            "<PIPELINE_VERSION>/tracker_config.json' file."
+            " Please check the tracker configuration and re-run "
+            "'nipoppy track-processing' to generate a processing status file with "
+            "at least one successful run."
+        )
+        return _empty_status_df()
+
+    successful[COL_CHECKPOINT] = (
+        successful[ProcessingStatusTable.col_pipeline_name]
+        + "\n"
+        + successful[ProcessingStatusTable.col_pipeline_version]
+        + "\n"
+        + successful[ProcessingStatusTable.col_pipeline_step]
+    )
+    return _attach_manifest_datatypes(successful, manifest_datatypes)
+
+
+def _filter_status_df(
+    status_df: pd.DataFrame, *, datatypes: set[str] | None = None
+) -> pd.DataFrame:
+    """Filter long-form records by exact manifest datatype membership."""
+    if datatypes is None:
+        return status_df.copy()
+
+    return status_df.loc[
+        status_df[Manifest.col_datatype].apply(datatypes.issubset)
+    ].copy()
+
+
+def _get_session_ids(status_df: pd.DataFrame) -> list[str]:
+    """Get deterministic session ordering from the selected status records."""
+    return sorted(status_df[Manifest.col_session_id].unique())
+
+
+def _count_by_session(
+    status_df: pd.DataFrame,
+    session_ids: list[str],
+    checkpoint_cols: list[str],
+) -> pd.DataFrame:
+    """Count completed checkpoints for each session."""
+    status_counts_df = (
+        status_df.groupby([Manifest.col_session_id, COL_CHECKPOINT], sort=False)
+        .size()
+        .unstack(fill_value=0)
+        .reindex(
+            index=session_ids,
+            columns=checkpoint_cols,
+            fill_value=0,
+        )
+        .astype(int)
+    )
+
+    status_counts_df.index.name = Manifest.col_session_id
+    status_counts_df.columns.name = None
+    return status_counts_df
 
 
 class StatusWorkflow(BaseDatasetWorkflow):
     """Workflow for status command."""
-
-    index_cols = [Manifest.col_participant_id, Manifest.col_session_id]
 
     def __init__(
         self,
@@ -76,7 +213,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             )
             return None
 
-        status_df = self._filter_status_df(status_df, datatypes=self.datatypes)
+        status_df = _filter_status_df(status_df, datatypes=self.datatypes)
         if status_df.empty:
             logger.warning(
                 f"No imaging manifest rows matched datatype: {self.datatypes}."
@@ -89,11 +226,11 @@ class StatusWorkflow(BaseDatasetWorkflow):
             - {CHECKPOINT_MANIFEST, *CurationStatusTable.status_cols}
         )
         checkpoint_cols = [CHECKPOINT_MANIFEST, *curation_cols, *processing_cols]
-        session_ids = self._get_session_ids(status_df)
+        session_ids = _get_session_ids(status_df)
 
         self._log_dataset_summary(status_df, session_ids)
 
-        status_counts_df = self._count_by_session(
+        status_counts_df = _count_by_session(
             status_df,
             session_ids=session_ids,
             checkpoint_cols=checkpoint_cols,
@@ -120,132 +257,25 @@ class StatusWorkflow(BaseDatasetWorkflow):
     def _build_status_df(self) -> pd.DataFrame:
         """Build one long-form table from manifest and completed status records."""
         imaging_manifest = pd.DataFrame(self.study.manifest.get_imaging_subset()).copy()
-        manifest_datatypes = self._get_manifest_datatypes(imaging_manifest)
+        manifest_datatypes = _get_manifest_datatypes(imaging_manifest)
         manifest_long = manifest_datatypes.copy()
         manifest_long[COL_CHECKPOINT] = CHECKPOINT_MANIFEST
 
         status_df = pd.concat(
             [
                 manifest_long,
-                self._curation_status_to_long(manifest_datatypes),
-                self._processing_status_to_long(manifest_datatypes),
+                _curation_status_to_long(
+                    self.curation_status_table, manifest_datatypes
+                ),
+                _processing_status_to_long(
+                    self.processing_status_table, manifest_datatypes
+                ),
             ],
             ignore_index=True,
         )
         status_df = status_df[LONG_STATUS_COLUMNS]
         logger.debug(f"Long-form status table:\n{status_df}")
         return status_df
-
-    @classmethod
-    def _get_manifest_datatypes(cls, imaging_manifest: pd.DataFrame) -> pd.DataFrame:
-        """Get the union of manifest datatypes for each participant-session pair."""
-        if imaging_manifest.empty:
-            return pd.DataFrame(columns=[*cls.index_cols, Manifest.col_datatype])
-
-        def combine_datatypes(values: pd.Series) -> list[str]:
-            return sorted(
-                {
-                    datatype
-                    for datatypes in values
-                    if isinstance(datatypes, list)
-                    for datatype in datatypes
-                }
-            )
-
-        return (
-            imaging_manifest.groupby(cls.index_cols, as_index=False, sort=False)[
-                Manifest.col_datatype
-            ]
-            .agg(combine_datatypes)
-            .reset_index(drop=True)
-        )
-
-    def _curation_status_to_long(
-        self, manifest_datatypes: pd.DataFrame
-    ) -> pd.DataFrame:
-        """Normalize completed curation checkpoints to the long-form schema."""
-        table = pd.DataFrame(self.curation_status_table).copy()
-        if table.empty:
-            logger.warning("No curation status file found.")
-            return self._empty_status_df()
-
-        status_df = table[[*self.index_cols, *CurationStatusTable.status_cols]].melt(
-            id_vars=self.index_cols,
-            value_vars=CurationStatusTable.status_cols,
-            var_name=COL_CHECKPOINT,
-            value_name="complete",
-        )
-        status_df = status_df.loc[status_df.pop("complete")]
-        return self._attach_manifest_datatypes(status_df, manifest_datatypes)
-
-    def _processing_status_to_long(
-        self, manifest_datatypes: pd.DataFrame
-    ) -> pd.DataFrame:
-        """Normalize successful processing checkpoints to the long-form schema."""
-        table = pd.DataFrame(self.processing_status_table).copy()
-        if table.empty:
-            logger.warning(
-                "No imaging processing status file found. Run "
-                "'nipoppy track-processing' to generate a processing status file"
-            )
-            return self._empty_status_df()
-
-        successful = table.loc[
-            table[ProcessingStatusTable.col_status] == STATUS_SUCCESS
-        ].copy()
-        if successful.empty:
-            pipeline_names = sorted(
-                table[ProcessingStatusTable.col_pipeline_name].unique()
-            )
-            logger.warning(
-                "The processing status file exists, but no successful run was found in"
-                " the imaging processing status file for pipeline(s): "
-                f"{pipeline_names}."
-                " If you have run a pipeline followed by 'nipoppy track-processing', it"
-                " is likely that your pipeline output does not meet the criteria in the"
-                f" '{DEFAULT_LAYOUT_INFO.dpath_pipelines}/<PIPELINE_NAME>-"
-                "<PIPELINE_VERSION>/tracker_config.json' file."
-                " Please check the tracker configuration and re-run "
-                "'nipoppy track-processing' to generate a processing status file with "
-                "at least one successful run."
-            )
-            return self._empty_status_df()
-
-        successful[COL_CHECKPOINT] = (
-            successful[ProcessingStatusTable.col_pipeline_name]
-            + "\n"
-            + successful[ProcessingStatusTable.col_pipeline_version]
-            + "\n"
-            + successful[ProcessingStatusTable.col_pipeline_step]
-        )
-        return self._attach_manifest_datatypes(successful, manifest_datatypes)
-
-    @classmethod
-    def _attach_manifest_datatypes(
-        cls, status_df: pd.DataFrame, manifest_datatypes: pd.DataFrame
-    ) -> pd.DataFrame:
-        """Attach manifest datatypes and discard status-only records."""
-        if status_df.empty or manifest_datatypes.empty:
-            return cls._empty_status_df()
-
-        return status_df.drop(columns=Manifest.col_datatype, errors="ignore").merge(
-            manifest_datatypes,
-            on=cls.index_cols,
-            how="inner",
-            validate="many_to_one",
-        )[LONG_STATUS_COLUMNS]
-
-    @staticmethod
-    def _filter_status_df(
-        status_df: pd.DataFrame, *, datatypes: set[str] | None = None
-    ) -> pd.DataFrame:
-        """Filter long-form records by exact manifest datatype membership."""
-        if datatypes is None:
-            return status_df.copy()
-
-        return status_df.loc[
-            status_df[Manifest.col_datatype].apply(datatypes.issubset)
-        ].copy()
 
     def _log_dataset_summary(self, status_df: pd.DataFrame, session_ids: list[str]):
         """Log manifest summary information for the selected dataset rows."""
@@ -263,39 +293,6 @@ class StatusWorkflow(BaseDatasetWorkflow):
             f"{len(imaging_participant_ids)}"
             f"\n\tImaging sessions (n={len(session_ids)}): {session_ids}"
         )
-
-    @staticmethod
-    def _get_session_ids(status_df: pd.DataFrame) -> list[str]:
-        """Get deterministic session ordering from the selected status records."""
-        return sorted(status_df[Manifest.col_session_id].unique())
-
-    @staticmethod
-    def _count_by_session(
-        status_df: pd.DataFrame,
-        session_ids: list[str],
-        checkpoint_cols: list[str],
-    ) -> pd.DataFrame:
-        """Count completed checkpoints for each session."""
-        status_counts_df = (
-            status_df.groupby([Manifest.col_session_id, COL_CHECKPOINT], sort=False)
-            .size()
-            .unstack(fill_value=0)
-            .reindex(
-                index=session_ids,
-                columns=checkpoint_cols,
-                fill_value=0,
-            )
-            .astype(int)
-        )
-
-        status_counts_df.index.name = Manifest.col_session_id
-        status_counts_df.columns.name = None
-        return status_counts_df
-
-    @staticmethod
-    def _empty_status_df() -> pd.DataFrame:
-        """Create an empty long-form status table with the canonical schema."""
-        return pd.DataFrame(columns=LONG_STATUS_COLUMNS)
 
     def _print_table(
         self,
