@@ -9,7 +9,6 @@ import pytest_mock
 from jinja2 import Environment, meta
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import LayoutError, WorkflowError
 from nipoppy.utils.utils import DPATH_HPC, FPATH_HPC_TEMPLATE
 from nipoppy.workflows.services.hpc import HPCRunner
@@ -34,10 +33,8 @@ def hpc_runner(hpc_config: HpcConfig, tmp_path: Path) -> HPCRunner:
     hpc_runner = HPCRunner(
         hpc_cluster="slurm",
         hpc_config=hpc_config,
-        subcommand="test",
         dpath_root="test",
         dpath_hpc=dpath_hpc,
-        pipeline_name="test",
         preamble=["module load some_module"],
         queue_limit=None,
     )
@@ -54,8 +51,6 @@ def submit_kwargs(tmp_path: Path) -> dict:
         "session_ids": ["S01", "S01"],
         "dpath_work": tmp_path / "work",
         "dpath_hpc_logs": tmp_path / "logs",
-        "fname_hpc_error": "error.log",
-        "fname_job_script": "script.sh",
         "pipeline_name": "test-pipe",
         "pipeline_version": "1.0",
         "pipeline_step": "step1",
@@ -82,10 +77,8 @@ def test_hpc_runner_initialization(
     hpc_runner = HPCRunner(
         hpc_cluster="slurm",
         hpc_config=hpc_config,
-        subcommand="test",
         dpath_root=tmp_path / "test_study",
         dpath_hpc=tmp_path / "hpc",
-        pipeline_name="test",
         preamble=preamble,
         queue_limit=queue_limit,
     )
@@ -285,7 +278,7 @@ def test_hpc_runner_submit_logs_job_script(
     caplog: pytest.LogCaptureFixture,
 ):
     def touch_job_script(*args, **kwargs):
-        fpath_script = submit_kwargs["dpath_work"] / submit_kwargs["fname_job_script"]
+        fpath_script = submit_kwargs["dpath_work"] / hpc_runner.fname_job_script
         fpath_script.parent.mkdir(parents=True, exist_ok=True)
         fpath_script.touch()
 
@@ -314,7 +307,7 @@ def test_hpc_runner_submit_pysqa_error(
     hpc_runner: HPCRunner, submit_kwargs: dict, mocker: pytest_mock.MockFixture
 ):
     def write_error_file(*args, **kwargs):
-        fpath_error = submit_kwargs["dpath_work"] / submit_kwargs["fname_hpc_error"]
+        fpath_error = submit_kwargs["dpath_work"] / hpc_runner.fname_hpc_error
         fpath_error.parent.mkdir(parents=True, exist_ok=True)
         fpath_error.write_text("PYSQA ERROR\n")
 
@@ -338,98 +331,3 @@ def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: di
         match="The HPC directory with appropriate content needs to exist",
     ):
         hpc_runner.submit(**submit_kwargs)
-
-
-@pytest.mark.parametrize(
-    "kwargs,expected_command",
-    [
-        (
-            {"participant_id": "P01", "session_id": "1"},
-            [
-                PROGRAM_NAME,
-                "test",
-                "--study",
-                "test",
-                "--pipeline",
-                "test",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-            ],
-        ),
-        (
-            {
-                "participant_id": "P01",
-                "session_id": "1",
-                "extra_flags": ["--flag1", "--flag2"],
-                "extra_options": {"--option1": "value1", "--option2": "value2"},
-            },
-            [
-                PROGRAM_NAME,
-                "test",
-                "--study",
-                "test",
-                "--pipeline",
-                "test",
-                "--participant-id",
-                "P01",
-                "--session-id",
-                "1",
-                "--option1",
-                "value1",
-                "--option2",
-                "value2",
-                "--flag1",
-                "--flag2",
-            ],
-        ),
-    ],
-)
-def test_hpc_runner_generate_cli_command(
-    hpc_runner: HPCRunner, kwargs: dict, expected_command: list[str]
-) -> None:
-    """Test HPCRunner.generate_cli_command produces correct CLI tokens."""
-    assert hpc_runner.generate_cli_command(**kwargs) == expected_command
-
-
-def test_hpc_runner_generate_cli_keep_workdir(hpc_runner: HPCRunner):
-    """Test that --keep-workdir flag is included when keep_workdir is True."""
-    hpc_runner.keep_workdir = True
-    command = hpc_runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--keep-workdir" in command
-
-
-def test_hpc_runner_generate_cli_verbose(hpc_runner: HPCRunner):
-    """Test that --verbose flag is included when verbose is True."""
-    hpc_runner.verbose = True
-    command = hpc_runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--verbose" in command
-
-
-def test_hpc_runner_generate_cli_fails_duplicate_options(hpc_runner: HPCRunner):
-    """Test an error is raised when extra_options contains duplicate keys."""
-    with pytest.raises(
-        ValueError,
-        match="Option .* is already set by the default options",
-    ):
-        hpc_runner.generate_cli_command(
-            participant_id="P01",
-            session_id="1",
-            extra_options={"--participant-id": "P02"},
-        )
-
-
-def test_hpc_runner_generate_cli_fails_duplicate_flags(hpc_runner: HPCRunner):
-    """Test an error is raised when extra_flags would add a duplicate flag."""
-    hpc_runner.keep_workdir = True  # This sets the --keep-workdir
-    duplicate_flag = "--keep-workdir"
-    with pytest.raises(
-        ValueError,
-        match="Flag .* is already in the command",
-    ):
-        hpc_runner.generate_cli_command(
-            participant_id="P01",
-            session_id="1",
-            extra_flags=[duplicate_flag],
-        )
