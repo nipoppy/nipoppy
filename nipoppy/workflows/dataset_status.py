@@ -32,27 +32,19 @@ def _empty_status_df() -> pd.DataFrame:
 
 
 def _get_manifest_datatypes(imaging_manifest: pd.DataFrame) -> pd.DataFrame:
-    """Get the union of manifest datatypes for each participant-session pair."""
+    """Get the datatypes of each imaging participant-session pair in the manifest.
+
+    (participant_id, session_id) is assumed to be unique (see #1234).
+    """
+    columns = [*INDEX_COLS, Manifest.col_datatype]
     if imaging_manifest.empty:
-        return pd.DataFrame(columns=[*INDEX_COLS, Manifest.col_datatype])
+        return pd.DataFrame(columns=columns)
 
-    def combine_datatypes(values: pd.Series) -> list[str]:
-        return sorted(
-            {
-                datatype
-                for datatypes in values
-                if isinstance(datatypes, list)
-                for datatype in datatypes
-            }
-        )
-
-    return (
-        imaging_manifest.groupby(INDEX_COLS, as_index=False, sort=False)[
-            Manifest.col_datatype
-        ]
-        .agg(combine_datatypes)
-        .reset_index(drop=True)
-    )
+    manifest_datatypes = imaging_manifest[columns].reset_index(drop=True)
+    manifest_datatypes[Manifest.col_datatype] = manifest_datatypes[
+        Manifest.col_datatype
+    ].apply(lambda value: value if isinstance(value, list) else [])
+    return manifest_datatypes
 
 
 def _attach_manifest_datatypes(

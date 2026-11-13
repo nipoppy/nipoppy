@@ -15,7 +15,6 @@ from nipoppy.workflows.dataset_status import (
     LONG_STATUS_COLUMNS,
     StatusWorkflow,
     _attach_manifest_datatypes,
-    _filter_status_df,
     _get_manifest_datatypes,
 )
 
@@ -356,14 +355,14 @@ def test_build_status_df_does_not_mutate_source_tables(dpath_root: Path):
     )
 
 
-def test_filter_uses_manifest_datatypes(dpath_root: Path):
-    """Status rows and the manifest use combined participant-session datatypes."""
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("anat", "dwi"))
-    workflow.study.manifest = Manifest(
+@pytest.mark.parametrize("datatype,expected", [(None, 2), (("anat",), 1)])
+def test_manifest_row_without_datatype(dpath_root: Path, datatype, expected):
+    """Imaging rows with no datatype are counted but never match a filter."""
+    manifest = Manifest(
         pd.DataFrame(
             [
-                ("01", "V1", "BL", ["anat"]),
-                ("01", "V2", "BL", ["dwi"]),
+                ("01", "BL", "BL", ["anat"]),
+                ("02", "BL", "BL", None),
             ],
             columns=[
                 Manifest.col_participant_id,
@@ -373,96 +372,14 @@ def test_filter_uses_manifest_datatypes(dpath_root: Path):
             ],
         )
     )
-    workflow.curation_status_table = CurationStatusTable(
-        pd.DataFrame(
-            [("01", "BL", True, True, True)],
-            columns=[
-                CurationStatusTable.col_participant_id,
-                CurationStatusTable.col_session_id,
-                *CurationStatusTable.status_cols,
-            ],
-        )
-    )
-    workflow.processing_status_table = ProcessingStatusTable(
-        pd.DataFrame(
-            [("01", "BL", "pipeline", "1.0.0", "default", "SUCCESS")],
-            columns=[
-                ProcessingStatusTable.col_participant_id,
-                ProcessingStatusTable.col_session_id,
-                ProcessingStatusTable.col_pipeline_name,
-                ProcessingStatusTable.col_pipeline_version,
-                ProcessingStatusTable.col_pipeline_step,
-                ProcessingStatusTable.col_status,
-            ],
-        )
-    )
-
-    status_df = _filter_status_df(
-        workflow._build_status_df(), datatypes=workflow.datatypes
-    )
-
-    # Both datatypes are present across visits for the same session.
-    assert status_df[COL_CHECKPOINT].value_counts().to_dict() == {
-        CurationStatusTable.col_in_pre_reorg: 1,
-        CurationStatusTable.col_in_post_reorg: 1,
-        CurationStatusTable.col_in_bids: 1,
-        CHECKPOINT_MANIFEST: 1,
-        "pipeline\n1.0.0\ndefault": 1,
-    }
-    assert status_df.loc[
-        status_df[COL_CHECKPOINT] == CHECKPOINT_MANIFEST,
-        Manifest.col_datatype,
-    ].tolist() == [["anat", "dwi"]]
-
-
-def test_multivisit_participant_sessions_count_once_for_bids_completion(
-    dpath_root: Path,
-):
-    """Multiple visit rows for one session count as one participant-session."""
-    workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.study.manifest = Manifest(
-        pd.DataFrame(
-            [
-                ("01", "V1", "BL", ["anat"]),
-                ("01", "V2", "BL", ["dwi"]),
-                ("02", "V1", "BL", ["anat"]),
-                ("02", "V2", "BL", ["dwi"]),
-            ],
-            columns=[
-                Manifest.col_participant_id,
-                Manifest.col_visit_id,
-                Manifest.col_session_id,
-                Manifest.col_datatype,
-            ],
-        )
-    )
-    workflow.curation_status_table = CurationStatusTable(
-        pd.DataFrame(
-            [
-                ("01", "BL", True, True, True),
-                ("02", "BL", True, True, True),
-            ],
-            columns=[
-                CurationStatusTable.col_participant_id,
-                CurationStatusTable.col_session_id,
-                *CurationStatusTable.status_cols,
-            ],
-        )
-    )
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
+    workflow.study.manifest = manifest
+    workflow.curation_status_table = CurationStatusTable()
     workflow.processing_status_table = ProcessingStatusTable()
-
-    long_status_df = workflow._build_status_df()
-    assert long_status_df.loc[
-        long_status_df[COL_CHECKPOINT] == CHECKPOINT_MANIFEST,
-        Manifest.col_datatype,
-    ].tolist() == [["anat", "dwi"], ["anat", "dwi"]]
 
     status_df = workflow.run_main()
 
-    assert status_df.loc["BL", CHECKPOINT_MANIFEST] == 2
-    assert status_df.loc["BL", CurationStatusTable.col_in_bids] == 2
-    assert CurationStatusTable.col_in_pre_reorg not in status_df.columns
-    assert CurationStatusTable.col_in_post_reorg not in status_df.columns
+    assert status_df.loc["BL", CHECKPOINT_MANIFEST] == expected
 
 
 def test_datatype_filter_bids_completion_drops_curation_stages(
