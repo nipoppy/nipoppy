@@ -31,7 +31,7 @@ The `in_pre_reorg` and `in_post_reorg` columns will be collapsed if all particip
 For each curation stage, the status is determined based on the presence of files in expected directories:
 
 | Column | Relevant directory |
-|---|---|
+| --- | --- |
 | `in_pre_reorg` | {{dpath_pre_reorg}}`/<PARTICIPANT_ID>/<SESSION_ID>` (configurable) |
 | `in_post_reorg` | {{dpath_post_reorg}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |
 | `in_bids` | {{dpath_bids}}`/sub-<PARTICIPANT_ID>/ses-<SESSION_ID>` |

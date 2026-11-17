@@ -182,7 +182,7 @@ See {doc}`../parallelization/hpc_scheduler` for more information on configuring 
 #### `tracker.json`
 
 Defines output tracking paths.
-See [here](#how-to-track-processing) for more information about pipeline tracking.
+See the [pipeline tracking guide](#how-to-track-processing) for more information about pipeline tracking.
 
 ```json
 {

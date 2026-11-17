@@ -20,7 +20,7 @@ If you do not already have Python set up on your system and/or wish to run Nipop
 
 ### {term}`conda` setup
 
-Install `conda` (e.g. through Miniconda) following instructions from [here](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
+Install `conda` (e.g. through Miniconda) following [these instructions](https://conda.io/projects/conda/en/latest/user-guide/install/index.html).
 
 Create a new environment (if needed) with Python version of at least `3.9` (we recommended the [latest available version](https://www.python.org/doc/versions)). Here we call it `nipoppy_env`, but it can be named anything. In a Terminal window, run:
 

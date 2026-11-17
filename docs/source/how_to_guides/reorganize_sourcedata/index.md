@@ -17,6 +17,8 @@ The Nipoppy directory tree for the imaging sourcedata looks like the following:
 
 **Example content for the imaging sourcedata directories:**
 
+<!-- markdownlint-disable MD036 -->
+
 <table><tr><td valign="top">
 
 **downloads**
@@ -101,6 +103,8 @@ sub- and ses- prefix added
 ```
 
 </td></tr></table>
+
+<!-- markdownlint-enable MD036 -->
 
 ## `nipoppy reorg`
 

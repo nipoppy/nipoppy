@@ -1,0 +1,20 @@
+---
+# Existing nested lists use 2- and 4-space indents across the docs
+MD007: false
+# No line length limit
+MD013: false
+# '$' prompts without output are kept for Pygments console highlighting
+MD014: false
+# Blank lines between blockquotes are needed for adjacent MyST admonitions
+MD028: false
+# Inline HTML is needed for YouTube embeds, some images, team/contributor tables
+MD033: false
+# Fenced code blocks need not declare a language
+MD040: false
+# First line need not be an H1 (e.g. PR template, MyST label lines)
+MD041: false
+# Links to MyST targets like `(how-to-track-processing)=` are valid but not understood by markdownlint
+MD051: false
+# Allow headers ending with '?' or '!' (e.g. "Why Nipoppy?")
+MD026:
+  punctuation: ".,;:。，；："

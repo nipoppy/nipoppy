@@ -15,7 +15,7 @@ If you have not installed Nipoppy yet, instructions are available [here](../../o
 
 ## Step 0: Download the BIDS dataset
 
-We will use the [**ds004101 dataset from OpenNeuro**](https://openneuro.org/datasets/ds004101/versions/1.0.1), which includes structural and functional MRI data for 9 subjects (2 sessions). The dataset can be downloaded by following instructions [here](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). If you do not have DataLad or Node.js installed, you can use the shell script method:
+We will use the [**ds004101 dataset from OpenNeuro**](https://openneuro.org/datasets/ds004101/versions/1.0.1), which includes structural and functional MRI data for 9 subjects (2 sessions). The dataset can be downloaded by following the [instructions on OpenNeuro](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). If you do not have DataLad or Node.js installed, you can use the shell script method:
 
 - Click on the "Download shell script" link at the bottom of [this page](https://openneuro.org/datasets/ds004101/versions/1.0.1/download). This should download a file called `ds004101-1.0.1.sh` to your computer.
 - Move `ds004101-1.0.1.sh` to the directory you will use for this tutorial.
