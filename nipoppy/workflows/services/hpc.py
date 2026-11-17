@@ -6,13 +6,13 @@ import getpass
 import sys
 from functools import cached_property
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from jinja2 import Environment, meta
 from pysqa import QueueAdapter
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.env import PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import StrOrPathLike
 from nipoppy.exceptions import LayoutError, WorkflowError
 from nipoppy.logger import get_logger
 from nipoppy.utils import fileops
@@ -25,23 +25,20 @@ logger = get_logger()
 
 
 class HPCRunner:
-    """Class for generating and submitting HPC jobs via PySQA."""
+    """Class for submitting HPC jobs via PySQA."""
+
+    # PySQA artefacts, relative to the job's working directory
+    fname_hpc_error = "pysqa.err"
+    fname_job_script = "run_queue.sh"
 
     def __init__(
         self,
         hpc_cluster: str,
         hpc_config: HpcConfig,
-        subcommand: str,
         dpath_root: StrOrPathLike,
         dpath_hpc: StrOrPathLike,
-        pipeline_name: str,
-        pipeline_version: str | None = None,
-        pipeline_step: str | None = None,
         preamble: list[str] | None = None,
         queue_limit: int | None = None,
-        keep_workdir: bool = False,
-        fpath_layout: StrOrPathLike | None = None,
-        verbose: bool = False,
     ):
         if preamble is None:
             preamble = []
@@ -51,17 +48,10 @@ class HPCRunner:
 
         self.hpc_cluster = hpc_cluster
         self.hpc_config = hpc_config
-        self.subcommand = subcommand
         self.dpath_root = dpath_root
         self.dpath_hpc = dpath_hpc
-        self.pipeline_name = pipeline_name
-        self.pipeline_version = pipeline_version
-        self.pipeline_step = pipeline_step
         self.preamble = preamble
         self.queue_limit = queue_limit
-        self.keep_workdir = keep_workdir
-        self.fpath_layout = fpath_layout
-        self.verbose = verbose
 
     @cached_property
     def _queue_adapter(self) -> QueueAdapter:
@@ -75,78 +65,6 @@ class HPCRunner:
             ) from e
 
         return queue_adapter
-
-    def generate_cli_command(
-        self,
-        participant_id: str,
-        session_id: str,
-        *,
-        extra_flags: list[str] | None = None,
-        extra_options: dict[str, Any] | None = None,
-    ) -> list[str]:
-        """Generate the CLI command for a participant-session combination.
-
-        Skips the --simulate, --hpc, --write-subcohort and --dry-run options.
-
-        Parameters
-        ----------
-        participant_id : str, optional
-            Participant ID to run on.
-        session_id : str, optional
-            Session ID to run on.
-        extra_flags : list[str], optional
-            Additional CLI flags to append.
-        extra_options : dict[str, Any], optional
-            Additional CLI options to append.
-
-        Returns
-        -------
-        list[str]
-            The CLI command as a list of string tokens.
-        """
-        command: list[str] = [
-            PROGRAM_NAME,
-            self.subcommand,
-            "--study",
-            str(self.dpath_root),
-            "--pipeline",
-            self.pipeline_name,
-        ]
-        default_options: dict[str, Any] = {
-            "--pipeline-version": self.pipeline_version,
-            "--pipeline-step": self.pipeline_step,
-            "--layout": self.fpath_layout,
-            "--participant-id": participant_id,
-            "--session-id": session_id,
-        }
-        for option, value in default_options.items():
-            if value is not None:
-                command.extend([option, str(value)])
-
-        if self.keep_workdir:
-            command.append("--keep-workdir")
-        if self.verbose:
-            command.append("--verbose")
-
-        extra_options = extra_options or {}
-        for option, value in extra_options.items():
-            if option in default_options:
-                raise ValueError(
-                    f"Option {option} is already set by the default options and cannot "
-                    "be overridden via extra_options."
-                )
-            command.extend([option, str(value)])
-
-        extra_flags = extra_flags or []
-        for flag in extra_flags:
-            if flag in command:
-                raise ValueError(
-                    f"Flag {flag} is already in the command and cannot be overridden "
-                    "via extra_flags."
-                )
-            command.append(flag)
-
-        return [str(c) for c in command]
 
     def _check_hpc_config(self) -> dict:
         """
@@ -193,8 +111,6 @@ class HPCRunner:
         session_ids: list,
         dpath_work: Path,
         dpath_hpc_logs: Path,
-        fname_hpc_error: str,
-        fname_job_script: str,
         pipeline_name: str,
         pipeline_version: str,
         pipeline_step: str,
@@ -202,6 +118,9 @@ class HPCRunner:
     ) -> int | None:
         """
         Submit a job to the HPC scheduler.
+
+        If the queue limit applies, only the first N commands (in order) are
+        submitted, where N is the number of available queue slots, and N is returned.
 
         Parameters
         ----------
@@ -217,10 +136,6 @@ class HPCRunner:
             Working directory for the job.
         dpath_hpc_logs : Path
             Directory where HPC logs will be saved.
-        fname_hpc_error : str
-            Filename of the HPC error log.
-        fname_job_script : str
-            Filename of the job script to generate.
         pipeline_name : str
             Name of the pipeline being run.
         pipeline_version : str
@@ -253,7 +168,7 @@ class HPCRunner:
 
         # This file is created by PySQA if the job submission command fails.
         # Delete it first to ensure only fresh submission errors are detected.
-        fpath_hpc_error = dpath_work / fname_hpc_error
+        fpath_hpc_error = dpath_work / self.fname_hpc_error
         fileops.rm(fpath_hpc_error, missing_ok=True)
 
         fileops.mkdir(dpath_hpc_logs)
@@ -282,7 +197,7 @@ class HPCRunner:
                 **job_args,
             )
 
-        fpath_job_script = dpath_work / fname_job_script
+        fpath_job_script = dpath_work / self.fname_job_script
         if fpath_job_script.exists():
             logger.info(f"Job script created at {fpath_job_script}")
         else:

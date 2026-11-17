@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-import rich
+import rich.progress
 from packaging.version import Version
 from pydantic import ValidationError
 
@@ -63,6 +63,7 @@ from nipoppy.utils.utils import (
     process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.executor import Executor, WorkItem
 
 if TYPE_CHECKING:
     import bids
@@ -127,10 +128,6 @@ def get_pipeline_version(
 
 class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
     """A workflow for a pipeline that has a Boutiques descriptor."""
-
-    dname_hpc_logs = "hpc"
-    fname_hpc_error = "pysqa.err"
-    fname_job_script = "run_queue.sh"
 
     _pipeline_type = PipelineTypeEnum.PROCESSING
 
@@ -206,6 +203,18 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 extra={"markup": False},
             )
             sys.exit(ReturnCode.MISSING_DEPENDENCY)
+
+        self.executor: Executor | None = None
+        if hpc is not None:
+            # Lazy import: keeps HPC dependencies out of local runs
+            from nipoppy.workflows.hpc_executor import HPCExecutor
+
+            self.executor = HPCExecutor(self, hpc_cluster=hpc)
+
+    @property
+    def extra_cli_flags(self) -> list[str]:
+        """Workflow-specific CLI flags needed to reproduce this run from the CLI."""
+        return []
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
@@ -687,7 +696,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Handle the execution strategy based on the workflow configuration."""
         if self.write_subcohort is not None:
             self._write_subcohort_to_file(participants_sessions)
+        elif self.executor is not None:
+            self._run_with_executor(participants_sessions)
         else:
+            # TODO: replace with LocalExecutor (nipoppy/nipoppy#1224) and make
+            # `self.executor` required
             self._run_locally(participants_sessions)
 
     def _check_filter_args_compatibility(self):
@@ -755,6 +768,29 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 self.write_subcohort, header=False, index=False, sep="\t"
             )
 
+    def _warn_no_participants_sessions(self) -> None:
+        """Log a warning that there is nothing to run."""
+        logger.warning(
+            "No participants or sessions to run. Make sure there are no mistakes "
+            "in the input arguments, the dataset's manifest or config file, and/or "
+            "check the curation status file at "
+            f"{self.study.layout.fpath_curation_status}"
+        )
+
+    def _run_with_executor(self, participants_sessions: list) -> None:
+        """Run pipeline with the executor and collect results."""
+        if len(participants_sessions) == 0:
+            self._warn_no_participants_sessions()
+            self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
+            return
+
+        result = self.executor.execute(
+            [WorkItem(participant_id=p, session_id=s) for p, s in participants_sessions]
+        )
+        self.n_success += len(result.succeeded)
+        self.n_total += len(result.succeeded) + len(result.failed)
+        self.return_code = result.return_code
+
     def _run_locally(self, participants_sessions: list) -> None:
         """Run pipeline locally and collect results."""
         results = list(self._get_results_generator(participants_sessions))
@@ -777,19 +813,12 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         """Log a summary message."""
         if self.write_subcohort is not None:
             logger.success(f"Wrote subcohort to {self.write_subcohort}")
+        elif self.executor is not None:
+            # the executor logs its own summary
+            return
         elif self.n_total == 0:
-            logger.warning(
-                "No participants or sessions to run. Make sure there are no mistakes "
-                "in the input arguments, the dataset's manifest or config file, and/or "
-                "check the curation status file at "
-                f"{self.study.layout.fpath_curation_status}"
-            )
+            self._warn_no_participants_sessions()
             self.return_code = ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
-        elif self.hpc is not None:
-            if self.n_success == 0:
-                logger.failure("Failed to submit HPC jobs")
-            else:
-                logger.success(f"Successfully submitted {self.n_success} HPC job(s)")
         else:
             if self.pipeline_step_config.ANALYSIS_LEVEL == AnalysisLevelType.group:
                 log_msg = "Ran on the entire study"
@@ -811,7 +840,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self, participant_id: str | None, session_id: str | None
     ):
         """
-        Return participant-session pairs to loop over with run_single().
+        Return the participant-session pairs to run.
 
         This is an abstract method that should be defined explicitly in subclasses.
         """

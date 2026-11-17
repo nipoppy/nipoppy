@@ -708,3 +708,9 @@ def test_run_main_write_subcohort(
     runner.run_main()
 
     mocked_write_subcohort_to_file.assert_called_once()
+
+
+@pytest.mark.parametrize("tar,expected", [(True, ["--tar"]), (False, [])])
+def test_extra_cli_flags(tar: bool, expected: list[str], runner: ProcessingRunner):
+    runner.tar = tar
+    assert runner.extra_cli_flags == expected
