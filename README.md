@@ -55,4 +55,22 @@ If you use Nipoppy in your research, please cite our preprint:
 ```
 </details>
 
-To cite a specific software release, see our [Zenodo record](https://doi.org/10.5281/zenodo.8084759).
+To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/zenodo.8084759):
+
+> Nipoppy contributors, Nikhil Bhagwat, Michelle Wang, Mathieu Dugré, Brent McPherson, and Jean-Baptiste Poline (2026). *nipoppy*. Zenodo. [https://doi.org/10.5281/zenodo.8084759](https://doi.org/10.5281/zenodo.8084759)
+
+<details>
+<summary>BibTeX</summary>
+
+```bibtex
+@software{NipoppyZenodo,
+  title = {nipoppy},
+  author = {{Nipoppy contributors} and Bhagwat, Nikhil and Wang, Michelle and Dugr{\'e}, Mathieu and McPherson, Brent and Poline, Jean-Baptiste},
+  publisher = {Zenodo},
+  year = {2026},
+  doi = {10.5281/zenodo.8084759},
+  url = {https://doi.org/10.5281/zenodo.8084759},
+  copyright = {MIT License}
+}
+```
+</details>
