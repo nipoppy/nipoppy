@@ -346,7 +346,7 @@ def test_launch_boutiques_run(
             ApptainerHandler(),
             [
                 "--force-apptainer",
-                "--no-automount",
+                "--no-automounts",
                 "--imagepath",
                 "--container-opts=",
             ],
@@ -355,7 +355,7 @@ def test_launch_boutiques_run(
             SingularityHandler(),
             [
                 "--force-singularity",
-                "--no-automount",
+                "--no-automounts",
                 "--imagepath",
                 "--container-opts=",
             ],
@@ -364,7 +364,7 @@ def test_launch_boutiques_run(
             DockerHandler(),
             [
                 "--force-docker",
-                "--no-automount",
+                "--no-automounts",
                 "--container-opts=",
             ],
         ),

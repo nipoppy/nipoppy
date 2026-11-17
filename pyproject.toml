@@ -8,6 +8,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved",
+    "Operating System :: MacOS",
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python",
