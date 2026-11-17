@@ -91,7 +91,7 @@ def _check_descriptor_file(
         else:
             logger.warning(
                 error_message
-                + "This will be deprecated in the future: you should update this file following steps listed in https://nipoppy.readthedocs.io/en/stable/other/changelog.html#release-0-4-1."  # noqa E501
+                + "This will be deprecated in the future: you should update this file following steps listed in https://nipoppy.readthedocs.io/en/0.4.1/changelog.html#release-0-4-1."  # noqa E501
             )
 
     return descriptor_str
