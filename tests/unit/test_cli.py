@@ -194,9 +194,7 @@ def test_check_at_most_one_flag_specified(cli_args: list[str], expected_match: s
     @click.option("--flag2", "renamed")
     @click.option("--flag3")
     def cmd(**kwargs):
-        check_at_most_one_flag_specified(
-            "--flag1", "--flag2", "--flag3", "--undeclared"
-        )
+        check_at_most_one_flag_specified("--flag1", "--flag2", "--flag3")
 
     with pytest.raises(UsageError, match=expected_match):
         runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
@@ -213,10 +211,24 @@ def test_check_at_most_one_flag_specified_no_error(cli_args: list[str]):
     @click.option("--flag1")
     @click.option("--flag2", "renamed")
     def cmd(**kwargs):
-        check_at_most_one_flag_specified("--flag1", "--flag2", "--undeclared")
+        check_at_most_one_flag_specified("--flag1", "--flag2")
 
     result = runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
     assert result.exception is None
+
+
+def test_check_at_most_one_flag_specified_undeclared_flag():
+    """Test that an error is raised when a flag is not declared by the command."""
+
+    @click.command()
+    @click.option("--flag1")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--undeclared")
+
+    with pytest.raises(
+        ValueError, match="Flag '--undeclared' not declared by command 'cmd'."
+    ):
+        runner.invoke(cmd, [], catch_exceptions=False, standalone_mode=False)
 
 
 @pytest.mark.no_xdist
