@@ -5,6 +5,6 @@ What's new
 ==========
 
 .. changelog::
-    :changelog-url: https://nipoppy.readthedocs.io/en/stable/changelog.html
+    :changelog-url: https://nipoppy.readthedocs.io/en/stable/other/changelog.html
     :github: https://github.com/nipoppy/nipoppy/releases/
     :pypi: https://pypi.org/project/nipoppy/
