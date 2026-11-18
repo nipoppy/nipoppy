@@ -4,6 +4,8 @@ import pytest
 
 from nipoppy.exceptions import TabularError
 from nipoppy.tabular.processing_status import (
+    STATUS_FAIL,
+    STATUS_SUCCESS,
     ProcessingStatusModel,
     ProcessingStatusTable,
 )
@@ -419,6 +421,58 @@ def test_get_completed_participants_sessions(
             session_id=session_id,
         )
     ] == expected
+
+
+@pytest.mark.parametrize(
+    "data,new_data,expected",
+    [
+        (
+            [],
+            [
+                ["01", "1", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["01", "2", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["02", "1", "pipeline1", "1.0", "step1", STATUS_FAIL],
+            ],
+            {"New SUCCESS": 2, "New FAIL": 1},
+        ),
+        (
+            [
+                ["01", "1", "pipeline1", "1.0", "step1", STATUS_FAIL],
+                ["01", "2", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["02", "1", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["02", "2", "pipeline2", "1.0", "step1", STATUS_SUCCESS],
+            ],
+            [
+                ["01", "1", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["01", "2", "pipeline1", "1.0", "step1", STATUS_FAIL],
+                ["02", "1", "pipeline1", "1.0", "step1", STATUS_SUCCESS],
+                ["02", "2", "pipeline1", "1.0", "step1", STATUS_FAIL],
+            ],
+            {"FAIL -> SUCCESS": 1, "SUCCESS -> FAIL": 1, "New FAIL": 1},
+        ),
+    ],
+)
+def test_get_status_changes(data, new_data, expected):
+    columns = [
+        ProcessingStatusTable.col_participant_id,
+        ProcessingStatusTable.col_session_id,
+        ProcessingStatusTable.col_pipeline_name,
+        ProcessingStatusTable.col_pipeline_version,
+        ProcessingStatusTable.col_pipeline_step,
+        ProcessingStatusTable.col_status,
+    ]
+    processing_status_table = ProcessingStatusTable(data, columns=columns).validate()
+    records = [dict(zip(columns, row)) for row in new_data]
+
+    assert (
+        processing_status_table.get_status_changes(
+            records,
+            pipeline_name="pipeline1",
+            pipeline_version="1.0",
+            pipeline_step="step1",
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
