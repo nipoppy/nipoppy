@@ -16,11 +16,11 @@ Below are some guidelines that could be helpful for potential contributors.
 
 ## All contributors
 
-This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found [here](https://allcontributors.org/en/bot/usage/).
+This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found in the [all-contributors bot documentation](https://allcontributors.org/en/bot/usage/).
 
 ## Contributing through GitHub
 
-Nipoppy development happens on [GitHub](https://github.com/). You will need an account to participate in issue threads and contribute code. Instructions for setting up an account can be found [here](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github).
+Nipoppy development happens on [GitHub](https://github.com/). You will need an account to participate in issue threads and contribute code. Instructions for setting up an account can be found in the [GitHub documentation](https://docs.github.com/en/get-started/start-your-journey/creating-an-account-on-github).
 
 ## Identifying an issue to work on
 
@@ -48,7 +48,7 @@ If you would like to contribute but are not sure where to start, we recommend lo
 ## Developer environment setup
 
 > [!TIP]
-> You should use a Python environment dedicated to Nipoppy development (see [here](#python-env-instructions) for instructions).
+> You should use a Python environment dedicated to Nipoppy development (see the [Python environment instructions](#python-env-instructions)).
 
 First, [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) the [repository](https://github.com/nipoppy/nipoppy) on GitHub.
 

@@ -182,7 +182,7 @@ See {doc}`../parallelization/hpc_scheduler` for more information on configuring 
 #### `tracker.json`
 
 Defines output tracking paths.
-See [here](#how-to-track-processing) for more information about pipeline tracking.
+See the [pipeline tracking guide](#how-to-track-processing) for more information about pipeline tracking.
 
 ```json
 {
@@ -204,6 +204,7 @@ Assuming a participant ID `001` and session ID `A`, the template strings will re
 - `[[NIPOPPY_BIDS_PARTICIPANT_ID]]`: `sub-001`
 - `[[NIPOPPY_SESSION_ID]]`: `A`
 - `[[NIPOPPY_BIDS_SESSION_ID]]`: `ses-A`
+
 :::
 
 ## Upload to the Nipoppy pipeline store (optional)
