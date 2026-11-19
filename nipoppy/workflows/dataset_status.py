@@ -54,7 +54,7 @@ def _attach_manifest_datatypes(
     if status_df.empty or manifest_datatypes.empty:
         return _empty_status_df()
 
-    return status_df.drop(columns=Manifest.col_datatype, errors="ignore").merge(
+    return status_df.merge(
         manifest_datatypes,
         on=INDEX_COLS,
         how="inner",
@@ -132,11 +132,6 @@ def _filter_status_df(
     ].copy()
 
 
-def _get_session_ids(status_df: pd.DataFrame) -> list[str]:
-    """Get deterministic session ordering from the selected status records."""
-    return sorted(status_df[Manifest.col_session_id].unique())
-
-
 def _count_by_session(
     status_df: pd.DataFrame,
     session_ids: list[str],
@@ -169,7 +164,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
-        datatype: tuple[str, ...] | str | None = None,
+        datatypes: tuple[str, ...] | None = None,
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -180,13 +175,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        self.datatype = datatype
-        if isinstance(datatype, str):
-            datatype = (datatype,)
-        if datatype is None:
-            datatype = ()
-        datatypes = set(datatype)
-        self.datatypes: set[str] | None = datatypes or None
+        self.datatypes: set[str] | None = set(datatypes or ()) or None
 
     def run_main(self) -> pd.DataFrame | None:
         """Build, filter, and summarize dataset status records by session.
@@ -218,7 +207,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             - {CHECKPOINT_MANIFEST, *CurationStatusTable.status_cols}
         )
         checkpoint_cols = [CHECKPOINT_MANIFEST, *curation_cols, *processing_cols]
-        session_ids = _get_session_ids(status_df)
+        session_ids = sorted(status_df[Manifest.col_session_id].unique())
 
         self._log_dataset_summary(status_df, session_ids)
 

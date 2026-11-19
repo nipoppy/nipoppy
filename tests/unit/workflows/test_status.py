@@ -24,46 +24,23 @@ def dpath_root(tmp_path: Path) -> Path:
     return tmp_path
 
 
-def make_manifest(n_participants=10, session_ids=("BL", "M12")) -> Manifest:
-    datatypes = ["anat", "dwi"]
-    participant_ids = [str(i) for i in range(1, n_participants + 1)]
-
-    return Manifest(
-        pd.concat(
-            [
-                pd.DataFrame(
-                    data={
-                        Manifest.col_session_id: session_id,
-                        Manifest.col_participant_id: participant_ids,
-                        Manifest.col_visit_id: session_id,
-                        Manifest.col_datatype: [datatypes for _ in participant_ids],
-                    }
-                )
-                for session_id in session_ids
-            ]
-        )
-    )
-
-
 def make_mixed_datatype_status_tables():
     """Make a manifest and status tables with mixed datatypes."""
     manifest = Manifest(
-        pd.DataFrame(
-            [
-                ("01", "BL", "BL", ["anat"]),
-                ("02", "BL", "BL", ["anat", "dwi"]),
-                ("03", "BL", "BL", ["dwi"]),
-                ("01", "M12", "M12", ["anat"]),
-                ("02", "M12", "M12", ["dwi"]),
-                ("04", "M12", None, []),
-            ],
-            columns=[
-                Manifest.col_participant_id,
-                Manifest.col_visit_id,
-                Manifest.col_session_id,
-                Manifest.col_datatype,
-            ],
-        )
+        [
+            ("01", "BL", "BL", ["anat"]),
+            ("02", "BL", "BL", ["anat", "dwi"]),
+            ("03", "BL", "BL", ["dwi"]),
+            ("01", "M12", "M12", ["anat"]),
+            ("02", "M12", "M12", ["dwi"]),
+            ("04", "M12", None, []),
+        ],
+        columns=[
+            Manifest.col_participant_id,
+            Manifest.col_visit_id,
+            Manifest.col_session_id,
+            Manifest.col_datatype,
+        ],
     )
     curation_columns = [
         CurationStatusTable.col_participant_id,
@@ -155,7 +132,7 @@ def make_mixed_datatype_status_tables():
     ],
 )
 def test_datatype_filters_all_status_tables(dpath_root: Path, datatype, expected):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=datatype)
     (
         workflow.study.manifest,
         workflow.curation_status_table,
@@ -168,7 +145,7 @@ def test_datatype_filters_all_status_tables(dpath_root: Path, datatype, expected
 def test_filtering_hide_pipeline_without_success(
     dpath_root: Path, caplog: pytest.LogCaptureFixture
 ):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype="anat")
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=("anat",))
     (
         workflow.study.manifest,
         workflow.curation_status_table,
@@ -198,7 +175,7 @@ def test_unmatched_datatype_returns_none(
     dpath_root: Path,
     caplog: pytest.LogCaptureFixture,
 ):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("fake",))
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=("fake",))
     (
         workflow.study.manifest,
         workflow.curation_status_table,
@@ -214,31 +191,10 @@ def test_unmatched_datatype_returns_none(
     )
 
 
-@pytest.mark.parametrize(
-    "datatype,expected",
-    [
-        (("dwi", "anat"), {"anat", "dwi"}),
-        ("dwi", {"dwi"}),
-        (("fake",), {"fake"}),
-        (None, None),
-        ((), None),
-    ],
-)
-def test_datatype_values_are_normalized(
-    dpath_root: Path,
-    datatype: tuple[str, ...] | str | None,
-    expected: set[str] | None,
-):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
-
-    assert workflow.datatypes == expected
-    assert workflow.datatype == datatype
-
-
 def test_str_with_datatype(dpath_root: Path):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=("anat",))
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=("anat",))
 
-    assert "datatype" in str(workflow)
+    assert "datatypes" in str(workflow)
 
 
 def test_empty_imaging_manifest_without_datatype(
@@ -257,7 +213,6 @@ def test_empty_imaging_manifest_without_datatype(
 
 
 def test_build_status_df(dpath_root: Path):
-    """Completed records are copied into one universal long-form schema."""
     workflow = StatusWorkflow(dpath_root=dpath_root)
     (
         workflow.study.manifest,
@@ -315,15 +270,13 @@ def test_attach_manifest_datatypes_with_empty_input(empty_status, empty_manifest
 def test_build_status_df_with_no_imaging_sessions(dpath_root: Path):
     workflow = StatusWorkflow(dpath_root=dpath_root)
     workflow.study.manifest = Manifest(
-        pd.DataFrame(
-            [("01", "V1", None, None)],
-            columns=[
-                Manifest.col_participant_id,
-                Manifest.col_visit_id,
-                Manifest.col_session_id,
-                Manifest.col_datatype,
-            ],
-        )
+        [("01", "V1", None, None)],
+        columns=[
+            Manifest.col_participant_id,
+            Manifest.col_visit_id,
+            Manifest.col_session_id,
+            Manifest.col_datatype,
+        ],
     )
     workflow.curation_status_table = CurationStatusTable()
     workflow.processing_status_table = ProcessingStatusTable()
@@ -357,22 +310,20 @@ def test_build_status_df_does_not_mutate_source_tables(dpath_root: Path):
 
 @pytest.mark.parametrize("datatype,expected", [(None, 2), (("anat",), 1)])
 def test_manifest_row_without_datatype(dpath_root: Path, datatype, expected):
-    """Imaging rows with no datatype are counted but never match a filter."""
+    """Test that rows with no datatype are only counted if no datatype filter is specified."""
     manifest = Manifest(
-        pd.DataFrame(
-            [
-                ("01", "BL", "BL", ["anat"]),
-                ("02", "BL", "BL", None),
-            ],
-            columns=[
-                Manifest.col_participant_id,
-                Manifest.col_visit_id,
-                Manifest.col_session_id,
-                Manifest.col_datatype,
-            ],
-        )
+        [
+            ("01", "BL", "BL", ["anat"]),
+            ("02", "BL", "BL", None),
+        ],
+        columns=[
+            Manifest.col_participant_id,
+            Manifest.col_visit_id,
+            Manifest.col_session_id,
+            Manifest.col_datatype,
+        ],
     )
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype=datatype)
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=datatype)
     workflow.study.manifest = manifest
     workflow.curation_status_table = CurationStatusTable()
     workflow.processing_status_table = ProcessingStatusTable()
@@ -382,15 +333,44 @@ def test_manifest_row_without_datatype(dpath_root: Path, datatype, expected):
     assert status_df.loc["BL", CHECKPOINT_MANIFEST] == expected
 
 
+@pytest.mark.parametrize(
+    "datatype,expected",
+    [
+        (
+            None,
+            [
+                CHECKPOINT_MANIFEST,
+                CurationStatusTable.col_in_pre_reorg,
+                CurationStatusTable.col_in_post_reorg,
+                CurationStatusTable.col_in_bids,
+            ],
+        ),
+        (("dwi",), [CHECKPOINT_MANIFEST, CurationStatusTable.col_in_bids]),
+    ],
+)
 def test_datatype_filter_bids_completion_drops_curation_stages(
-    dpath_root: Path,
+    dpath_root: Path, datatype, expected
 ):
     """When BIDS count equals manifest count under datatype filter, hide pre/post reorg."""
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatype="dwi")
-    workflow.study.manifest = make_manifest(n_participants=1, session_ids=["BL"])
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=datatype)
+    workflow.study.manifest = Manifest(
+        [
+            ("1", "BL", "BL", ["anat", "dwi"]),
+            ("2", "BL", "BL", ["anat"]),
+        ],
+        columns=[
+            Manifest.col_participant_id,
+            Manifest.col_visit_id,
+            Manifest.col_session_id,
+            Manifest.col_datatype,
+        ],
+    )
     workflow.curation_status_table = CurationStatusTable(
         pd.DataFrame(
-            [("1", "BL", True, True, True)],
+            [
+                ("1", "BL", True, True, True),
+                ("2", "BL", False, False, False),
+            ],
             columns=[
                 CurationStatusTable.col_participant_id,
                 CurationStatusTable.col_session_id,
@@ -400,12 +380,7 @@ def test_datatype_filter_bids_completion_drops_curation_stages(
     )
     workflow.processing_status_table = ProcessingStatusTable()
 
-    status_df = workflow.run_main()
-
-    assert status_df.columns.tolist() == [
-        CHECKPOINT_MANIFEST,
-        CurationStatusTable.col_in_bids,
-    ]
+    assert workflow.run_main().columns.tolist() == expected
 
 
 def test_empty_processing_table_has_only_missing_file_warning(
@@ -413,7 +388,18 @@ def test_empty_processing_table_has_only_missing_file_warning(
     caplog: pytest.LogCaptureFixture,
 ):
     workflow = StatusWorkflow(dpath_root=dpath_root)
-    workflow.study.manifest = make_manifest(n_participants=1)
+    workflow.study.manifest = Manifest(
+        [
+            ("1", "BL", "BL", ["anat", "dwi"]),
+            ("1", "M12", "M12", ["anat", "dwi"]),
+        ],
+        columns=[
+            Manifest.col_participant_id,
+            Manifest.col_visit_id,
+            Manifest.col_session_id,
+            Manifest.col_datatype,
+        ],
+    )
     workflow.curation_status_table = CurationStatusTable()
     workflow.processing_status_table = ProcessingStatusTable()
 

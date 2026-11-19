@@ -291,6 +291,7 @@ def extract(**params):
 @study_option
 @click.option(
     "--datatype",
+    "datatypes",
     type=str,
     multiple=True,
     help=(
