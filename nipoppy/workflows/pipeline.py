@@ -684,6 +684,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             [WorkItem(p, s) for p, s in participants_sessions],
         )
         self.return_code = executor_result.return_code
+        self.n_success += len(executor_result.successful_items)
+        self.n_total += len(executor_result.successful_items) + len(
+            executor_result.failed_items
+        )
         return executor_result
 
     def _log_summary_message(self):

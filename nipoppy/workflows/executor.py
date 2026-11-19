@@ -15,6 +15,8 @@ class ExecutorResult:
     """Result of an execution."""
 
     return_code: ReturnCode
+    successful_items: list[WorkItem]
+    failed_items: list[WorkItem]
 
 
 class Executor(ABC):

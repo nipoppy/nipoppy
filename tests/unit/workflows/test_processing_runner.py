@@ -695,6 +695,29 @@ def test_run_missing_container_raises_error(runner: ProcessingRunner):
         runner.run()
 
 
+@pytest.mark.parametrize(
+    "fail_participant_ids,expected_dpaths_exist", [([], False), (["01"], True)]
+)
+def test_run_cleanup_after_local_run(
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+    fail_participant_ids: list[str],
+    expected_dpaths_exist: bool,
+):
+    def mocked_run_single(participant_id, session_id):
+        if participant_id in fail_participant_ids:
+            raise RuntimeError("Failed")
+
+    mocker.patch.object(runner, "run_single", side_effect=mocked_run_single)
+    runner.keep_workdir = False
+    runner.dpath_pipeline_bids_db.mkdir(parents=True)
+
+    runner.run()
+
+    for dpath in [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]:
+        assert dpath.exists() == expected_dpaths_exist
+
+
 def test_run_main_write_subcohort(
     runner: ProcessingRunner,
     mocker: pytest_mock.MockFixture,

@@ -1228,9 +1228,9 @@ def test_run_locally(
     mocked_execute = mocker.patch.object(workflow.executor, "execute")
     mocked_execute.return_value = LocalExecutorResult(
         return_code=expected_return_code,
-        successful_items=[],
-        failed_items=[],
-        results=[],
+        successful_items=[WorkItem("01", "1"), WorkItem("02", "1")],
+        failed_items=[WorkItem("01", "2")],
+        results=[None, None],
     )
 
     output = workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])
@@ -1240,3 +1240,5 @@ def test_run_locally(
     )
 
     assert workflow.return_code == expected_return_code
+    assert workflow.n_success == 2
+    assert workflow.n_total == 3

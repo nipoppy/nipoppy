@@ -35,8 +35,6 @@ class LocalExecutorResult(ExecutorResult, Generic[ResultT]):
     The results attribute contains the results associated with each successful item.
     """
 
-    successful_items: list[WorkItem]
-    failed_items: list[WorkItem]
     results: list[ResultT]
 
 
