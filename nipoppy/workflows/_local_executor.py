@@ -3,7 +3,7 @@
 from collections.abc import Callable, Iterable
 from typing import Any
 
-import rich
+import rich.progress
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.exceptions import ExecutionError, InvalidArgumentError, ReturnCode
