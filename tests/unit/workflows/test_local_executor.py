@@ -1,0 +1,354 @@
+"""Tests for LocalExecutor."""
+
+import builtins
+import importlib.util
+from functools import partial
+from types import ModuleType
+from typing import Callable
+
+import pytest
+import pytest_mock
+
+import nipoppy.workflows.local_executor  # for mocking
+from nipoppy.exceptions import ExecutionError, InvalidArgumentError, ReturnCode
+from nipoppy.workflows.executor import WorkItem
+from nipoppy.workflows.local_executor import (
+    LocalExecutor,
+    _check_args,
+    _get_return_code,
+    _log_summary_message,
+)
+
+
+def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "joblib":
+            raise ImportError(error_message)
+        return real_import(name, *args, **kwargs)
+
+    mocker.patch("builtins.__import__", side_effect=fake_import)
+
+
+@pytest.fixture(scope="function")
+def partial_executor() -> Callable[..., LocalExecutor]:
+
+    def work_fn(item: WorkItem):
+        if item.participant_id == "FAIL":
+            raise RuntimeError("Simulated failure")
+        else:
+            return "SUCCESS"
+
+    return partial(
+        LocalExecutor,
+        work_fn=work_fn,
+        error_message_builder=lambda x: f"Error for {x.participant_id}, {x.session_id}",
+    )
+
+
+class TestGetReturnCode:
+    @pytest.mark.parametrize(
+        ["n_success", "n_total", "expected_return_code"],
+        [
+            (0, 0, ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN),
+            (0, 5, ReturnCode.FAILURE),
+            (3, 6, ReturnCode.PARTIAL_SUCCESS),
+            (7, 7, ReturnCode.SUCCESS),
+        ],
+    )
+    def test_get_return_code(self, n_success, n_total, expected_return_code):
+        """Test that the return code is correct."""
+        assert _get_return_code(n_success, n_total) == expected_return_code
+
+
+class TestLogSummaryMessage:
+    @pytest.mark.parametrize(
+        ["n_success", "n_total", "is_study_level", "expected_message", "level"],
+        [
+            (0, 0, False, "No participants or sessions to run", "WARNING"),
+            (0, 5, False, "Ran for 0 out of 5 participants and/or sessions", "ERROR"),
+            (3, 6, False, "Ran for 3 out of 6 participants and/or sessions", "WARNING"),
+            (7, 7, False, "Ran for 7 out of 7 participants and/or sessions", "INFO"),
+            (1, 1, True, "Ran on the entire study", "INFO"),
+            (0, 1, True, "Ran on the entire study", "ERROR"),
+        ],
+    )
+    def test_log_summary_message(
+        self, n_success, n_total, is_study_level, expected_message, level, caplog
+    ):
+        """Test that the log summary message is correct."""
+        _log_summary_message(n_success, n_total, is_study_level)
+        assert any(
+            expected_message in record.message and record.levelname == level
+            for record in caplog.records
+        )
+
+
+class TestJoblibImport:
+    @staticmethod
+    def _exec_fresh_local_executor_module() -> ModuleType:
+        """Import a separate, throwaway copy of the local_executor module.
+
+        This re-runs the module's top-level code (e.g. the joblib import check) without
+        touching the real nipoppy.workflows.local_executor module.
+
+        We avoid importlib.reload() because it recreates the module's classes, which
+        causes flaky test failures.
+        """
+        spec = importlib.util.find_spec("nipoppy.workflows.local_executor")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_joblib_not_installed(self, mocker: pytest_mock.MockFixture):
+        """Test that JOBLIB_INSTALLED is False when joblib is not installed."""
+        _mock_joblib_import_error(mocker, "No module named 'joblib'")
+        module = self._exec_fresh_local_executor_module()
+        assert not module.JOBLIB_INSTALLED
+
+    def test_import_error_propagates(self, mocker: pytest_mock.MockFixture):
+        """Test that ImportError is propagated if joblib exists but import fails."""
+        error_message = "Unexpected exception during import"
+        _mock_joblib_import_error(mocker, error_message)
+
+        with pytest.raises(ImportError, match=error_message):
+            self._exec_fresh_local_executor_module()
+
+
+class TestInit:
+    def test_init_success(self, partial_executor):
+        """Test that LocalExecutor can be initialized successfully."""
+        partial_executor(n_jobs=1, show_progress=False)
+
+    def test_init_does_not_check_args(self, partial_executor):
+        """Test that arguments are not validated at initialization."""
+        # should not raise an error
+        partial_executor(n_jobs=0)
+
+
+class TestCheckArgs:
+    @pytest.mark.parametrize("n_jobs", [-2, -1, 1, 2])
+    def test_n_jobs_valid(self, n_jobs, mocker: pytest_mock.MockFixture):
+        """Test that no error is raised when n_jobs is valid."""
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", True)
+
+        # should not raise an error
+        _check_args(n_jobs)
+
+    @pytest.mark.parametrize("n_jobs", [0, None])
+    def test_n_jobs_invalid(self, n_jobs, mocker: pytest_mock.MockFixture):
+        """Test that an error is raised when n_jobs is invalid."""
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", True)
+
+        with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
+            _check_args(n_jobs)
+
+    @pytest.mark.no_xdist
+    def test_n_jobs_but_no_joblib(self, mocker: pytest_mock.MockFixture):
+        """Test that an error is raised when joblib is not installed and n_jobs > 1."""
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", False)
+        with pytest.raises(
+            ExecutionError,
+            match="An additional dependency is required to enable local parallelization",
+        ):
+            _check_args(2)
+
+
+class TestExecute:
+    def test_execute_checks_args(
+        self, partial_executor, mocker: pytest_mock.MockFixture
+    ):
+        """Test that arguments are validated when execute is called."""
+        executor: LocalExecutor = partial_executor(n_jobs=1)
+        mocked_check_args = mocker.spy(nipoppy.workflows.local_executor, "_check_args")
+
+        executor.execute([WorkItem("01", "1")])
+
+        mocked_check_args.assert_called_once_with(executor.n_jobs)
+
+    def test_execute_invalid_args(
+        self, partial_executor, mocker: pytest_mock.MockFixture
+    ):
+        """Test that execute raises before running any work if args are invalid."""
+        executor: LocalExecutor = partial_executor(n_jobs=0)
+        mocked_get_statuses_and_results = mocker.patch.object(
+            executor, "_get_statuses_and_results"
+        )
+
+        with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
+            executor.execute([WorkItem("01", "1")])
+
+        mocked_get_statuses_and_results.assert_not_called()
+
+    @pytest.mark.parametrize(
+        ["items", "expected_n_success", "is_study_level"],
+        [
+            (
+                [WorkItem("01", "1"), WorkItem("01", "2"), WorkItem("02", "1")],
+                3,
+                False,
+            ),
+            (
+                [WorkItem("FAIL", "1"), WorkItem("FAIL", "2"), WorkItem("FAIL", "3")],
+                0,
+                False,
+            ),
+            (
+                [WorkItem("01", "1"), WorkItem("01", "2"), WorkItem("FAIL", "1")],
+                2,
+                False,
+            ),
+            ([WorkItem(None, None)], 1, True),
+        ],
+    )
+    @pytest.mark.parametrize("items_type", [list, tuple])
+    def test_execute(
+        self,
+        items,
+        items_type,
+        expected_n_success,
+        is_study_level,
+        partial_executor,
+        mocker: pytest_mock.MockFixture,
+    ):
+        """Test result parsing."""
+        executor: LocalExecutor = partial_executor()
+
+        items = items_type(items)  # convert to the specified type
+
+        mocked_log_summary_message = mocker.spy(
+            nipoppy.workflows.local_executor, "_log_summary_message"
+        )
+        mocked_get_return_code = mocker.spy(
+            nipoppy.workflows.local_executor, "_get_return_code"
+        )
+
+        executor_output = executor.execute(items)
+
+        mocked_log_summary_message.assert_called_once_with(
+            expected_n_success, len(items), is_study_level=is_study_level
+        )
+
+        mocked_get_return_code.assert_called_once_with(expected_n_success, len(items))
+        assert executor_output.return_code == mocked_get_return_code.spy_return
+
+        assert len(executor_output.successful_items) == expected_n_success
+        assert len(executor_output.failed_items) == len(items) - expected_n_success
+        assert (
+            set(executor_output.successful_items) | set(executor_output.failed_items)
+        ) == set(items)
+        assert list(executor_output.results.keys()) == executor_output.successful_items
+        assert all(result == "SUCCESS" for result in executor_output.results.values())
+
+
+class TestWorkFnWrapper:
+    def test_success(self, partial_executor):
+        """Test result on success."""
+        executor: LocalExecutor = partial_executor()
+        item = WorkItem("01", "1")
+        status, result = executor._work_fn_wrapper(item)
+        assert status is True
+        assert result == "SUCCESS"
+
+    def test_failure(self, partial_executor):
+        """Test result on failure."""
+        executor: LocalExecutor = partial_executor()
+        item = WorkItem("FAIL", "1")
+        status, result = executor._work_fn_wrapper(item)
+        assert status is False
+        assert result is None
+
+
+class TestGetStatusesAndResults:
+    @pytest.mark.parametrize("show_progress", [True, False])
+    def test_no_joblib(
+        self,
+        partial_executor,
+        show_progress: bool,
+        mocker: pytest_mock.MockFixture,
+    ):
+        """Test that joblib is not used when joblib is not installed."""
+        executor: LocalExecutor = partial_executor(
+            n_jobs=1, show_progress=show_progress
+        )
+        participants_sessions = [
+            WorkItem("01", "1"),
+            WorkItem("01", "2"),
+            WorkItem("01", "3"),
+            WorkItem("02", "1"),
+        ]
+
+        # pretend that joblib is not installed
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", False)
+
+        # also mock joblib.delayed which is not supposed to be called
+        # when joblib is not installed
+        mocked_delayed = mocker.spy(nipoppy.workflows.local_executor, "delayed")
+
+        results = executor._get_statuses_and_results(participants_sessions)
+        mocked_delayed.assert_not_called()
+        assert len(results) == len(participants_sessions)
+
+    @pytest.mark.parametrize("show_progress", [True, False])
+    def test_with_joblib(
+        self, partial_executor, show_progress: bool, mocker: pytest_mock.MockFixture
+    ):
+        """Test that joblib is not used."""
+        # fmt: off
+        # make sure joblib is installed
+        import nipoppy.workflows.local_executor
+        from nipoppy.workflows.local_executor import JOBLIB_INSTALLED
+        assert JOBLIB_INSTALLED, "joblib must be installed"
+        # fmt: on
+
+        executor: LocalExecutor = partial_executor(
+            n_jobs=10, show_progress=show_progress
+        )
+        participants_sessions = [
+            WorkItem("01", "1"),
+            WorkItem("01", "2"),
+            WorkItem("01", "3"),
+            WorkItem("02", "1"),
+        ]
+
+        mocked_delayed = mocker.spy(nipoppy.workflows.local_executor, "delayed")
+
+        results = executor._get_statuses_and_results(participants_sessions)
+        mocked_delayed.assert_called_once()
+        assert len(results) == len(participants_sessions)
+
+    def test_with_progress_bar(self, partial_executor, mocker: pytest_mock.MockFixture):
+        """Test that progress bar is shown."""
+        executor = partial_executor(show_progress=True)
+        participants_sessions = [WorkItem("001", "1")]
+
+        mocked_track = mocker.patch(
+            "nipoppy.workflows.local_executor.rich.progress.track"
+        )
+
+        executor._get_statuses_and_results(participants_sessions)
+        mocked_track.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "show_progress,participants_sessions",
+        [(False, [WorkItem("001", "1")]), (True, [])],
+    )
+    def test_no_progress_bar(
+        self,
+        partial_executor,
+        show_progress,
+        participants_sessions,
+        mocker: pytest_mock.MockFixture,
+    ):
+        """Test that progress bar is not shown."""
+        executor: LocalExecutor = partial_executor(
+            n_jobs=1, show_progress=show_progress
+        )
+
+        mocked_track = mocker.patch(
+            "nipoppy.workflows.local_executor.rich.progress.track"
+        )
+
+        executor._get_statuses_and_results(participants_sessions)
+        mocked_track.assert_not_called()

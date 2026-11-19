@@ -13,6 +13,7 @@ from nipoppy.env import BIDS_PATH_INJECTION_PREFIX
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    ReturnCode,
     WorkflowError,
 )
 from nipoppy.tabular.curation_status import CurationStatusTable
@@ -542,7 +543,9 @@ def test_get_participants_sessions_to_run(
     ] == expected
 
 
-def test_run_multiple(runner: ProcessingRunner):
+def test_run_multiple(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
+    # don't actually launch the (dummy) container
+    mocker.patch.object(runner, "launch_boutiques_run", return_value=(None, None))
     participant_id = None
     session_id = None
     runner.participant_id = participant_id
@@ -550,6 +553,8 @@ def test_run_multiple(runner: ProcessingRunner):
 
     runner.run_setup()
     runner.run_main()
+
+    assert runner.return_code == ReturnCode.SUCCESS
 
     bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
     assert not len(bids_layout.get(extension=".nii.gz")) == 0
@@ -693,6 +698,29 @@ def test_run_missing_container_raises_error(runner: ProcessingRunner):
         FileOperationError, match="No container image file found for pipeline"
     ):
         runner.run()
+
+
+@pytest.mark.parametrize(
+    "fail_participant_ids,expected_dpaths_exist", [([], False), (["01"], True)]
+)
+def test_run_cleanup_after_local_run(
+    runner: ProcessingRunner,
+    mocker: pytest_mock.MockFixture,
+    fail_participant_ids: list[str],
+    expected_dpaths_exist: bool,
+):
+    def mocked_run_single(participant_id, session_id):
+        if participant_id in fail_participant_ids:
+            raise RuntimeError("Failed")
+
+    mocker.patch.object(runner, "run_single", side_effect=mocked_run_single)
+    runner.keep_workdir = False
+    runner.dpath_pipeline_bids_db.mkdir(parents=True)
+
+    runner.run()
+
+    for dpath in [runner.dpath_pipeline_bids_db, runner.dpath_pipeline_work]:
+        assert dpath.exists() == expected_dpaths_exist
 
 
 def test_run_main_write_subcohort(

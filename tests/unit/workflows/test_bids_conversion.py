@@ -6,6 +6,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.pipeline import BIDSificationPipelineConfig
+from nipoppy.exceptions import ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.workflows.bids_conversion import BIDSificationRunner
 from tests.conftest import (
@@ -177,10 +178,14 @@ def test_write_status_file_no_update(workflow: BIDSificationRunner):
 
 def test_run_main(workflow: BIDSificationRunner, mocker: pytest_mock.MockerFixture):
     mocked_write_status_file = mocker.patch.object(workflow, "_write_status_file")
+    mocked_run_single = mocker.patch.object(workflow, "run_single")
     mocker.patch.object(
         workflow, "get_participants_sessions_to_run", return_value=[("01", "1")]
     )
     workflow.run_main()
+
+    mocked_run_single.assert_called_once_with("01", "1")
+    assert workflow.return_code == ReturnCode.SUCCESS
     mocked_write_status_file.assert_called_once()
 
 

@@ -11,7 +11,7 @@ from nipoppy.config.pipeline import (
     PipelineInfo,
 )
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
-from nipoppy.exceptions import FileOperationError
+from nipoppy.exceptions import FileOperationError, ReturnCode
 from nipoppy.tabular.processing_status import ProcessingStatusTable
 from nipoppy.utils.bids import (
     participant_id_to_bids_participant_id,
@@ -279,6 +279,23 @@ def test_run_single(
         bind_paths=[extractor.dpath_pipeline_idp, extractor.dpath_pipeline_output],
     )
     assert mocked_launch_boutiques_container.call_count == 1
+
+
+def test_run_main(extractor: ExtractionRunner, mocker: pytest_mock.MockerFixture):
+    mocked_run_single = mocker.patch.object(extractor, "run_single")
+    mocker.patch.object(
+        extractor,
+        "get_participants_sessions_to_run",
+        return_value=[("S01", "BL"), ("S02", "M12")],
+    )
+
+    extractor.run_main()
+
+    assert mocked_run_single.call_args_list == [
+        mocker.call("S01", "BL"),
+        mocker.call("S02", "M12"),
+    ]
+    assert extractor.return_code == ReturnCode.SUCCESS
 
 
 def test_check_pipeline_version(extractor: ExtractionRunner):
