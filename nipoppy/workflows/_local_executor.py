@@ -1,6 +1,6 @@
 """Local executor with multiprocessing support."""
 
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Generic, TypeVar
 
@@ -107,11 +107,11 @@ class LocalExecutor(Executor, Generic[ResultT]):
                 hint=None,
             )
 
-    def execute(self, items: Collection[WorkItem]) -> LocalExecutorResult[ResultT]:
+    def execute(self, items: Sequence[WorkItem]) -> LocalExecutorResult[ResultT]:
         """Run pipeline locally and collect results."""
-        if not isinstance(items, Collection):
+        if not isinstance(items, Sequence):
             raise InvalidArgumentError(
-                f"{items=} ({type(items)}) is not an instance of collections.abc.Collection."  # noqa: E501
+                f"{items=} ({type(items)}) is not an instance of collections.abc.Sequence."  # noqa: E501
             )
 
         results = []
@@ -133,7 +133,7 @@ class LocalExecutor(Executor, Generic[ResultT]):
             n_total,
             is_study_level=(
                 len(items) == 1
-                and WorkItem(participant_id=None, session_id=None) in items
+                and items[0] == WorkItem(participant_id=None, session_id=None)
             ),
         )
 
@@ -161,7 +161,7 @@ class LocalExecutor(Executor, Generic[ResultT]):
         return False, None
 
     def _get_statuses_and_results(
-        self, work_items: Collection[WorkItem]
+        self, work_items: Sequence[WorkItem]
     ) -> list[tuple[bool, ResultT | None]]:
         work_items = list(work_items)
         n_total = len(work_items)

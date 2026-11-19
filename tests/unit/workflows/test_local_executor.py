@@ -160,20 +160,16 @@ class TestCheckArgs:
 
 
 class TestExecute:
-    @staticmethod
-    def generator(items):
-        """Convert items to a generator."""
-        for item in items:
-            yield item
-
-    @pytest.mark.parametrize("items_type", [iter, generator])
+    @pytest.mark.parametrize(
+        "items_type", [iter, lambda items: (item for item in items), set]
+    )
     def test_invalid_items_type(self, items_type, partial_executor):
-        """Test that an error is raised when items is not a Collection."""
+        """Test that an error is raised when items is not a Sequence."""
         executor: LocalExecutor = partial_executor()
         items = items_type([WorkItem("01", "1"), WorkItem("01", "2")])
         with pytest.raises(
             InvalidArgumentError,
-            match="is not an instance of collections.abc.Collection",
+            match="is not an instance of collections.abc.Sequence",
         ):
             executor.execute(items)
 
@@ -198,7 +194,7 @@ class TestExecute:
             ([WorkItem(None, None)], 1, True),
         ],
     )
-    @pytest.mark.parametrize("items_type", [list, tuple, set])
+    @pytest.mark.parametrize("items_type", [list, tuple])
     def test_execute(
         self,
         items,

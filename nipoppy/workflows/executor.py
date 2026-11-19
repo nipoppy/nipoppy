@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from collections.abc import Iterable
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from nipoppy.exceptions import ReturnCode
@@ -21,6 +21,6 @@ class Executor(ABC):
     """Abstract base class for executors."""
 
     @abstractmethod
-    def execute(self, items: Iterable[WorkItem]) -> ExecutorResult:
+    def execute(self, items: Sequence[WorkItem]) -> ExecutorResult:
         """Execute a list of work items."""
         raise NotImplementedError()
