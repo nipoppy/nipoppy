@@ -10,6 +10,7 @@ import pytest_mock
 
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
+from nipoppy.exceptions import ReturnCode
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.tabular.processing_status import ProcessingStatusTable
@@ -42,6 +43,7 @@ def tracker(tmp_path: Path):
     manifest: Manifest = prepare_dataset(
         participants_and_sessions_manifest=participants_and_sessions,
         participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=tracker.study.layout.dpath_bids,
     )
     manifest.save_with_backup(tracker.study.layout.fpath_manifest)
 
@@ -354,7 +356,18 @@ def test_update_status_file(
 def test_run_main(tracker: PipelineTracker, mocker: pytest_mock.MockFixture):
     mocked_update_status_file = mocker.patch.object(tracker, "_update_status_file")
     tracker.run_main()
+
+    assert tracker.return_code == ReturnCode.SUCCESS
+
     mocked_update_status_file.assert_called_once()
+    records = mocked_update_status_file.call_args.args[0]
+    assert sorted(
+        (
+            record[ProcessingStatusTable.col_participant_id],
+            record[ProcessingStatusTable.col_session_id],
+        )
+        for record in records
+    ) == [("01", "1"), ("01", "2"), ("02", "1"), ("02", "2")]
 
 
 def test_run_no_create_work_directory(tracker: PipelineTracker):

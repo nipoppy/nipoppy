@@ -31,6 +31,7 @@ from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
     InvalidArgumentError,
+    ReturnCode,
     WorkflowError,
 )
 from nipoppy.logger import get_logger
@@ -56,7 +57,9 @@ class PipelineWorkflow(BasePipelineWorkflow):
     """Dummy pipeline workflow for testing."""
 
     def __init__(self, *args, **kwargs):
-        executor = LocalExecutor(self.run_single, lambda item: "Error")
+        executor = LocalExecutor(
+            lambda item: self.run_single(*item), lambda item: "Error"
+        )
         super().__init__(*args, executor=executor, name="test", **kwargs)
 
     def get_participants_sessions_to_run(
@@ -923,6 +926,19 @@ def test_run_main_analysis_level(
     manifest.save_with_backup(workflow.study.layout.fpath_manifest)
     workflow.run_main()
     assert mocked.call_count == 1
+
+
+def test_run_main_local_execution(workflow: PipelineWorkflow):
+    participants_and_sessions = {"01": ["1", "2"], "02": ["1"]}
+    workflow.study.manifest = prepare_dataset(
+        participants_and_sessions_manifest=participants_and_sessions,
+        participants_and_sessions_bidsified=participants_and_sessions,
+        dpath_bidsified=workflow.study.layout.dpath_bids,
+    )
+
+    workflow.run_main()
+
+    assert workflow.return_code == ReturnCode.SUCCESS
 
 
 def test_run_main_returns_execution_output(

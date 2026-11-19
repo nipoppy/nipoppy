@@ -13,6 +13,7 @@ from nipoppy.env import BIDS_PATH_INJECTION_PREFIX
 from nipoppy.exceptions import (
     ConfigError,
     FileOperationError,
+    ReturnCode,
     WorkflowError,
 )
 from nipoppy.tabular.curation_status import CurationStatusTable
@@ -542,7 +543,9 @@ def test_get_participants_sessions_to_run(
     ] == expected
 
 
-def test_run_multiple(runner: ProcessingRunner):
+def test_run_multiple(runner: ProcessingRunner, mocker: pytest_mock.MockFixture):
+    # don't actually launch the (dummy) container
+    mocker.patch.object(runner, "launch_boutiques_run", return_value=(None, None))
     participant_id = None
     session_id = None
     runner.participant_id = participant_id
@@ -550,6 +553,8 @@ def test_run_multiple(runner: ProcessingRunner):
 
     runner.run_setup()
     runner.run_main()
+
+    assert runner.return_code == ReturnCode.SUCCESS
 
     bids_layout = BIDSLayout(database_path=runner.dpath_pipeline_bids_db)
     assert not len(bids_layout.get(extension=".nii.gz")) == 0
