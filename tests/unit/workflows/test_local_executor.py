@@ -160,6 +160,23 @@ class TestCheckArgs:
 
 
 class TestExecute:
+    @staticmethod
+    def generator(items):
+        """Convert items to a generator."""
+        for item in items:
+            yield item
+
+    @pytest.mark.parametrize("items_type", [iter, generator])
+    def test_invalid_items_type(self, items_type, partial_executor):
+        """Test that an error is raised when items is not a Collection."""
+        executor: LocalExecutor = partial_executor()
+        items = items_type([WorkItem("01", "1"), WorkItem("01", "2")])
+        with pytest.raises(
+            InvalidArgumentError,
+            match="is not an instance of collections.abc.Collection",
+        ):
+            executor.execute(items)
+
     @pytest.mark.parametrize(
         ["items", "expected_n_success", "is_study_level"],
         [
@@ -181,9 +198,11 @@ class TestExecute:
             ([WorkItem(None, None)], 1, True),
         ],
     )
+    @pytest.mark.parametrize("items_type", [list, tuple, set])
     def test_execute(
         self,
         items,
+        items_type,
         expected_n_success,
         is_study_level,
         partial_executor,
@@ -191,6 +210,8 @@ class TestExecute:
     ):
         """Test result parsing."""
         executor: LocalExecutor = partial_executor()
+
+        items = items_type(items)  # convert to the specified type
 
         mocked_log_summary_message = mocker.spy(
             nipoppy.workflows._local_executor, "_log_summary_message"

@@ -1,6 +1,6 @@
 """Local executor with multiprocessing support."""
 
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection
 from typing import Any
 
 import rich.progress
@@ -93,9 +93,14 @@ class LocalExecutor(Executor):
             )
 
     def execute(
-        self, items: Iterable[WorkItem]
+        self, items: Collection[WorkItem]
     ) -> tuple[list[WorkItem], list[WorkItem]]:
         """Run pipeline locally and collect results."""
+        if not isinstance(items, Collection):
+            raise InvalidArgumentError(
+                f"{items=} ({type(items)}) is not an instance of collections.abc.Collection."  # noqa: E501
+            )
+
         self.results = []
         successful_items = []
         failed_items = []
@@ -113,7 +118,10 @@ class LocalExecutor(Executor):
         _log_summary_message(
             n_success,
             n_total,
-            is_study_level=(items == [WorkItem(participant_id=None, session_id=None)]),
+            is_study_level=(
+                len(items) == 1
+                and WorkItem(participant_id=None, session_id=None) in items
+            ),
         )
 
         return _get_return_code(n_success, n_total), successful_items, failed_items
@@ -135,7 +143,7 @@ class LocalExecutor(Executor):
         return False, None
 
     def _get_statuses_and_results(
-        self, work_items: Iterable[WorkItem]
+        self, work_items: Collection[WorkItem]
     ) -> list[tuple[bool, Any]]:
         work_items = list(work_items)
         n_total = len(work_items)
