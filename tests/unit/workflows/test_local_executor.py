@@ -156,19 +156,6 @@ class TestCheckArgs:
 
 
 class TestExecute:
-    @pytest.mark.parametrize(
-        "items_type", [iter, lambda items: (item for item in items), set]
-    )
-    def test_invalid_items_type(self, items_type, partial_executor):
-        """Test that an error is raised when items is not a Sequence."""
-        executor: LocalExecutor = partial_executor()
-        items = items_type([WorkItem("01", "1"), WorkItem("01", "2")])
-        with pytest.raises(
-            InvalidArgumentError,
-            match="is not an instance of collections.abc.Sequence",
-        ):
-            executor.execute(items)
-
     def test_execute_checks_args(
         self, partial_executor, mocker: pytest_mock.MockFixture
     ):

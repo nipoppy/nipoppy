@@ -105,14 +105,9 @@ class LocalExecutor(Executor, Generic[ResultT]):
         self.show_progress = show_progress
         self.progress_bar_description = progress_bar_description
 
-    def execute(self, items: Sequence[WorkItem]) -> LocalExecutorResult[ResultT]:
+    def _execute(self, items: Sequence[WorkItem]) -> LocalExecutorResult[ResultT]:
         """Run work function locally and collect results."""
         _check_args(self.n_jobs)
-
-        if not isinstance(items, Sequence):
-            raise InvalidArgumentError(
-                f"{items=} ({type(items)}) is not an instance of collections.abc.Sequence."  # noqa: E501
-            )
 
         results: dict[WorkItem, ResultT] = {}
         successful_items = []
