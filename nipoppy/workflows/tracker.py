@@ -37,7 +37,7 @@ class PipelineTracker(BasePipelineWorkflow):
             name="track_processing",
             pipeline_name=pipeline_name,
             executor=LocalExecutor(
-                work_fn=self._track,
+                work_fn=lambda item: self._track(item.participant_id, item.session_id),
                 error_message_builder=lambda item: (
                     f"Error tracking {self.pipeline_name} {self.pipeline_version}"
                     f" for participant {item.participant_id}, session {item.session_id}"

@@ -32,8 +32,8 @@ def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: 
 @pytest.fixture(scope="function")
 def partial_executor() -> Callable[..., LocalExecutor]:
 
-    def work_fn(participant_id: str, session_id: str):
-        if participant_id == "FAIL":
+    def work_fn(item: WorkItem):
+        if item.participant_id == "FAIL":
             raise RuntimeError("Simulated failure")
         else:
             return "SUCCESS"
@@ -265,7 +265,12 @@ class TestGetStatusesAndResults:
         executor: LocalExecutor = partial_executor(
             n_jobs=1, show_progress=show_progress
         )
-        participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
+        participants_sessions = [
+            WorkItem("01", "1"),
+            WorkItem("01", "2"),
+            WorkItem("01", "3"),
+            WorkItem("02", "1"),
+        ]
 
         # pretend that joblib is not installed
         _mock_joblib_import_error(mocker, "No module named 'joblib'")
@@ -304,7 +309,12 @@ class TestGetStatusesAndResults:
         executor: LocalExecutor = partial_executor(
             n_jobs=10, show_progress=show_progress
         )
-        participants_sessions = [("01", "1"), ("01", "2"), ("01", "3"), ("02", "1")]
+        participants_sessions = [
+            WorkItem("01", "1"),
+            WorkItem("01", "2"),
+            WorkItem("01", "3"),
+            WorkItem("02", "1"),
+        ]
 
         mocked_delayed = mocker.spy(nipoppy.workflows._local_executor, "delayed")
 
@@ -315,7 +325,7 @@ class TestGetStatusesAndResults:
     def test_with_progress_bar(self, partial_executor, mocker: pytest_mock.MockFixture):
         """Test that progress bar is shown."""
         executor = partial_executor(show_progress=True)
-        participants_sessions = [("001", "1")]
+        participants_sessions = [WorkItem("001", "1")]
 
         mocked_track = mocker.patch(
             "nipoppy.workflows._local_executor.rich.progress.track"
@@ -325,7 +335,8 @@ class TestGetStatusesAndResults:
         mocked_track.assert_called_once()
 
     @pytest.mark.parametrize(
-        "show_progress,participants_sessions", [(False, [("001", "1")]), (True, [])]
+        "show_progress,participants_sessions",
+        [(False, [WorkItem("001", "1")]), (True, [])],
     )
     def test_no_progress_bar(
         self,

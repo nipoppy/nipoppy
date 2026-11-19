@@ -48,7 +48,9 @@ class Runner(BasePipelineWorkflow, ABC):
         super().__init__(
             *args,
             executor=LocalExecutor(
-                work_fn=self.run_single,
+                work_fn=lambda item: self.run_single(
+                    item.participant_id, item.session_id
+                ),
                 error_message_builder=lambda item: (
                     f"Error running {self.pipeline_name} {self.pipeline_version}"
                     f" on participant {item.participant_id}, session {item.session_id}"

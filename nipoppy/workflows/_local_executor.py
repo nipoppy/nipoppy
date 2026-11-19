@@ -153,7 +153,7 @@ class LocalExecutor(Executor, Generic[ResultT]):
         """
         try:
             # success
-            return True, self.work_fn(*item)
+            return True, self.work_fn(item)
         except Exception as exception:
             logger.error(f"{self.error_message_builder(item)}: {exception}")
 
