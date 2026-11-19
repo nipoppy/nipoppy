@@ -34,7 +34,7 @@ def _empty_status_df() -> pd.DataFrame:
 def _get_manifest_datatypes(imaging_manifest: pd.DataFrame) -> pd.DataFrame:
     """Get the datatypes of each imaging participant-session pair in the manifest.
 
-    (participant_id, session_id) is assumed to be unique (see #1234).
+    (participant_id, session_id) is assumed to be unique.
     """
     columns = [*INDEX_COLS, Manifest.col_datatype]
     if imaging_manifest.empty:
@@ -248,7 +248,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
     def _build_status_df(self) -> pd.DataFrame:
         """Build one long-form table from manifest and completed status records."""
-        imaging_manifest = pd.DataFrame(self.study.manifest.get_imaging_subset()).copy()
+        imaging_manifest = self.study.manifest.get_imaging_subset().copy()
         manifest_datatypes = _get_manifest_datatypes(imaging_manifest)
         manifest_long = manifest_datatypes.copy()
         manifest_long[COL_CHECKPOINT] = CHECKPOINT_MANIFEST
@@ -278,12 +278,13 @@ class StatusWorkflow(BaseDatasetWorkflow):
         imaging_participant_ids = status_df[Manifest.col_participant_id].unique()
         logger.info(
             "Dataset summary (based on the manifest file):"
-            f"\tNumber of participants (imaging and non-imaging): "
+            f"\n- Number of participants (imaging and non-imaging): "
             f"{len(participant_ids)}"
-            f"\n\tVisits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
-            f"\n\tNumber of participants with imaging data: "
+            f"\n- Visits (imaging and non-imaging) (n={len(visit_ids)}): {visit_ids}"
+            f"\n- Number of participants with imaging data: "
             f"{len(imaging_participant_ids)}"
-            f"\n\tImaging sessions (n={len(session_ids)}): {session_ids}"
+            f"\n- Imaging sessions (n={len(session_ids)}): {session_ids}"
+            "\n"
         )
 
     def _print_table(
