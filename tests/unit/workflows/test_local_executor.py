@@ -123,16 +123,25 @@ class TestInit:
 
 
 class TestCheckArgs:
-    def test_n_jobs_less_than_1(
-        self, partial_executor, mocker: pytest_mock.MockFixture
+    @pytest.mark.parametrize("n_jobs", [-2, -1, 1, 2])
+    def test_n_jobs_valid(
+        self, n_jobs, partial_executor, mocker: pytest_mock.MockFixture
     ):
-        """Test that an error is raised when n_jobs < 1."""
+        """Test that no error is raised when n_jobs is valid."""
         mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
 
-        with pytest.raises(
-            InvalidArgumentError, match="must be a positive integer or None"
-        ):
-            partial_executor(n_jobs=0)
+        # should not raise an error
+        partial_executor(n_jobs=n_jobs)
+
+    @pytest.mark.parametrize("n_jobs", [0, None])
+    def test_n_jobs_invalid(
+        self, n_jobs, partial_executor, mocker: pytest_mock.MockFixture
+    ):
+        """Test that an error is raised when n_jobs is invalid."""
+        mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
+
+        with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
+            partial_executor(n_jobs=n_jobs)
 
     @pytest.mark.no_xdist
     def test_init_n_jobs_but_no_joblib(

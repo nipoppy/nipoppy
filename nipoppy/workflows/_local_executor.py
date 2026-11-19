@@ -80,9 +80,9 @@ class LocalExecutor(Executor):
 
     def _check_args(self):
 
-        if self.n_jobs < 1:
+        if not (isinstance(self.n_jobs, int) and self.n_jobs != 0):
             raise InvalidArgumentError(
-                f"{self.n_jobs=} must be a positive integer or None."
+                f"{self.n_jobs=} ({type(self.n_jobs)}) must be a non-zero integer."
             )
 
         if not JOBLIB_INSTALLED and self.n_jobs != 1:
