@@ -56,6 +56,8 @@ class PipelineTracker(BasePipelineWorkflow):
             _skip_logfile=True,
         )
 
+        self.n_jobs = n_jobs  # for __str__
+
     def run_setup(self):
         """Load/initialize the processing status file."""
         rv = super().run_setup()
