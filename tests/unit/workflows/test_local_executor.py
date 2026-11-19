@@ -8,15 +8,15 @@ from typing import Callable
 import pytest
 import pytest_mock
 
-import nipoppy.workflows._local_executor  # for mocking
+import nipoppy.workflows.local_executor  # for mocking
 from nipoppy.exceptions import ExecutionError, InvalidArgumentError, ReturnCode
-from nipoppy.workflows._local_executor import (
+from nipoppy.workflows.executor import WorkItem
+from nipoppy.workflows.local_executor import (
     LocalExecutor,
     _check_args,
     _get_return_code,
     _log_summary_message,
 )
-from nipoppy.workflows.executor import WorkItem
 
 
 def _mock_joblib_import_error(mocker: pytest_mock.MockerFixture, error_message: str):
@@ -53,10 +53,10 @@ def reimport_joblib(mocker: pytest_mock.MockerFixture):
 
     # fmt: off
     mocker.stopall()
-    import nipoppy.workflows._local_executor
-    importlib.reload(nipoppy.workflows._local_executor)
-    from nipoppy.workflows._local_executor import LocalExecutor  # noqa F401
-    from nipoppy.workflows._local_executor import (
+    import nipoppy.workflows.local_executor
+    importlib.reload(nipoppy.workflows.local_executor)
+    from nipoppy.workflows.local_executor import LocalExecutor  # noqa F401
+    from nipoppy.workflows.local_executor import (
         JOBLIB_INSTALLED,
     )
     assert JOBLIB_INSTALLED
@@ -109,10 +109,10 @@ class TestJoblibImport:
         _mock_joblib_import_error(mocker, error_message)
 
         # reload the module
-        import nipoppy.workflows._local_executor
+        import nipoppy.workflows.local_executor
 
         with pytest.raises(ImportError, match=error_message):
-            importlib.reload(nipoppy.workflows._local_executor)
+            importlib.reload(nipoppy.workflows.local_executor)
 
 
 class TestInit:
@@ -130,7 +130,7 @@ class TestCheckArgs:
     @pytest.mark.parametrize("n_jobs", [-2, -1, 1, 2])
     def test_n_jobs_valid(self, n_jobs, mocker: pytest_mock.MockFixture):
         """Test that no error is raised when n_jobs is valid."""
-        mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", True)
 
         # should not raise an error
         _check_args(n_jobs)
@@ -138,7 +138,7 @@ class TestCheckArgs:
     @pytest.mark.parametrize("n_jobs", [0, None])
     def test_n_jobs_invalid(self, n_jobs, mocker: pytest_mock.MockFixture):
         """Test that an error is raised when n_jobs is invalid."""
-        mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", True)
 
         with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
             _check_args(n_jobs)
@@ -150,7 +150,7 @@ class TestCheckArgs:
         reimport_joblib,
     ):
         """Test that an error is raised when joblib is not installed and n_jobs > 1."""
-        mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", False)
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", False)
         with pytest.raises(
             ExecutionError,
             match="An additional dependency is required to enable local parallelization",
@@ -177,7 +177,7 @@ class TestExecute:
     ):
         """Test that arguments are validated when execute is called."""
         executor: LocalExecutor = partial_executor(n_jobs=1)
-        mocked_check_args = mocker.spy(nipoppy.workflows._local_executor, "_check_args")
+        mocked_check_args = mocker.spy(nipoppy.workflows.local_executor, "_check_args")
 
         executor.execute([WorkItem("01", "1")])
 
@@ -234,10 +234,10 @@ class TestExecute:
         items = items_type(items)  # convert to the specified type
 
         mocked_log_summary_message = mocker.spy(
-            nipoppy.workflows._local_executor, "_log_summary_message"
+            nipoppy.workflows.local_executor, "_log_summary_message"
         )
         mocked_get_return_code = mocker.spy(
-            nipoppy.workflows._local_executor, "_get_return_code"
+            nipoppy.workflows.local_executor, "_get_return_code"
         )
 
         executor_output = executor.execute(items)
@@ -301,10 +301,10 @@ class TestGetStatusesAndResults:
 
         # reload the module
         # fmt: off
-        import nipoppy.workflows._local_executor
-        importlib.reload(nipoppy.workflows._local_executor)
+        import nipoppy.workflows.local_executor
+        importlib.reload(nipoppy.workflows.local_executor)
         # check that mocking/reloading worked
-        from nipoppy.workflows._local_executor import (  # noqa: F401
+        from nipoppy.workflows.local_executor import (  # noqa: F401
             JOBLIB_INSTALLED,
         )
         assert not JOBLIB_INSTALLED
@@ -312,7 +312,7 @@ class TestGetStatusesAndResults:
 
         # also mock joblib.delayed which is not supposed to be called
         # when joblib is not installed
-        mocked_delayed = mocker.spy(nipoppy.workflows._local_executor, "delayed")
+        mocked_delayed = mocker.spy(nipoppy.workflows.local_executor, "delayed")
 
         results = executor._get_statuses_and_results(participants_sessions)
         mocked_delayed.assert_not_called()
@@ -325,8 +325,8 @@ class TestGetStatusesAndResults:
         """Test that joblib is not used."""
         # fmt: off
         # make sure joblib is installed
-        import nipoppy.workflows._local_executor
-        from nipoppy.workflows._local_executor import JOBLIB_INSTALLED
+        import nipoppy.workflows.local_executor
+        from nipoppy.workflows.local_executor import JOBLIB_INSTALLED
         assert JOBLIB_INSTALLED, "joblib must be installed"
         # fmt: on
 
@@ -340,7 +340,7 @@ class TestGetStatusesAndResults:
             WorkItem("02", "1"),
         ]
 
-        mocked_delayed = mocker.spy(nipoppy.workflows._local_executor, "delayed")
+        mocked_delayed = mocker.spy(nipoppy.workflows.local_executor, "delayed")
 
         results = executor._get_statuses_and_results(participants_sessions)
         mocked_delayed.assert_called_once()
@@ -352,7 +352,7 @@ class TestGetStatusesAndResults:
         participants_sessions = [WorkItem("001", "1")]
 
         mocked_track = mocker.patch(
-            "nipoppy.workflows._local_executor.rich.progress.track"
+            "nipoppy.workflows.local_executor.rich.progress.track"
         )
 
         executor._get_statuses_and_results(participants_sessions)
@@ -375,7 +375,7 @@ class TestGetStatusesAndResults:
         )
 
         mocked_track = mocker.patch(
-            "nipoppy.workflows._local_executor.rich.progress.track"
+            "nipoppy.workflows.local_executor.rich.progress.track"
         )
 
         executor._get_statuses_and_results(participants_sessions)

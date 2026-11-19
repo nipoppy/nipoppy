@@ -89,6 +89,8 @@ def _check_args(n_jobs: int) -> None:
 
 
 class LocalExecutor(Executor, Generic[ResultT]):
+    """Executor for iterating a function over a sequence of input arguments."""
+
     def __init__(
         self,
         work_fn: Callable[[WorkItem], ResultT],

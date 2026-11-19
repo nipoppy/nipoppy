@@ -18,9 +18,9 @@ from nipoppy.env import ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
-from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.base import _run_command
 from nipoppy.workflows.executor import ExecutorResult
+from nipoppy.workflows.local_executor import LocalExecutor
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import (
     BoshRunnerCallable,

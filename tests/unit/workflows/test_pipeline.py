@@ -34,8 +34,8 @@ from nipoppy.exceptions import (
     WorkflowError,
 )
 from nipoppy.logger import get_logger
-from nipoppy.workflows._local_executor import LocalExecutor, LocalExecutorResult
 from nipoppy.workflows.executor import WorkItem
+from nipoppy.workflows.local_executor import LocalExecutor, LocalExecutorResult
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
     get_pipeline_version,
