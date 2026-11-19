@@ -74,6 +74,20 @@ def _log_summary_message(n_success, n_total, is_study_level=False):
             logger.warning(log_msg)
 
 
+def _check_args(n_jobs: int) -> None:
+    if not (isinstance(n_jobs, int) and n_jobs != 0):
+        raise InvalidArgumentError(
+            f"{n_jobs=} ({type(n_jobs)}) must be a non-zero integer."
+        )
+
+    if not JOBLIB_INSTALLED and n_jobs != 1:
+        raise ExecutionError(
+            "An additional dependency is required to enable local parallelization "
+            "with --n-jobs. Install it with: pip install nipoppy[parallel]",
+            hint=None,
+        )
+
+
 class LocalExecutor(Executor, Generic[ResultT]):
     def __init__(
         self,
@@ -91,24 +105,10 @@ class LocalExecutor(Executor, Generic[ResultT]):
         self.show_progress = show_progress
         self.progress_bar_description = progress_bar_description
 
-        self._check_args()
-
-    def _check_args(self):
-
-        if not (isinstance(self.n_jobs, int) and self.n_jobs != 0):
-            raise InvalidArgumentError(
-                f"{self.n_jobs=} ({type(self.n_jobs)}) must be a non-zero integer."
-            )
-
-        if not JOBLIB_INSTALLED and self.n_jobs != 1:
-            raise ExecutionError(
-                "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]",
-                hint=None,
-            )
-
     def execute(self, items: Sequence[WorkItem]) -> LocalExecutorResult[ResultT]:
-        """Run pipeline locally and collect results."""
+        """Run work function locally and collect results."""
+        _check_args(self.n_jobs)
+
         if not isinstance(items, Sequence):
             raise InvalidArgumentError(
                 f"{items=} ({type(items)}) is not an instance of collections.abc.Sequence."  # noqa: E501

@@ -12,6 +12,7 @@ import nipoppy.workflows._local_executor  # for mocking
 from nipoppy.exceptions import ExecutionError, InvalidArgumentError, ReturnCode
 from nipoppy.workflows._local_executor import (
     LocalExecutor,
+    _check_args,
     _get_return_code,
     _log_summary_message,
 )
@@ -115,38 +116,36 @@ class TestJoblibImport:
 
 
 class TestInit:
-    def test_init_success(self, partial_executor, mocker: pytest_mock.MockFixture):
+    def test_init_success(self, partial_executor):
         """Test that LocalExecutor can be initialized successfully."""
-        mocked = mocker.spy(LocalExecutor, "_check_args")
         partial_executor(n_jobs=1, show_progress=False)
-        mocked.assert_called_once()
+
+    def test_init_does_not_check_args(self, partial_executor):
+        """Test that arguments are not validated at initialization."""
+        # should not raise an error
+        partial_executor(n_jobs=0)
 
 
 class TestCheckArgs:
     @pytest.mark.parametrize("n_jobs", [-2, -1, 1, 2])
-    def test_n_jobs_valid(
-        self, n_jobs, partial_executor, mocker: pytest_mock.MockFixture
-    ):
+    def test_n_jobs_valid(self, n_jobs, mocker: pytest_mock.MockFixture):
         """Test that no error is raised when n_jobs is valid."""
         mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
 
         # should not raise an error
-        partial_executor(n_jobs=n_jobs)
+        _check_args(n_jobs)
 
     @pytest.mark.parametrize("n_jobs", [0, None])
-    def test_n_jobs_invalid(
-        self, n_jobs, partial_executor, mocker: pytest_mock.MockFixture
-    ):
+    def test_n_jobs_invalid(self, n_jobs, mocker: pytest_mock.MockFixture):
         """Test that an error is raised when n_jobs is invalid."""
         mocker.patch("nipoppy.workflows._local_executor.JOBLIB_INSTALLED", True)
 
         with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
-            partial_executor(n_jobs=n_jobs)
+            _check_args(n_jobs)
 
     @pytest.mark.no_xdist
-    def test_init_n_jobs_but_no_joblib(
+    def test_n_jobs_but_no_joblib(
         self,
-        partial_executor,
         mocker: pytest_mock.MockFixture,
         reimport_joblib,
     ):
@@ -156,7 +155,7 @@ class TestCheckArgs:
             ExecutionError,
             match="An additional dependency is required to enable local parallelization",
         ):
-            partial_executor(n_jobs=2)
+            _check_args(2)
 
 
 class TestExecute:
@@ -172,6 +171,31 @@ class TestExecute:
             match="is not an instance of collections.abc.Sequence",
         ):
             executor.execute(items)
+
+    def test_execute_checks_args(
+        self, partial_executor, mocker: pytest_mock.MockFixture
+    ):
+        """Test that arguments are validated when execute is called."""
+        executor: LocalExecutor = partial_executor(n_jobs=1)
+        mocked_check_args = mocker.spy(nipoppy.workflows._local_executor, "_check_args")
+
+        executor.execute([WorkItem("01", "1")])
+
+        mocked_check_args.assert_called_once_with(executor.n_jobs)
+
+    def test_execute_invalid_args(
+        self, partial_executor, mocker: pytest_mock.MockFixture
+    ):
+        """Test that execute raises before running any work if args are invalid."""
+        executor: LocalExecutor = partial_executor(n_jobs=0)
+        mocked_get_statuses_and_results = mocker.patch.object(
+            executor, "_get_statuses_and_results"
+        )
+
+        with pytest.raises(InvalidArgumentError, match="must be a non-zero integer"):
+            executor.execute([WorkItem("01", "1")])
+
+        mocked_get_statuses_and_results.assert_not_called()
 
     @pytest.mark.parametrize(
         ["items", "expected_n_success", "is_study_level"],
