@@ -128,8 +128,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         PipelineTypeEnum.EXTRACTION: ExtractionPipelineConfig,
     }
 
-    progress_bar_description = "Working..."  # default description used by rich
-
     def __init__(
         self,
         dpath_root: StrOrPathLike,
@@ -711,7 +709,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self, participant_id: str | None, session_id: str | None
     ):
         """
-        Return participant-session pairs to loop over with run_single().
+        Return participant-session pairs that the workflow should run on.
 
         This is an abstract method that should be defined explicitly in subclasses.
         """

@@ -55,7 +55,6 @@ class PipelineTracker(BasePipelineWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        self.n_jobs = n_jobs
 
     def run_setup(self):
         """Load/initialize the processing status file."""
