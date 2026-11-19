@@ -60,7 +60,7 @@ from nipoppy.utils.utils import (
     process_template_str,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
-from nipoppy.workflows.executor import Executor, WorkItem
+from nipoppy.workflows.executor import Executor, ExecutorResult, WorkItem
 
 if TYPE_CHECKING:
     import bids
@@ -604,12 +604,15 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
         return list(participants_sessions)
 
-    def _handle_execution_strategy(self, participants_sessions):
+    def _handle_execution_strategy(
+        self, participants_sessions
+    ) -> ExecutorResult | None:
         """Handle the execution strategy based on the workflow configuration."""
         if self.write_subcohort is not None:
             self._write_subcohort_to_file(participants_sessions)
         else:
-            self._run_locally(participants_sessions)
+            return self._run_locally(participants_sessions)
+        return None
 
     def _check_filter_args_compatibility(self):
         """Warn if participant/session ID filters cannot be applied."""
@@ -635,7 +638,7 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 hint="Remove the incompatible flag(s)",
             )
 
-    def run_main(self):
+    def run_main(self) -> ExecutorResult | None:
         """Run the pipeline."""
         participants_sessions = self.get_participants_sessions_to_run(
             self.participant_id, self.session_id
@@ -648,9 +651,11 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
             participants_sessions=participants_sessions,
             analysis_level=self.pipeline_step_config.ANALYSIS_LEVEL,
         )
-        self._handle_execution_strategy(participants_sessions)
+        output = self._handle_execution_strategy(participants_sessions)
 
         self._log_summary_message()
+
+        return output
 
     def _filter_by_subcohort(self, participants_sessions: Iterable) -> list:
         """Filter participants/sessions by subcohort file."""
@@ -675,12 +680,13 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
                 self.write_subcohort, header=False, index=False, sep="\t"
             )
 
-    def _run_locally(self, participants_sessions: list) -> None:
+    def _run_locally(self, participants_sessions: list) -> ExecutorResult:
         """Run locally."""
-        return_code, _, _ = self.executor.execute(
+        executor_result = self.executor.execute(
             [WorkItem(p, s) for p, s in participants_sessions],
         )
-        self.return_code = return_code
+        self.return_code = executor_result.return_code
+        return executor_result
 
     def _log_summary_message(self):
         """Log a summary message."""

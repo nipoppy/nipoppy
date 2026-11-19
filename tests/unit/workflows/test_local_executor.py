@@ -220,20 +220,22 @@ class TestExecute:
             nipoppy.workflows._local_executor, "_get_return_code"
         )
 
-        return_code, successful_items, failed_items = executor.execute(items)
+        executor_output = executor.execute(items)
 
         mocked_log_summary_message.assert_called_once_with(
             expected_n_success, len(items), is_study_level=is_study_level
         )
 
         mocked_get_return_code.assert_called_once_with(expected_n_success, len(items))
-        assert return_code == mocked_get_return_code.spy_return
+        assert executor_output.return_code == mocked_get_return_code.spy_return
 
-        assert len(successful_items) == expected_n_success
-        assert len(failed_items) == len(items) - expected_n_success
-        assert (set(successful_items) | set(failed_items)) == set(items)
-        assert len(executor.results) == len(items)
-        assert all(result in ("SUCCESS", None) for result in executor.results)
+        assert len(executor_output.successful_items) == expected_n_success
+        assert len(executor_output.failed_items) == len(items) - expected_n_success
+        assert (
+            set(executor_output.successful_items) | set(executor_output.failed_items)
+        ) == set(items)
+        assert len(executor_output.results) == expected_n_success
+        assert all(result == "SUCCESS" for result in executor_output.results)
 
 
 class TestWorkFnWrapper:

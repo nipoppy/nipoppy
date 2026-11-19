@@ -20,6 +20,7 @@ from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, get_pipeline_tag, load_json
 from nipoppy.workflows._local_executor import LocalExecutor
 from nipoppy.workflows.base import _run_command
+from nipoppy.workflows.executor import ExecutorResult
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 from nipoppy.workflows.services.boutiques import (
     BoshRunnerCallable,
@@ -335,7 +336,9 @@ class Runner(BasePipelineWorkflow, ABC):
         return container_command, container_handler
 
     @override
-    def _handle_execution_strategy(self, participants_sessions):
+    def _handle_execution_strategy(
+        self, participants_sessions
+    ) -> ExecutorResult | None:
         """Handle the execution strategy based on the workflow configuration.
 
         Same as the parent, with HPC submission added as an option if configured.
@@ -343,4 +346,4 @@ class Runner(BasePipelineWorkflow, ABC):
         if self.hpc is not None:
             self._submit_hpc_job(participants_sessions)
         else:
-            super()._handle_execution_strategy(participants_sessions)
+            return super()._handle_execution_strategy(participants_sessions)

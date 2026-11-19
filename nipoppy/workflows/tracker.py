@@ -10,7 +10,7 @@ from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
 from nipoppy.tabular.processing_status import ProcessingStatusTable
-from nipoppy.workflows._local_executor import LocalExecutor
+from nipoppy.workflows._local_executor import LocalExecutor, LocalExecutorResult
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
 logger = get_logger()
@@ -190,6 +190,6 @@ class PipelineTracker(BasePipelineWorkflow):
 
     def run_main(self):
         """Run the tracker workflow."""
-        super().run_main()
-        if isinstance(self.executor, LocalExecutor):
-            self._update_status_file(self.executor.results)
+        output = super().run_main()
+        if isinstance(output, LocalExecutorResult):
+            self._update_status_file(output.results)

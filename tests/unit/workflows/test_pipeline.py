@@ -34,7 +34,7 @@ from nipoppy.exceptions import (
     WorkflowError,
 )
 from nipoppy.logger import get_logger
-from nipoppy.workflows._local_executor import LocalExecutor
+from nipoppy.workflows._local_executor import LocalExecutor, LocalExecutorResult
 from nipoppy.workflows.executor import WorkItem
 from nipoppy.workflows.pipeline import (
     BasePipelineWorkflow,
@@ -925,6 +925,15 @@ def test_run_main_analysis_level(
     assert mocked.call_count == 1
 
 
+def test_run_main_returns_execution_output(
+    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+):
+    mocker.patch.object(workflow, "get_participants_sessions_to_run", return_value=[])
+    mocked = mocker.patch.object(workflow, "_handle_execution_strategy")
+
+    assert workflow.run_main() is mocked.return_value
+
+
 @pytest.mark.parametrize("write_subcohort", ["list.tsv", "to_run.tsv"])
 @pytest.mark.parametrize("dry_run", [True, False])
 def test_run_main_write_subcohort(
@@ -1217,9 +1226,15 @@ def test_run_locally(
     expected_return_code, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):
     mocked_execute = mocker.patch.object(workflow.executor, "execute")
-    mocked_execute.return_value = (expected_return_code, [], [])
+    mocked_execute.return_value = LocalExecutorResult(
+        return_code=expected_return_code,
+        successful_items=[],
+        failed_items=[],
+        results=[],
+    )
 
-    workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])
+    output = workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])
+    assert output is mocked_execute.return_value
     mocked_execute.assert_called_once_with(
         [WorkItem("01", "1"), WorkItem("01", "2"), WorkItem("02", "1")]
     )

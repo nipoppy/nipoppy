@@ -1,14 +1,15 @@
 """Local executor with multiprocessing support."""
 
 from collections.abc import Callable, Collection
-from typing import Any
+from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 import rich.progress
 
 from nipoppy.console import _INDENT, CONSOLE_STDOUT
 from nipoppy.exceptions import ExecutionError, InvalidArgumentError, ReturnCode
 from nipoppy.logger import get_logger
-from nipoppy.workflows.executor import Executor, WorkItem
+from nipoppy.workflows.executor import Executor, ExecutorResult, WorkItem
 
 try:
     from joblib import Parallel, delayed
@@ -22,6 +23,21 @@ except ImportError as error:
         raise
 
 logger = get_logger()
+
+ResultT = TypeVar("ResultT")
+
+
+@dataclass(frozen=True)
+class LocalExecutorResult(ExecutorResult, Generic[ResultT]):
+    """
+    Output of a local execution.
+
+    The results attribute contains the results associated with each successful item.
+    """
+
+    successful_items: list[WorkItem]
+    failed_items: list[WorkItem]
+    results: list[ResultT]
 
 
 def _get_return_code(n_success: int, n_total: int) -> ReturnCode:
@@ -58,10 +74,10 @@ def _log_summary_message(n_success, n_total, is_study_level=False):
             logger.warning(log_msg)
 
 
-class LocalExecutor(Executor):
+class LocalExecutor(Executor, Generic[ResultT]):
     def __init__(
         self,
-        work_fn: Callable[[WorkItem], Any],
+        work_fn: Callable[[WorkItem], ResultT],
         error_message_builder: Callable[[WorkItem], str],
         n_jobs: int = 1,
         show_progress: bool = False,
@@ -74,7 +90,6 @@ class LocalExecutor(Executor):
         self.error_message_builder = error_message_builder
         self.show_progress = show_progress
         self.progress_bar_description = progress_bar_description
-        self.results: list[Any] | None = None
 
         self._check_args()
 
@@ -92,16 +107,14 @@ class LocalExecutor(Executor):
                 hint=None,
             )
 
-    def execute(
-        self, items: Collection[WorkItem]
-    ) -> tuple[list[WorkItem], list[WorkItem]]:
+    def execute(self, items: Collection[WorkItem]) -> LocalExecutorResult[ResultT]:
         """Run pipeline locally and collect results."""
         if not isinstance(items, Collection):
             raise InvalidArgumentError(
                 f"{items=} ({type(items)}) is not an instance of collections.abc.Collection."  # noqa: E501
             )
 
-        self.results = []
+        results = []
         successful_items = []
         failed_items = []
         n_success = 0
@@ -109,11 +122,11 @@ class LocalExecutor(Executor):
         for (status, result), item in zip(self._get_statuses_and_results(items), items):
             if status is True:
                 successful_items.append(item)
+                results.append(result)
                 n_success += 1
             else:
                 failed_items.append(item)
             n_total += 1
-            self.results.append(result)
 
         _log_summary_message(
             n_success,
@@ -124,9 +137,14 @@ class LocalExecutor(Executor):
             ),
         )
 
-        return _get_return_code(n_success, n_total), successful_items, failed_items
+        return LocalExecutorResult(
+            return_code=_get_return_code(n_success, n_total),
+            successful_items=successful_items,
+            failed_items=failed_items,
+            results=results,
+        )
 
-    def _work_fn_wrapper(self, item: WorkItem) -> bool:
+    def _work_fn_wrapper(self, item: WorkItem) -> tuple[bool, ResultT | None]:
         """
         Run a single participant/session and handle exceptions.
 
@@ -144,7 +162,7 @@ class LocalExecutor(Executor):
 
     def _get_statuses_and_results(
         self, work_items: Collection[WorkItem]
-    ) -> list[tuple[bool, Any]]:
+    ) -> list[tuple[bool, ResultT | None]]:
         work_items = list(work_items)
         n_total = len(work_items)
         if JOBLIB_INSTALLED:
