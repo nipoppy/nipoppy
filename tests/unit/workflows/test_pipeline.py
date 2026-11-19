@@ -1230,7 +1230,7 @@ def test_run_locally(
         return_code=expected_return_code,
         successful_items=[WorkItem("01", "1"), WorkItem("02", "1")],
         failed_items=[WorkItem("01", "2")],
-        results=[None, None],
+        results={WorkItem("01", "1"): None, WorkItem("02", "1"): None},
     )
 
     output = workflow._run_locally([("01", "1"), ("01", "2"), ("02", "1")])

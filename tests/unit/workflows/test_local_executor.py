@@ -254,8 +254,8 @@ class TestExecute:
         assert (
             set(executor_output.successful_items) | set(executor_output.failed_items)
         ) == set(items)
-        assert len(executor_output.results) == expected_n_success
-        assert all(result == "SUCCESS" for result in executor_output.results)
+        assert list(executor_output.results.keys()) == executor_output.successful_items
+        assert all(result == "SUCCESS" for result in executor_output.results.values())
 
 
 class TestWorkFnWrapper:

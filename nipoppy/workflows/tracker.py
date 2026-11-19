@@ -191,4 +191,4 @@ class PipelineTracker(BasePipelineWorkflow):
         """Run the tracker workflow."""
         output = super().run_main()
         if isinstance(output, LocalExecutorResult):
-            self._update_status_file(output.results)
+            self._update_status_file(list(output.results.values()))

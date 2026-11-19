@@ -32,10 +32,10 @@ class LocalExecutorResult(ExecutorResult, Generic[ResultT]):
     """
     Output of a local execution.
 
-    The results attribute contains the results associated with each successful item.
+    The results attribute maps each successful item to its result.
     """
 
-    results: list[ResultT]
+    results: dict[WorkItem, ResultT]
 
 
 def _get_return_code(n_success: int, n_total: int) -> ReturnCode:
@@ -114,7 +114,7 @@ class LocalExecutor(Executor, Generic[ResultT]):
                 f"{items=} ({type(items)}) is not an instance of collections.abc.Sequence."  # noqa: E501
             )
 
-        results = []
+        results: dict[WorkItem, ResultT] = {}
         successful_items = []
         failed_items = []
         n_success = 0
@@ -122,7 +122,7 @@ class LocalExecutor(Executor, Generic[ResultT]):
         for (status, result), item in zip(self._get_statuses_and_results(items), items):
             if status is True:
                 successful_items.append(item)
-                results.append(result)
+                results[item] = result
                 n_success += 1
             else:
                 failed_items.append(item)
