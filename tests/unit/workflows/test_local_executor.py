@@ -1,8 +1,9 @@
 """Tests for LocalExecutor."""
 
 import builtins
-import importlib
+import importlib.util
 from functools import partial
+from types import ModuleType
 from typing import Callable
 
 import pytest
@@ -46,23 +47,6 @@ def partial_executor() -> Callable[..., LocalExecutor]:
     )
 
 
-@pytest.fixture(scope="function")
-def reimport_joblib(mocker: pytest_mock.MockerFixture):
-    """Fixture for tests where joblib import was manipulated."""
-    yield
-
-    # fmt: off
-    mocker.stopall()
-    import nipoppy.workflows.local_executor
-    importlib.reload(nipoppy.workflows.local_executor)
-    from nipoppy.workflows.local_executor import LocalExecutor  # noqa F401
-    from nipoppy.workflows.local_executor import (
-        JOBLIB_INSTALLED,
-    )
-    assert JOBLIB_INSTALLED
-    # fmt: on
-
-
 class TestGetReturnCode:
     @pytest.mark.parametrize(
         ["n_success", "n_total", "expected_return_code"],
@@ -102,17 +86,34 @@ class TestLogSummaryMessage:
 
 
 class TestJoblibImport:
+    @staticmethod
+    def _exec_fresh_local_executor_module() -> ModuleType:
+        """Import a separate, throwaway copy of the local_executor module.
+
+        This re-runs the module's top-level code (e.g. the joblib import check) without
+        touching the real nipoppy.workflows.local_executor module.
+
+        We avoid importlib.reload() because it recreates the module's classes, which
+        causes flaky test failures.
+        """
+        spec = importlib.util.find_spec("nipoppy.workflows.local_executor")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_joblib_not_installed(self, mocker: pytest_mock.MockFixture):
+        """Test that JOBLIB_INSTALLED is False when joblib is not installed."""
+        _mock_joblib_import_error(mocker, "No module named 'joblib'")
+        module = self._exec_fresh_local_executor_module()
+        assert not module.JOBLIB_INSTALLED
+
     def test_import_error_propagates(self, mocker: pytest_mock.MockFixture):
         """Test that ImportError is propagated if joblib exists but import fails."""
-        # pretend that joblib is not installed
         error_message = "Unexpected exception during import"
         _mock_joblib_import_error(mocker, error_message)
 
-        # reload the module
-        import nipoppy.workflows.local_executor
-
         with pytest.raises(ImportError, match=error_message):
-            importlib.reload(nipoppy.workflows.local_executor)
+            self._exec_fresh_local_executor_module()
 
 
 class TestInit:
@@ -144,11 +145,7 @@ class TestCheckArgs:
             _check_args(n_jobs)
 
     @pytest.mark.no_xdist
-    def test_n_jobs_but_no_joblib(
-        self,
-        mocker: pytest_mock.MockFixture,
-        reimport_joblib,
-    ):
+    def test_n_jobs_but_no_joblib(self, mocker: pytest_mock.MockFixture):
         """Test that an error is raised when joblib is not installed and n_jobs > 1."""
         mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", False)
         with pytest.raises(
@@ -283,9 +280,8 @@ class TestGetStatusesAndResults:
         partial_executor,
         show_progress: bool,
         mocker: pytest_mock.MockFixture,
-        reimport_joblib,
     ):
-        """Test that joblib is not used when n_jobs=1."""
+        """Test that joblib is not used when joblib is not installed."""
         executor: LocalExecutor = partial_executor(
             n_jobs=1, show_progress=show_progress
         )
@@ -297,18 +293,7 @@ class TestGetStatusesAndResults:
         ]
 
         # pretend that joblib is not installed
-        _mock_joblib_import_error(mocker, "No module named 'joblib'")
-
-        # reload the module
-        # fmt: off
-        import nipoppy.workflows.local_executor
-        importlib.reload(nipoppy.workflows.local_executor)
-        # check that mocking/reloading worked
-        from nipoppy.workflows.local_executor import (  # noqa: F401
-            JOBLIB_INSTALLED,
-        )
-        assert not JOBLIB_INSTALLED
-        # fmt: on
+        mocker.patch("nipoppy.workflows.local_executor.JOBLIB_INSTALLED", False)
 
         # also mock joblib.delayed which is not supposed to be called
         # when joblib is not installed
