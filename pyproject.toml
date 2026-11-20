@@ -35,7 +35,7 @@ description = "Standardized organization and processing of neuroimaging-clinical
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
-requires-python = ">=3.10, <3.16"
+requires-python = ">=3.11, <3.16"
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -43,9 +43,7 @@ parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
-    # Simplify after dropping Python 3.10 support
-    "myst-parser>=5.1.0 ; python_version >= '3.11'",
-    "myst-parser ; python_version < '3.11'",
+    "myst-parser>=5.1.0",
     "sphinx",
     "sphinx-autoapi",
     "sphinx-click",
@@ -78,6 +76,12 @@ nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
+
+[tool.uv]
+# Require soupsieve>=4.0.0, which fixes GHSA-mmhr-3c5m-f64f, GHSA-6655-6qjp-jx7x
+# and GHSA-7g44-g9rc-x53w. soupsieve>=3 needs Python>=3.11.5, so Python 3.11.0-3.11.4
+# falls back to soupsieve 2.x, which remains affected (docs build only).
+constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
