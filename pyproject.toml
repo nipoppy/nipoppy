@@ -77,6 +77,10 @@ nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
 
+[tool.uv]
+# soupsieve>=3 requires Python>=3.11.5; older 3.11 patch releases fall back to soupsieve 2.x
+constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
