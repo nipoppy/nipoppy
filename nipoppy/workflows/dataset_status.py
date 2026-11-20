@@ -138,7 +138,7 @@ def _count_by_session(
     checkpoint_cols: list[str],
 ) -> pd.DataFrame:
     """Count completed checkpoints for each session."""
-    status_counts_df = (
+    return (
         status_df.groupby([Manifest.col_session_id, COL_CHECKPOINT], sort=False)
         .size()
         .unstack(fill_value=0)
@@ -149,10 +149,6 @@ def _count_by_session(
         )
         .astype(int)
     )
-
-    status_counts_df.index.name = Manifest.col_session_id
-    status_counts_df.columns.name = None
-    return status_counts_df
 
 
 class StatusWorkflow(BaseDatasetWorkflow):
