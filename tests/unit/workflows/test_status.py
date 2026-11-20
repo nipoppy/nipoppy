@@ -15,7 +15,6 @@ from nipoppy.workflows.dataset_status import (
     LONG_STATUS_COLUMNS,
     StatusWorkflow,
     _attach_manifest_datatypes,
-    _get_manifest_datatypes,
 )
 
 
@@ -235,16 +234,6 @@ def test_build_status_df(dpath_root: Path):
         .apply(lambda value: isinstance(value, list))
         .all()
     )
-
-
-def test_get_manifest_datatypes_with_empty_imaging_manifest():
-    manifest_datatypes = _get_manifest_datatypes(pd.DataFrame())
-
-    assert manifest_datatypes.empty
-    assert manifest_datatypes.columns.tolist() == [
-        *INDEX_COLS,
-        Manifest.col_datatype,
-    ]
 
 
 @pytest.mark.parametrize("empty_status,empty_manifest", [(True, False), (False, True)])

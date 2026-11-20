@@ -31,22 +31,6 @@ def _empty_status_df() -> pd.DataFrame:
     return pd.DataFrame(columns=LONG_STATUS_COLUMNS)
 
 
-def _get_manifest_datatypes(imaging_manifest: pd.DataFrame) -> pd.DataFrame:
-    """Get the datatypes of each imaging participant-session pair in the manifest.
-
-    (participant_id, session_id) is assumed to be unique.
-    """
-    columns = [*INDEX_COLS, Manifest.col_datatype]
-    if imaging_manifest.empty:
-        return pd.DataFrame(columns=columns)
-
-    manifest_datatypes = imaging_manifest[columns].reset_index(drop=True)
-    manifest_datatypes[Manifest.col_datatype] = manifest_datatypes[
-        Manifest.col_datatype
-    ].apply(lambda value: value if isinstance(value, list) else [])
-    return manifest_datatypes
-
-
 def _attach_manifest_datatypes(
     status_df: pd.DataFrame, manifest_datatypes: pd.DataFrame
 ) -> pd.DataFrame:
@@ -128,7 +112,9 @@ def _filter_status_df(
         return status_df.copy()
 
     return status_df.loc[
-        status_df[Manifest.col_datatype].apply(datatypes.issubset)
+        status_df[Manifest.col_datatype].apply(
+            lambda value: isinstance(value, list) and datatypes.issubset(value)
+        )
     ].copy()
 
 
@@ -233,8 +219,9 @@ class StatusWorkflow(BaseDatasetWorkflow):
 
     def _build_status_df(self) -> pd.DataFrame:
         """Build one long-form table from manifest and completed status records."""
-        imaging_manifest = self.study.manifest.get_imaging_subset().copy()
-        manifest_datatypes = _get_manifest_datatypes(imaging_manifest)
+        manifest_datatypes = self.study.manifest.get_imaging_subset()[
+            [*INDEX_COLS, Manifest.col_datatype]
+        ]
         manifest_long = manifest_datatypes.copy()
         manifest_long[COL_CHECKPOINT] = CHECKPOINT_MANIFEST
 
