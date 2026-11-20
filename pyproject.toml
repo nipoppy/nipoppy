@@ -78,7 +78,9 @@ nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 packages = ["nipoppy"]
 
 [tool.uv]
-# soupsieve>=3 requires Python>=3.11.5; older 3.11 patch releases fall back to soupsieve 2.x
+# Require soupsieve>=4.0.0, which fixes GHSA-mmhr-3c5m-f64f, GHSA-6655-6qjp-jx7x
+# and GHSA-7g44-g9rc-x53w. soupsieve>=3 needs Python>=3.11.5, so Python 3.11.0-3.11.4
+# falls back to soupsieve 2.x, which remains affected (docs build only).
 constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
 
 [tool.hatch.metadata]
