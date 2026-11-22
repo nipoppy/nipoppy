@@ -1,5 +1,7 @@
 """Workflow for status command."""
 
+from collections.abc import Sequence
+
 import pandas as pd
 from rich import box
 from rich.table import Table
@@ -146,7 +148,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
-        datatypes: tuple[str, ...] | None = None,
+        datatypes: Sequence[str] | None = None,
     ):
         """Initialize the workflow."""
         super().__init__(
