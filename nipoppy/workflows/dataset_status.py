@@ -106,11 +106,9 @@ def _processing_status_to_long(
     return _attach_manifest_datatypes(successful, manifest_datatypes)
 
 
-def _filter_status_df(
-    status_df: pd.DataFrame, *, datatypes: set[str] | None = None
-) -> pd.DataFrame:
+def _filter_status_df(status_df: pd.DataFrame, *, datatypes: set[str]) -> pd.DataFrame:
     """Filter long-form records by exact manifest datatype membership."""
-    if datatypes is None:
+    if len(datatypes) == 0:
         return status_df.copy()
 
     return status_df.loc[
@@ -148,7 +146,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
         fpath_layout: StrOrPathLike | None = None,
         verbose: bool = False,
         dry_run: bool = False,
-        datatypes: Sequence[str] | None = None,
+        datatypes: Sequence[str] = tuple(),
     ):
         """Initialize the workflow."""
         super().__init__(
@@ -159,7 +157,7 @@ class StatusWorkflow(BaseDatasetWorkflow):
             dry_run=dry_run,
             _skip_logfile=True,
         )
-        self.datatypes: set[str] | None = set(datatypes or ()) or None
+        self.datatypes: set[str] = set(datatypes)
 
     def run_main(self) -> pd.DataFrame | None:
         """Build, filter, and summarize dataset status records by session.
