@@ -87,7 +87,7 @@ def make_mixed_datatype_status_tables():
 
 
 @pytest.mark.parametrize(
-    "datatype,expected",
+    "datatypes,expected",
     [
         (
             None,
@@ -130,8 +130,8 @@ def make_mixed_datatype_status_tables():
         ),
     ],
 )
-def test_datatype_filters_all_status_tables(dpath_root: Path, datatype, expected):
-    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=datatype)
+def test_datatype_filters_all_status_tables(dpath_root: Path, datatypes, expected):
+    workflow = StatusWorkflow(dpath_root=dpath_root, datatypes=datatypes)
     (
         workflow.study.manifest,
         workflow.curation_status_table,
