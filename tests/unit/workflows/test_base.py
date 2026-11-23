@@ -137,8 +137,7 @@ class TestRun:
             workflow.run()
 
         assert any(
-            "Troubleshooting:" in record.message and hint in record.message
-            for record in caplog.records
+            f"Troubleshooting: {hint}" in record.message for record in caplog.records
         )
 
     def test_handle_exception_nipoppy_exception_logs_default_hint(
@@ -160,7 +159,7 @@ class TestRun:
             for record in caplog.records
         )
 
-    def test_handle_exception_json_error(
+    def test_handle_json_error(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
@@ -188,7 +187,7 @@ class TestRun:
         [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)],
     )
     @pytest.mark.parametrize("exception", [Exception, RuntimeError])
-    def test_handle_exception_unknown_exception(
+    def test_handle_unknown_exception(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
@@ -216,7 +215,7 @@ class TestRun:
         assert any(BUG_REPORT_URL in record.message for record in caplog.records)
         assert any(DISCORD_URL in record.message for record in caplog.records)
 
-    def test_handle_exception_pydantic_failed_validation(
+    def test_handle_pydantic_validation_error(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
