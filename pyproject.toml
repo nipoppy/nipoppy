@@ -78,14 +78,12 @@ nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 packages = ["nipoppy"]
 
 [tool.uv]
+# Constrain dev dependencies to address these security advisories:
+#   - https://github.com/advisories/GHSA-mmhr-3c5m-f64f (soupsieve)
+#   - https://github.com/advisories/GHSA-6655-6qjp-jx7x (soupsieve)
+#   - https://github.com/advisories/GHSA-7g44-g9rc-x53w (soupsieve)
 # soupsieve is only pulled in by the `doc` extra (furo -> beautifulsoup4 -> soupsieve).
-# Require soupsieve>=4.0.0, which fixes these security advisories:
-#   - https://github.com/advisories/GHSA-mmhr-3c5m-f64f
-#   - https://github.com/advisories/GHSA-6655-6qjp-jx7x
-#   - https://github.com/advisories/GHSA-7g44-g9rc-x53w
-# soupsieve>=3 requires Python>=3.11.5, so the constraint only applies there. On
-# Python 3.11.0-3.11.4, uv falls back to soupsieve 2.x, which is still affected.
-# The Read the Docs build uses Python 3.14, so it gets a fixed version.
+# These constraints only apply to installs managed by uv.
 constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
 
 [tool.hatch.metadata]
