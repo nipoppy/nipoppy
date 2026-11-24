@@ -10,15 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.0.1
-        with:
-          python-version: 3.14
-      - run: uv lock
+      - uses: astral-sh/setup-uv@v10.3.3
+      - run: uv lock --upgrade
       - name: Generate a token
         id: generate-token
         uses: actions/create-github-app-token@v3
         with:
-          app-id: ${{ vars.NIPOPPY_BOT_APP_ID }}
+          client-id: ${{ vars.NIPOPPY_BOT_CLIENT_ID }}
           private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
       - uses: peter-evans/create-pull-request@v8
         with:
@@ -26,4 +24,4 @@ jobs:
           branch: ci/update_lockfile
           labels: 'T.2 - Maintenance,bot'
           commit-message: '[MAINT] Update lockfile'
-          token: $${{ steps.generate-token.outputs.token }}
+          token: ${{ steps.generate-token.outputs.token }}

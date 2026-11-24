@@ -8,6 +8,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved",
+    "Operating System :: MacOS",
     "Operating System :: POSIX",
     "Operating System :: Unix",
     "Programming Language :: Python",
@@ -34,7 +35,7 @@ description = "Standardized organization and processing of neuroimaging-clinical
 license = { file = "LICENSE" }
 name = "nipoppy"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11, <3.16"
 dynamic = ["version"]
 
 [project.optional-dependencies]
@@ -42,9 +43,7 @@ parallel = ["joblib"]
 doc = [
     "furo",
     "mdit-py-plugins",
-    # Simplify after dropping Python 3.10 support
-    "myst-parser>=5.1.0 ; python_version >= '3.11'",
-    "myst-parser ; python_version < '3.11'",
+    "myst-parser>=5.1.0",
     "sphinx",
     "sphinx-autoapi",
     "sphinx-click",
@@ -77,6 +76,15 @@ nipoppy-gui = "nipoppy.cli.cli:tui_launch"
 
 [tool.hatch.build.targets.wheel]
 packages = ["nipoppy"]
+
+[tool.uv]
+# Constrain dev dependencies to address these security advisories:
+#   - https://github.com/advisories/GHSA-mmhr-3c5m-f64f (soupsieve)
+#   - https://github.com/advisories/GHSA-6655-6qjp-jx7x (soupsieve)
+#   - https://github.com/advisories/GHSA-7g44-g9rc-x53w (soupsieve)
+# soupsieve is only pulled in by the `doc` extra (furo -> beautifulsoup4 -> soupsieve).
+# These constraints only apply to installs managed by uv.
+constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
 
 [tool.hatch.metadata]
 allow-direct-references = true
