@@ -119,6 +119,25 @@ class TestRun:
             f"Troubleshooting: {hint}" in record.message for record in caplog.records
         )
 
+    def test_log_exception_no_default_hint(
+        self,
+        workflow: BaseWorkflow,
+        mocker: pytest_mock.MockerFixture,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """Known NipoppyError without any hint should not emit a troubleshooting log."""
+        mocker.patch.object(
+            workflow,
+            "run",
+            side_effect=NipoppyError(),
+        )
+        with pytest.raises(NipoppyError):
+            workflow.run()
+
+        assert not any(
+            "Troubleshooting:" in record.message for record in caplog.records
+        )
+
     def test_log_exception_default_hint(
         self,
         workflow: BaseWorkflow,
