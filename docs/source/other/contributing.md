@@ -16,7 +16,7 @@ Below are some guidelines that could be helpful for potential contributors.
 
 ## All contributors
 
-This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found in the [all-contributors bot documentation](https://allcontributors.org/en/bot/usage/).
+This project follows the [all-contributors](https://allcontributors.org) specification. Contributors of any kind are acknowledged on the [Team](team.md#contributors) page. The `all-contributors` bot can be used to update the list of contributors -- instructions can be found in the [`all-contributors` bot documentation](https://allcontributors.org/en/bot/usage/).
 
 ## Contributing through GitHub
 
