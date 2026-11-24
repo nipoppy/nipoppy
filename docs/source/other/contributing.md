@@ -60,10 +60,10 @@ $ cd nipoppy
 $ pip install -e ".[dev]"
 ```
 
-Set up [`pre-commit`](https://pre-commit.com/) to apply automatic formatting/linting/etc. when making a new commit:
+Set up [`prek`](https://prek.j178.dev/) (a faster drop-in replacement for [`pre-commit`](https://pre-commit.com/)) to apply automatic formatting/linting/etc. when making a new commit:
 
 ```{code-block} console
-$ pre-commit install
+$ prek install
 ```
 
 It is a good idea to create a new branch when you start working on a new issue. Branches can be created [through GitHub](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-and-deleting-branches-within-your-repository) or with the `git` command-line in the Terminal.
