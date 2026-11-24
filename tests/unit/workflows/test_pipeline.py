@@ -261,13 +261,12 @@ def test_init(args):
 def test_init_n_jobs_but_no_joblib(
     tmp_path: Path,
     mocker: pytest_mock.MockFixture,
-    caplog: pytest.LogCaptureFixture,
     reimport_joblib,
 ):
     """Test that an error is raised when joblib is not installed and n_jobs > 1."""
     dpath_root = tmp_path / "my_dataset"
     mocker.patch("nipoppy.workflows.pipeline.JOBLIB_INSTALLED", False)
-    with pytest.raises(SystemExit):
+    with pytest.raises(WorkflowError) as exc_info:
         PipelineWorkflow(
             dpath_root=dpath_root,
             pipeline_name="my_pipeline",
@@ -275,17 +274,10 @@ def test_init_n_jobs_but_no_joblib(
             _skip_logfile=True,
         )
 
-    assert any(
-        [
-            record.levelname == "ERROR"
-            and (
-                "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
-            )
-            in record.message
-            for record in caplog.records
-        ]
-    )
+    assert (
+        "An additional dependency is required to enable local parallelization "
+        "with --n-jobs. Install it with: pip install nipoppy[parallel]"
+    ) in str(exc_info.value)
 
 
 def test_init_hpc_write_subcohort():

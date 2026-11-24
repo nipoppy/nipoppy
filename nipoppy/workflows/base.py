@@ -186,12 +186,13 @@ class BaseWorkflow(Base, ABC):
         self.verbose = verbose
 
         # for the CLI
-        self.return_code = ReturnCode.SUCCESS
+        self.return_code = None
 
         logger.set_verbose(self.verbose)
 
     def run_setup(self):
         """Run the setup part of the workflow."""
+        self.return_code = ReturnCode.SUCCESS
         logger.debug(self)
         if self.dry_run:
             logger.info("Doing a dry run")
@@ -229,10 +230,6 @@ class BaseWorkflow(Base, ABC):
             raise
         except ZenodoAPIError as e:
             self.return_code = ReturnCode.KNOWN_FAILURE
-            logger.error(e)
-            raise
-        except SystemExit as e:
-            self.return_code = e.code or ReturnCode.UNKNOWN_FAILURE
             logger.error(e)
             raise
         except Exception:

@@ -1,1 +1,1 @@
-"""Empty init file."""
+"""CLI commands and reusable options."""

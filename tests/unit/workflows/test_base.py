@@ -1,6 +1,5 @@
 """Tests for the BaseWorkflow class."""
 
-import json
 import logging
 import subprocess
 from pathlib import Path
@@ -9,7 +8,7 @@ import pytest
 import pytest_mock
 
 from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
-from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
+from nipoppy.exceptions import NipoppyError, ReturnCode
 from nipoppy.workflows.base import (
     BaseWorkflow,
     LogPrefix,
@@ -37,7 +36,7 @@ def test_abstract_class():
 
 def test_init(workflow: BaseWorkflow):
     assert workflow.name == "my_workflow"
-    assert workflow.return_code == 0
+    assert workflow.return_code is None
 
 
 @pytest.mark.parametrize("command", ["echo x", "echo y"])
@@ -60,38 +59,18 @@ class TestRun:
         """Test that run() completes without error."""
         assert workflow.run() is None
 
-    @pytest.mark.parametrize(
-        "return_code, expected_return_code",
-        [
-            (None, ReturnCode.UNKNOWN_FAILURE),
-            (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-            (ReturnCode.INVALID_ARGUMENT, ReturnCode.INVALID_ARGUMENT),
-        ],
-    )
-    def test_handle_exception_system_exit_exception(
-        self,
-        workflow: BaseWorkflow,
-        mocker: pytest_mock.MockerFixture,
-        return_code,
-        expected_return_code,
+    def test_run_resets_return_code(
+        self, workflow: BaseWorkflow, mocker: pytest_mock.MockerFixture
     ):
-        """Test that run() handles SystemExit correctly.
-
-        SystemExit should set the workflow return code to the
-        exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
-        """
-
-        def run_main():
-            if return_code is None:
-                raise SystemExit
-            else:
-                raise SystemExit(return_code)
-
-        mocker.patch.object(workflow, "run_main", side_effect=run_main)
-        with pytest.raises(SystemExit):
+        """Test that return code of a failed run does not carry over to the next."""
+        mocker.patch.object(workflow, "run_main", side_effect=MyCustomException)
+        with pytest.raises(MyCustomException):
             workflow.run()
+        assert workflow.return_code == MyCustomException.code
 
-        assert workflow.return_code == expected_return_code
+        mocker.patch.object(workflow, "run_main", side_effect=None)
+        workflow.run()
+        assert workflow.return_code == ReturnCode.SUCCESS
 
     @pytest.mark.parametrize(
         "exception,return_code",
@@ -101,7 +80,7 @@ class TestRun:
             (MyCustomException, MyCustomException.code),
         ],
     )
-    def test_handle_exception_nipoppy_exception(
+    def test_handle_nipoppy_exception(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
@@ -120,7 +99,7 @@ class TestRun:
         assert workflow.return_code == return_code
 
     @pytest.mark.parametrize("hint", ["", "This is a hint."])
-    def test_handle_exception_nipoppy_exception_logs_custom_hint(
+    def test_log_exception_custom_hint(
         self,
         hint,
         workflow: BaseWorkflow,
@@ -140,7 +119,7 @@ class TestRun:
             f"Troubleshooting: {hint}" in record.message for record in caplog.records
         )
 
-    def test_handle_exception_nipoppy_exception_logs_default_hint(
+    def test_log_exception_default_hint(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
@@ -156,29 +135,6 @@ class TestRun:
 
         assert any(
             f"Troubleshooting: {default_hint}" in record.message
-            for record in caplog.records
-        )
-
-    def test_handle_json_error(
-        self,
-        workflow: BaseWorkflow,
-        mocker: pytest_mock.MockerFixture,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        """Test that JSONError includes the file path in the error message."""
-        fpath = "invalid.json"
-        mocker.patch.object(
-            workflow,
-            "run_main",
-            side_effect=JSONError(
-                json.JSONDecodeError("Invalid JSON", "{}", 10),
-                fpath=Path(fpath),
-            ),
-        )
-        with pytest.raises(JSONError):
-            workflow.run()
-        assert any(
-            f"Invalid JSON: {fpath}: line 1 column 11 (char 10)" in record.message
             for record in caplog.records
         )
 
