@@ -365,6 +365,19 @@ def test_apply_pipeline_variables(
     )
 
 
+def test_apply_pipeline_variables_unset(valid_config_data):
+    config = Config(**valid_config_data)
+    config.PIPELINE_VARIABLES = PipelineVariables(
+        PROCESSING={"proc_pipeline": {"0.1.0": {"proc1": "val1", "proc2": None}}}
+    )
+    assert config.apply_pipeline_variables(
+        PipelineTypeEnum.PROCESSING,
+        "proc_pipeline",
+        "0.1.0",
+        {"some_key": "[[proc1]]_[[proc2]]"},
+    ) == {"some_key": "val1_[[proc2]]"}
+
+
 def test_pipeline_variables(valid_config_data: dict):
     config = Config(
         **{k: v for (k, v) in valid_config_data.items() if k in REQUIRED_FIELDS_CONFIG}

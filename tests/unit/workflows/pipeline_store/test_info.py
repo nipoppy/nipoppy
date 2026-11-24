@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.env import PipelineTypeEnum
 from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.workflows.pipeline_store.info import PipelineInfoWorkflow
 from tests.conftest import (
@@ -82,3 +83,30 @@ class TestRun:
         workflow.pipeline_version = "2.0.0"
         with pytest.raises(FileOperationError, match="Pipeline config file not found"):
             workflow.run()
+
+    @pytest.mark.no_xdist
+    def test_variables_not_set(
+        self, workflow: PipelineInfoWorkflow, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that pipeline variables do not need to be set."""
+        # state right after "nipoppy pipeline install": variables are null
+        workflow.study.config.PIPELINE_VARIABLES.set_variables(
+            PipelineTypeEnum.PROCESSING, "my_pipeline", "1.0.0", {"MY_VAR": None}
+        )
+
+        workflow.run()
+
+        assert "my_pipeline 1.0.0 (processing)" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "method,args",
+    [
+        ("get_participants_sessions_to_run", (None, None)),
+        ("run_single", (None, None)),
+    ],
+)
+def test_loop_methods_not_implemented(workflow: PipelineInfoWorkflow, method, args):
+    """Test that the unused participant/session loop methods raise."""
+    with pytest.raises(NotImplementedError, match="no participant and session loop"):
+        getattr(workflow, method)(*args)

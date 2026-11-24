@@ -38,6 +38,9 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
                 break
         super().run_setup()
 
+    def _check_pipeline_variables(self):
+        """Allow unset variables, since this command does not run the pipeline."""
+
     def run_main(self):
         """Show configuration details for a pipeline."""
         logger.info(
