@@ -4,8 +4,14 @@ name: Validate CITATION.cff
 on:
   push:
     branches: ['*']
+    paths:
+      - 'CITATION.cff'
+      - '.github/workflows/validate_citation_cff.yml'
   pull_request:
     branches: ['*']
+    paths:
+      - 'CITATION.cff'
+      - '.github/workflows/validate_citation_cff.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

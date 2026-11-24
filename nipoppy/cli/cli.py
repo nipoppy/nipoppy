@@ -54,6 +54,7 @@ click.rich_click.OPTION_GROUPS = {
                 "--sandbox",
                 "--regenerate",
                 "--type",
+                "--source-descriptor",
                 "--skip-container",
             ],
         },
