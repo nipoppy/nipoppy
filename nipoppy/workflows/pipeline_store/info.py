@@ -31,15 +31,15 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
 
     def run_setup(self):
         """Find the pipeline type, then run the usual pipeline setup."""
-        # self._pipeline_type defaults to PROCESSING always !
+        # the base class assumes the PROCESSING type, so find the pipeline's real type
         for pipeline_type, pipelines in self.study._get_pipeline_info_map().items():
             if self.pipeline_name in pipelines:
                 self._pipeline_type = pipeline_type
                 break
         super().run_setup()
 
-    def _check_pipeline_variables(self):
-        """Allow unset variables, since this command does not run the pipeline."""
+    # def _check_pipeline_variables(self):
+    #     """Allow unset variables, since this command does not run the pipeline."""
 
     def run_main(self):
         """Show configuration details for a pipeline."""
