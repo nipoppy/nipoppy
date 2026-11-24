@@ -5,6 +5,7 @@ If you use Nipoppy in your research, please cite our preprint:
 > Nikhil Bhagwat, Michelle Wang, Mathieu Dugré, Julia-Katharina Pfarr, Alyssa Dai, Sebastian Urchs, Brent McPherson, Rémi Gau, Eva M. van Heese, Emile d’Angremont, Max A. Laansma, Shweta Prasad, Jacob Sanz-Robinson, Mohammad Torabi, Arman Jahanpour, Matthew Danyluik, Alice Joubert, Austin Macdonald, Lea Waller, Ashley Stewart, Matthieu Joulot, Erin Dickie, Gabriel A. Devenyi, Sylvain Bouix, Steffen Bollmann, Neda Jahanshad, Paul M. Thompson, Ninon Burgos, M. Mallar Chakravarty, Yaroslav O. Halchenko, Ysbrand D. van der Werf, and Jean-Baptiste Poline (2026). Nipoppy: A framework for standardizing neuroimaging studies to facilitate international derived-data sharing. *bioRxiv*. <https://doi.org/10.64898/2026.05.18.723593>
 
 :::{dropdown} BibTeX
+
 ```bibtex
 @article{Bhagwat2026Nipoppy,
   title = {Nipoppy: A framework for standardizing neuroimaging studies to facilitate international derived-data sharing},
@@ -16,6 +17,7 @@ If you use Nipoppy in your research, please cite our preprint:
   url = {https://doi.org/10.64898/2026.05.18.723593}
 }
 ```
+
 :::
 
 To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/zenodo.8084759):
@@ -23,6 +25,7 @@ To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/ze
 > Nipoppy contributors, Nikhil Bhagwat, Michelle Wang, Mathieu Dugré, Brent McPherson, and Jean-Baptiste Poline (2026). *nipoppy*. Zenodo. <https://doi.org/10.5281/zenodo.8084759>
 
 :::{dropdown} BibTeX
+
 ```bibtex
 @software{NipoppyZenodo,
   title = {nipoppy},
@@ -34,4 +37,5 @@ To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/ze
   copyright = {MIT License}
 }
 ```
+
 :::

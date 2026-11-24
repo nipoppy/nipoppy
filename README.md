@@ -53,6 +53,7 @@ If you use Nipoppy in your research, please cite our preprint:
   url = {https://doi.org/10.64898/2026.05.18.723593}
 }
 ```
+
 </details>
 
 To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/zenodo.8084759):
@@ -73,4 +74,5 @@ To cite the Nipoppy software, see our [Zenodo record](https://doi.org/10.5281/ze
   copyright = {MIT License}
 }
 ```
+
 </details>
