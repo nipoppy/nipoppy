@@ -108,5 +108,6 @@ caption: Other
 other/changelog
 other/team
 other/contributing
+other/cite_us
 other/glossary
 ```
