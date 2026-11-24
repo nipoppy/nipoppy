@@ -4,9 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from nipoppy.exceptions import WorkflowError
+from nipoppy.exceptions import FileOperationError, WorkflowError
 from nipoppy.workflows.pipeline_store.info import PipelineInfoWorkflow
-from tests.conftest import create_empty_dataset, create_pipeline_config_files
+from tests.conftest import (
+    create_empty_dataset,
+    create_pipeline_config_files,
+    get_config,
+)
 
 
 @pytest.fixture()
@@ -14,8 +18,16 @@ def workflow(tmp_path: Path):
     dpath_root = tmp_path / "my_dataset"
     create_empty_dataset(dpath_root)
     workflow = PipelineInfoWorkflow(dpath_root, pipeline_name="my_pipeline")
+    workflow.study.config = get_config()
     create_pipeline_config_files(
         workflow.study.layout.dpath_pipelines,
+        bidsification_pipelines=[
+            {
+                "NAME": "my_bids_pipeline",
+                "VERSION": "1.0.0",
+                "STEPS": [{"DESCRIPTOR_FILE": "descriptor.json"}],
+            }
+        ],
         processing_pipelines=[
             {
                 "NAME": "my_pipeline",
@@ -33,26 +45,40 @@ def workflow(tmp_path: Path):
     return workflow
 
 
-@pytest.mark.no_xdist
-def test_run_main(workflow: PipelineInfoWorkflow, caplog: pytest.LogCaptureFixture):
-    workflow.run_main()
+class TestRun:
+    @pytest.mark.no_xdist
+    def test_latest_version(
+        self, workflow: PipelineInfoWorkflow, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that the latest installed version is used by default."""
+        workflow.run()
 
-    # latest version is used by default
-    dpath_bundle = (
-        workflow.study.layout.dpath_pipelines / "processing/my_pipeline-1.0.0"
-    )
-    assert f"Bundle: {dpath_bundle}" in caplog.text
-    assert f"Descriptor: {dpath_bundle / 'descriptor.json'}" in caplog.text
-    assert f"Invocation: {dpath_bundle / 'invocation.json'}" in caplog.text
+        dpath_bundle = (
+            workflow.study.layout.dpath_pipelines / "processing/my_pipeline-1.0.0"
+        )
+        assert "my_pipeline 1.0.0 (processing)" in caplog.text
+        assert f"Descriptor: {dpath_bundle / 'descriptor.json'}" in caplog.text
+        assert f"Invocation: {dpath_bundle / 'invocation.json'}" in caplog.text
 
+    @pytest.mark.no_xdist
+    def test_other_pipeline_type(
+        self, workflow: PipelineInfoWorkflow, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that pipelines that are not processing pipelines are found."""
+        workflow.pipeline_name = "my_bids_pipeline"
 
-def test_run_main_pipeline_not_installed(workflow: PipelineInfoWorkflow):
-    workflow.pipeline_name = "other_pipeline"
-    with pytest.raises(WorkflowError, match="Pipeline other_pipeline is not installed"):
-        workflow.run_main()
+        workflow.run()
 
+        assert "my_bids_pipeline 1.0.0 (bidsification)" in caplog.text
 
-def test_run_main_version_not_installed(workflow: PipelineInfoWorkflow):
-    workflow.pipeline_version = "2.0.0"
-    with pytest.raises(WorkflowError, match="Installed versions: 0.9.0, 1.0.0"):
-        workflow.run_main()
+    def test_pipeline_not_installed(self, workflow: PipelineInfoWorkflow):
+        """Test that an error is raised if the pipeline is not installed."""
+        workflow.pipeline_name = "other_pipeline"
+        with pytest.raises(WorkflowError, match="No config found for pipeline"):
+            workflow.run()
+
+    def test_version_not_installed(self, workflow: PipelineInfoWorkflow):
+        """Test that an error is raised if the version is not installed."""
+        workflow.pipeline_version = "2.0.0"
+        with pytest.raises(FileOperationError, match="Pipeline config file not found"):
+            workflow.run()

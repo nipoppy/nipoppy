@@ -1,7 +1,5 @@
 """Workflow for pipeline info command."""
 
-from nipoppy.env import PROGRAM_NAME
-from nipoppy.exceptions import WorkflowError
 from nipoppy.logger import emphasize, get_logger
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -31,34 +29,21 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
             _skip_logfile=True,
         )
 
+    def run_setup(self):
+        """Find the pipeline type, then run the usual pipeline setup."""
+        # self._pipeline_type defaults to PROCESSING always !
+        for pipeline_type, pipelines in self.study._get_pipeline_info_map().items():
+            if self.pipeline_name in pipelines:
+                self._pipeline_type = pipeline_type
+                break
+        super().run_setup()
+
     def run_main(self):
         """Show configuration details for a pipeline."""
-        pipeline_type_to_info_map = self.study._get_pipeline_info_map()
-        self._pipeline_type = None
-        for pipeline_type_to_check, pipelines in pipeline_type_to_info_map.items():
-            if self.pipeline_name in pipelines:
-                self._pipeline_type = pipeline_type_to_check
-                installed_versions = pipelines[self.pipeline_name]
-                break
-
-        if self._pipeline_type is None:
-            raise WorkflowError(
-                f"Pipeline {self.pipeline_name} is not installed. Installed pipelines"
-                f' can be listed with the "{PROGRAM_NAME} pipeline list" command'
-            )
-
-        if self.pipeline_version is None:
-            self.check_pipeline_version()
-        elif self.pipeline_version not in installed_versions:
-            raise WorkflowError(
-                f"Version {self.pipeline_version} of pipeline {self.pipeline_name} is"
-                " not installed. Installed versions: " + ", ".join(installed_versions)
-            )
-
         logger.info(
             emphasize(
                 f"{self.pipeline_config.NAME} {self.pipeline_config.VERSION}"
-                f" ({self._pipeline_type.value})"
+                f" ({self.pipeline_config.PIPELINE_TYPE.value})"
             )
         )
         fname_config = self.study.layout.fname_pipeline_config
@@ -77,13 +62,13 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
                     logger.info(f"- {label}: {self.dpath_pipeline_bundle / fpath}")
 
     def get_participants_sessions_to_run(self, participant_id, session_id):
-        """Not used: this workflow does not loop over participants."""
+        """Not used."""
         raise NotImplementedError(
             "Pipeline info command has no participant and session loop"
         )
 
     def run_single(self, participant_id, session_id):
-        """Not used: this workflow does not loop over participants."""
+        """Not used."""
         raise NotImplementedError(
             "Pipeline info command has no participant and session loop"
         )
