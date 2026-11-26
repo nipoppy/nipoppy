@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 import pytest_mock
+from pydantic import ValidationError
 
 from nipoppy.env import BUG_REPORT_URL, DISCORD_URL
 from nipoppy.exceptions import NipoppyError, ReturnCode
@@ -52,9 +53,10 @@ def test_log_command(command, caplog: pytest.LogCaptureFixture):
 
 class TestRun:
     class MyCustomException(NipoppyError):
-        """Custom exception with its own return code."""
+        """Custom exception with its own return code and default hint."""
 
         code = 999
+        default_hint = "This is a default hint."
 
     def test_run(self, workflow: BaseWorkflow):
         """Test that run() completes without error."""
@@ -76,12 +78,16 @@ class TestRun:
     @pytest.mark.parametrize(
         "exception,return_code",
         [
-            (NipoppyError, NipoppyError.code),
-            (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
-            (MyCustomException, MyCustomException.code),
+            (NipoppyError(), NipoppyError.code),
+            (ZenodoAPIError(), ReturnCode.KNOWN_FAILURE),
+            (MyCustomException(), MyCustomException.code),
+            (
+                ValidationError.from_exception_data("MockedModel", []),
+                ReturnCode.INVALID_CONFIG,
+            ),
         ],
     )
-    def test_handle_nipoppy_exception(
+    def test_handle_known_exception(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
@@ -90,11 +96,10 @@ class TestRun:
     ):
         """Test that run() handles exceptions correctly.
 
-        NipoppyError and its subclasses should set the workflow return code to the
-        exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
+        Known exceptions should set the workflow return code to the exception's code.
         """
         mocker.patch.object(workflow, "run_main", side_effect=exception)
-        with pytest.raises(exception):
+        with pytest.raises(type(exception)):
             workflow.run()
 
         assert workflow.return_code == return_code
@@ -127,95 +132,63 @@ class TestRun:
         caplog: pytest.LogCaptureFixture,
     ):
         """Known NipoppyError without any hint should not emit a troubleshooting log."""
-        mocker.patch.object(
-            workflow,
-            "run",
-            side_effect=NipoppyError(),
-        )
+        mocker.patch.object(workflow, "run_main", side_effect=NipoppyError())
         with pytest.raises(NipoppyError):
             workflow.run()
 
+        assert caplog.records
         assert not any(
             "Troubleshooting:" in record.message for record in caplog.records
         )
 
+    @pytest.mark.parametrize(
+        "exception,expected_hint",
+        [
+            (MyCustomException(), MyCustomException.default_hint),
+            (
+                ValidationError.from_exception_data("MockedModel", []),
+                "Review your configuration fields and value types.",
+            ),
+        ],
+    )
     def test_log_exception_default_hint(
         self,
+        exception: Exception,
+        expected_hint: str,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
         caplog: pytest.LogCaptureFixture,
     ):
-        """Known NipoppyError should emit default hint when none provided."""
-        default_hint = "This is a default hint."
-        e = NipoppyError("Invalid project config", hint=None)
-        e.default_hint = default_hint
-        mocker.patch.object(workflow, "run_main", side_effect=e)
-        with pytest.raises(NipoppyError):
+        """Known exception with default hint should emit troubleshooting log."""
+        mocker.patch.object(workflow, "run_main", side_effect=exception)
+        with pytest.raises(type(exception)):
             workflow.run()
 
         assert any(
-            f"Troubleshooting: {default_hint}" in record.message
+            f"Troubleshooting: {expected_hint}" in record.message
             for record in caplog.records
         )
 
-    @pytest.mark.parametrize(
-        "return_code",
-        [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)],
-    )
     @pytest.mark.parametrize("exception", [Exception, RuntimeError])
     def test_handle_unknown_exception(
         self,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
-        exception,
-        return_code,
+        exception: type[Exception],
         caplog: pytest.LogCaptureFixture,
     ):
-        """Test that run() handles exceptions correctly.
+        """Test that run() handles unknown exceptions correctly.
 
-        Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
+        Unknown exceptions should always set the return code to UNKNOWN_FAILURE.
         """
-
-        def run_main():
-            if return_code is None:
-                raise exception
-            else:
-                raise exception(code=return_code)
-
-        mocker.patch.object(workflow, "run_main", side_effect=run_main)
-        with pytest.raises(Exception):
+        mocker.patch.object(workflow, "run_main", side_effect=exception)
+        with pytest.raises(exception):
             workflow.run()
 
         # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
         assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
         assert any(BUG_REPORT_URL in record.message for record in caplog.records)
         assert any(DISCORD_URL in record.message for record in caplog.records)
-
-    def test_handle_pydantic_validation_error(
-        self,
-        workflow: BaseWorkflow,
-        mocker: pytest_mock.MockerFixture,
-        caplog: pytest.LogCaptureFixture,
-    ):
-        """Test that run() handles pydantic ValidationError correctly."""
-        from pydantic import BaseModel, ValidationError
-
-        class MockedModel(BaseModel):
-            field: int
-
-        def run_main():
-            MockedModel(field="invalid")  # will raise ValidationError
-
-        mocker.patch.object(workflow, "run_main", side_effect=run_main)
-        with pytest.raises(ValidationError):
-            workflow.run()
-
-        assert workflow.return_code == ReturnCode.INVALID_CONFIG
-        assert any(
-            "Troubleshooting:" in record.message
-            and "Review your configuration fields and value types" in record.message
-            for record in caplog.records
-        )
 
     @pytest.mark.parametrize("method", ["run_setup", "run_main", "run_cleanup"])
     def test_run_exception(
