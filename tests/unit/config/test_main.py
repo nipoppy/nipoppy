@@ -370,6 +370,7 @@ def test_apply_pipeline_variables_unset(valid_config_data):
     config.PIPELINE_VARIABLES = PipelineVariables(
         PROCESSING={"proc_pipeline": {"0.1.0": {"proc1": "val1", "proc2": None}}}
     )
+    # no error and no replacement if a value is `None`
     assert config.apply_pipeline_variables(
         PipelineTypeEnum.PROCESSING,
         "proc_pipeline",

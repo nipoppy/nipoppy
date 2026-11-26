@@ -153,7 +153,7 @@ def test_run_variables_not_set(
     workflow: PipelineInfoWorkflow, caplog: pytest.LogCaptureFixture
 ):
     """Test that pipeline variables do not need to be set."""
-    # state right after "nipoppy pipeline install": variables are null
+    # replicate the state right after "nipoppy pipeline install": variables are null
     workflow.study.config.PIPELINE_VARIABLES.set_variables(
         PipelineTypeEnum.PROCESSING, "my_pipeline", "1.0.0", {"MY_VAR": None}
     )

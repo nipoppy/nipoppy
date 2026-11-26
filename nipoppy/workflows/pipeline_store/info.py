@@ -52,7 +52,7 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
         fname_config = self.study.layout.fname_pipeline_config
         logger.info(f"Config: {self.dpath_pipeline_bundle / fname_config}")
         for step in self.pipeline_config.STEPS:
-            logger.info(f"Step: {step.NAME}")
+            logger.info(f"Step: {emphasize(step.NAME)}")
             for label, field in (
                 ("Descriptor", "DESCRIPTOR_FILE"),
                 ("Invocation", "INVOCATION_FILE"),
