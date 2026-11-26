@@ -61,7 +61,7 @@ class BoutiquesAPI(ABC):
 
         Parameters
         ----------
-        output_path : Path
+        descriptor_path : Path
             Path where the descriptor should be written.
         """
         ...
@@ -95,7 +95,7 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
             LoadError,
         ) as exception:
             raise ConfigError(
-                f"Descriptor {descriptor} is invalid: {str(exception)}"
+                f"Descriptor is invalid: {str(exception)}: {descriptor}"
             ) from exception
 
     def validate_invocation(  # noqa: D102
@@ -158,10 +158,6 @@ def _create_boutiques_api() -> BoutiquesAPI:
     -------
     BoutiquesAPI
 
-    Raises
-    ------
-    NotImplementedError
-        If the installed ``boutiques`` version is not supported yet.
     """
     version = importlib.metadata.version("boutiques")
     if Version(version) < BOUTIQUES_NEXT_VERSION:
