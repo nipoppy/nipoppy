@@ -1348,99 +1348,106 @@ def test_init_hpc_write_subcohort():
         PipelineWorkflow(**args)
 
 
-def test_init_hpc_builds_executor(tmp_path: Path):
-    workflow = PipelineWorkflow(
-        dpath_root=tmp_path / "my_dataset", pipeline_name="my_pipeline", hpc="slurm"
+class TestInitExecutor:
+    def test_hpc_builds_executor(self, tmp_path: Path):
+        """Test that hpc builds an HPCExecutor that references the workflow."""
+        workflow = PipelineWorkflow(
+            dpath_root=tmp_path / "my_dataset", pipeline_name="my_pipeline", hpc="slurm"
+        )
+        assert isinstance(workflow.executor, HPCExecutor)
+        assert workflow.executor.workflow is workflow
+        assert workflow.executor.hpc_cluster == "slurm"
+
+    def test_default_is_none(self, workflow: PipelineWorkflow):
+        """Test that no executor is set when hpc is not given."""
+        assert workflow.executor is None
+
+
+class TestHandleExecutionStrategy:
+    def test_executor(
+        self, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+    ):
+        """Test that work items are passed to the executor, not run locally."""
+        workflow.executor = FakeExecutor()
+        mocked_run_locally = mocker.patch.object(workflow, "_run_locally")
+        participants_sessions = [("01", "1"), ("02", "2")]
+
+        workflow._handle_execution_strategy(participants_sessions)
+
+        mocked_run_locally.assert_not_called()
+        assert workflow.executor.items == [
+            WorkItem("01", "1"),
+            WorkItem("02", "2"),
+        ]
+
+    def test_write_subcohort_over_executor(
+        self, workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
+    ):
+        """Test that write_subcohort takes precedence over the executor."""
+        workflow.executor = FakeExecutor()
+        workflow.write_subcohort = "list.tsv"
+        mocked_write = mocker.patch.object(workflow, "_write_subcohort_to_file")
+
+        workflow._handle_execution_strategy([("01", "1")])
+
+        mocked_write.assert_called_once()
+        assert workflow.executor.items is None
+
+
+class TestRunWithExecutor:
+    @pytest.mark.parametrize(
+        "return_code,n_successful,expected_success,expected_total",
+        [
+            (ReturnCode.SUCCESS, None, 3, 3),
+            (ReturnCode.SUCCESS, 1, 1, 3),
+            (ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, 0, 0, 3),
+        ],
     )
-    assert isinstance(workflow.executor, HPCExecutor)
-    assert workflow.executor.workflow is workflow
-    assert workflow.executor.hpc_cluster == "slurm"
+    def test_results(
+        self,
+        return_code,
+        n_successful,
+        expected_success,
+        expected_total,
+        workflow: PipelineWorkflow,
+    ):
+        """Test that counts and return code are updated from the executor result."""
+        workflow.executor = FakeExecutor(return_code, n_successful)
+        workflow._run_with_executor([("01", "1"), ("01", "2"), ("02", "1")])
+
+        assert workflow.n_success == expected_success
+        assert workflow.n_total == expected_total
+        assert workflow.return_code == return_code
+
+    @pytest.mark.no_xdist
+    def test_no_participants_sessions(
+        self, workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
+    ):
+        """Test that empty input warns and skips the executor."""
+        workflow.executor = FakeExecutor()
+
+        workflow._run_with_executor([])
+
+        assert workflow.executor.items is None  # execute() not called
+        assert str(workflow.study.layout.fpath_curation_status) in caplog.text
+        assert "No participants or sessions to run" in caplog.text
+        assert workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
 
 
-def test_executor_default(workflow: PipelineWorkflow):
-    assert workflow.executor is None
+class TestLogSummaryMessageExecutor:
+    @pytest.mark.no_xdist
+    def test_silent(self, workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture):
+        """Test that the summary message is silent when an executor is set."""
+        workflow.executor = FakeExecutor()
+        workflow.n_success = 0
+        workflow.n_total = 0
+        workflow.return_code = ReturnCode.SUCCESS
+        caplog.clear()
 
+        workflow._log_summary_message()
 
-def test_handle_execution_strategy_executor(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    workflow.executor = FakeExecutor()
-    mocked_run_locally = mocker.patch.object(workflow, "_run_locally")
-    participants_sessions = [("01", "1"), ("02", "2")]
-
-    workflow._handle_execution_strategy(participants_sessions)
-
-    mocked_run_locally.assert_not_called()
-    assert workflow.executor.items == [
-        WorkItem("01", "1"),
-        WorkItem("02", "2"),
-    ]
-
-
-def test_handle_execution_strategy_write_subcohort_over_executor(
-    workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
-):
-    workflow.executor = FakeExecutor()
-    workflow.write_subcohort = "list.tsv"
-    mocked_write = mocker.patch.object(workflow, "_write_subcohort_to_file")
-
-    workflow._handle_execution_strategy([("01", "1")])
-
-    mocked_write.assert_called_once()
-    assert workflow.executor.items is None
-
-
-@pytest.mark.parametrize(
-    "return_code,n_successful,expected_success,expected_total",
-    [
-        (ReturnCode.SUCCESS, None, 3, 3),
-        (ReturnCode.SUCCESS, 1, 1, 3),
-        (ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, 0, 0, 3),
-    ],
-)
-def test_run_with_executor(
-    return_code,
-    n_successful,
-    expected_success,
-    expected_total,
-    workflow: PipelineWorkflow,
-):
-    workflow.executor = FakeExecutor(return_code, n_successful)
-    workflow._run_with_executor([("01", "1"), ("01", "2"), ("02", "1")])
-
-    assert workflow.n_success == expected_success
-    assert workflow.n_total == expected_total
-    assert workflow.return_code == return_code
-
-
-@pytest.mark.no_xdist
-def test_run_with_executor_no_participants_sessions(
-    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
-):
-    workflow.executor = FakeExecutor()
-
-    workflow._run_with_executor([])
-
-    assert workflow.executor.items is None  # execute() not called
-    assert str(workflow.study.layout.fpath_curation_status) in caplog.text
-    assert "No participants or sessions to run" in caplog.text
-    assert workflow.return_code == ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN
-
-
-@pytest.mark.no_xdist
-def test_log_summary_message_executor(
-    workflow: PipelineWorkflow, caplog: pytest.LogCaptureFixture
-):
-    workflow.executor = FakeExecutor()
-    workflow.n_success = 0
-    workflow.n_total = 0
-    workflow.return_code = ReturnCode.SUCCESS
-    caplog.clear()
-
-    workflow._log_summary_message()
-
-    assert caplog.text == ""
-    assert workflow.return_code == ReturnCode.SUCCESS
+        assert caplog.text == ""
+        assert workflow.return_code == ReturnCode.SUCCESS
 
 
 @pytest.mark.parametrize(

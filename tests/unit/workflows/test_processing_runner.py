@@ -710,11 +710,13 @@ def test_run_main_write_subcohort(
     mocked_write_subcohort_to_file.assert_called_once()
 
 
-@pytest.mark.parametrize("tar", [True, False])
-def test_generate_cli_command_tar(tar: bool, runner: ProcessingRunner):
-    runner.tar = tar
-    command = runner.generate_cli_command("01", "1")
-    if tar:
-        assert command[-1] == "--tar"
-    else:
-        assert "--tar" not in command
+class TestGenerateCliCommand:
+    @pytest.mark.parametrize("tar", [True, False])
+    def test_tar(self, tar: bool, runner: ProcessingRunner):
+        """Test that --tar is appended last only when tarring is requested."""
+        runner.tar = tar
+        command = runner.generate_cli_command("01", "1")
+        if tar:
+            assert command[-1] == "--tar"
+        else:
+            assert "--tar" not in command

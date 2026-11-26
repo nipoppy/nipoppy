@@ -296,57 +296,47 @@ def test_process_container_config_no_bindpaths(runner: Runner):
     runner.process_container_config(participant_id="01", session_id="BL")
 
 
-def _expected_base_command(runner: Runner) -> list[str]:
-    return [
-        PROGRAM_NAME,
-        runner.subcommand,
-        "--study",
-        str(runner.dpath_root),
-        "--pipeline",
-        runner.pipeline_name,
-        "--pipeline-version",
-        runner.pipeline_version,
-    ]
-
-
-@pytest.mark.parametrize(
-    "kwargs,expected_suffix",
-    [
-        (
-            {"participant_id": "P01", "session_id": "1"},
-            ["--participant-id", "P01", "--session-id", "1"],
-        ),
-        (
-            {"participant_id": None, "session_id": "1"},
-            ["--session-id", "1"],
-        ),
-    ],
-)
-def test_generate_cli_command(kwargs: dict, expected_suffix: list[str], runner: Runner):
-    assert runner.generate_cli_command(**kwargs) == (
-        _expected_base_command(runner) + expected_suffix
+class TestGenerateCliCommand:
+    @pytest.mark.parametrize(
+        "kwargs,expected_suffix",
+        [
+            (
+                {"participant_id": "P01", "session_id": "1"},
+                ["--participant-id", "P01", "--session-id", "1"],
+            ),
+            (
+                {"participant_id": None, "session_id": "1"},
+                ["--session-id", "1"],
+            ),
+        ],
     )
+    def test_command(self, kwargs: dict, expected_suffix: list[str], runner: Runner):
+        """Test that the CLI command has the expected tokens in order."""
+        expected = [
+            PROGRAM_NAME,
+            runner.subcommand,
+            "--study",
+            str(runner.dpath_root),
+            "--pipeline",
+            runner.pipeline_name,
+            "--pipeline-version",
+            runner.pipeline_version,
+            *expected_suffix,
+        ]
+        assert runner.generate_cli_command(**kwargs) == expected
 
-
-def test_generate_cli_command_pipeline_step(runner: Runner):
-    runner.pipeline_step = "step1"
-    command = runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert command[command.index("--pipeline-step") + 1] == "step1"
-
-
-def test_generate_cli_command_keep_workdir(runner: Runner):
-    runner.keep_workdir = True
-    command = runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--keep-workdir" in command
-
-
-def test_generate_cli_command_verbose(runner: Runner):
-    runner.verbose = True
-    command = runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--verbose" in command
-
-
-def test_generate_cli_command_layout(runner: Runner):
-    runner.fpath_layout = "layout.json"
-    command = runner.generate_cli_command(participant_id="P01", session_id="1")
-    assert command[command.index("--layout") + 1] == "layout.json"
+    @pytest.mark.parametrize(
+        "attr,value,expected_tokens",
+        [
+            ("pipeline_step", "step1", ["--pipeline-step", "step1"]),
+            ("fpath_layout", "layout.json", ["--layout", "layout.json"]),
+            ("keep_workdir", True, ["--keep-workdir"]),
+            ("verbose", True, ["--verbose"]),
+        ],
+    )
+    def test_optional_option(self, attr, value, expected_tokens, runner: Runner):
+        """Test that an optional option is added to the command when set."""
+        setattr(runner, attr, value)
+        command = runner.generate_cli_command(participant_id="P01", session_id="1")
+        i = command.index(expected_tokens[0])
+        assert command[i : i + len(expected_tokens)] == expected_tokens
