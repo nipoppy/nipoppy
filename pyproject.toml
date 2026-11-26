@@ -40,6 +40,10 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 parallel = ["joblib"]
+tui = ["trogon"]
+gui = ["nipoppy[tui]"] # alias for TUI
+
+[dependency-groups]
 doc = [
     "furo",
     "mdit-py-plugins",
@@ -54,7 +58,11 @@ doc = [
     "sphinx_design",
     "Sphinx-Substitution-Extensions",
 ]
-dev = ["nipoppy[doc,test]", "prek"]
+dev = [
+    { include-group = "doc" },
+    { include-group = "test" },
+    "prek",
+]
 test = [
     "bids-validator-deno",
     "fids>=0.1.0",
@@ -66,9 +74,7 @@ test = [
     "pytest-xdist",
     "pytest>=6.0.0",
 ]
-tests = ["nipoppy[test]"] # alias in case of typo
-tui = ["trogon"]
-gui = ["nipoppy[tui]"] # alias for TUI
+tests = [{ include-group = "test" }] # alias in case of typo
 
 [project.scripts]
 nipoppy = "nipoppy.cli.cli:cli"
@@ -82,7 +88,7 @@ packages = ["nipoppy"]
 #   - https://github.com/advisories/GHSA-mmhr-3c5m-f64f (soupsieve)
 #   - https://github.com/advisories/GHSA-6655-6qjp-jx7x (soupsieve)
 #   - https://github.com/advisories/GHSA-7g44-g9rc-x53w (soupsieve)
-# soupsieve is only pulled in by the `doc` extra (furo -> beautifulsoup4 -> soupsieve).
+# soupsieve is only pulled in by the `doc` dependency group (furo -> beautifulsoup4 -> soupsieve).
 # These constraints only apply to installs managed by uv.
 constraint-dependencies = ["soupsieve>=4.0.0 ; python_full_version >= '3.11.5'"]
 

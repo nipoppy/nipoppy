@@ -22,16 +22,16 @@ jobs:
 
     - name: Install package with doc dependencies
       run: |
-        uv sync --extra doc
+        uv sync --no-dev --group doc
 
     - name: Generate JSON schemas for docs
       run: |
-        uv run python docs/scripts/pydantic_to_jsonschema.py
-        uv run python docs/scripts/process_template_json5_configs.py
+        uv run --no-sync python docs/scripts/pydantic_to_jsonschema.py
+        uv run --no-sync python docs/scripts/process_template_json5_configs.py
 
     - name: Run linkcheck
       run: |
-        uv run python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
+        uv run --no-sync python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
 
   pytest:
     runs-on: ubuntu-latest
@@ -45,8 +45,8 @@ jobs:
 
     - name: Install package with test dependencies
       run: |
-        uv sync --extra tests
+        uv sync --no-dev --group test
 
     - name: Run pytest linkcheck tests
       run: |
-        uv run python -m pytest -m linkcheck
+        uv run --no-sync python -m pytest -m linkcheck
