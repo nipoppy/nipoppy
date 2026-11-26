@@ -54,7 +54,7 @@ doc = [
     "sphinx_design",
     "Sphinx-Substitution-Extensions",
 ]
-dev = ["nipoppy[doc,test]", "pre-commit"]
+dev = ["nipoppy[doc,test]", "prek"]
 test = [
     "bids-validator-deno",
     "fids>=0.1.0",

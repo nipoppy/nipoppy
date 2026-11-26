@@ -82,8 +82,8 @@ $ nipoppy pipeline install --study <NIPOPPY_STUDY_ROOT> <PATH_TO_PIPELINE_CONFIG
 ```
 ````
 
-
 Running this command will download all pipeline configuration files for fMRIPrep 24.1.1 into the Nipoppy study. Depending on the **pipeline type**, the files will be written to different locations:
+
 - BIDSification pipelines: {{dpath_pipelines}}`/bidsification`
 - Processing pipelines: {{dpath_pipelines}}`/processing`
 - Extraction pipelines: {{dpath_pipelines}}`/extraction`
