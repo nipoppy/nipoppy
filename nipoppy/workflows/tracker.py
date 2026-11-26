@@ -190,15 +190,39 @@ class PipelineTracker(BasePipelineWorkflow):
             self.study.layout.fpath_processing_status,
             dry_run=self.dry_run,
         )
-        if not self.dry_run and change_counts:
-            changes_table = Table(
-                title="Processing status changes", box=box.MINIMAL_DOUBLE_HEAD
+        if self.dry_run:
+            return
+
+        status_counts = self.processing_status_table.get_status_counts(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
+        if status_counts:
+            summary_table = Table(
+                title="Processing status summary", box=box.MINIMAL_DOUBLE_HEAD
             )
-            changes_table.add_column("Change")
-            changes_table.add_column("Count", justify="right")
-            for change, count in change_counts.items():
-                changes_table.add_row(change, str(count))
-            CONSOLE_STDOUT.print(changes_table)
+            summary_table.add_column("Status")
+            summary_table.add_column("Total", justify="right")
+            summary_table.add_column("New", justify="right")
+            for status in sorted(status_counts):
+                summary_table.add_row(
+                    status,
+                    str(status_counts[status]),
+                    str(change_counts[(None, status)]),
+                )
+            CONSOLE_STDOUT.print(summary_table)
+
+        n_lost_success = sum(
+            count
+            for (old_status, _), count in change_counts.items()
+            if old_status == ProcessingStatusTable.status_success
+        )
+        if n_lost_success > 0:
+            logger.warning(
+                f"{n_lost_success} participant-session(s) changed from "
+                f"{ProcessingStatusTable.status_success} to another status"
+            )
 
     def run_main(self):
         """Run the tracker workflow."""
