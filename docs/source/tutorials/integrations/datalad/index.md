@@ -55,8 +55,7 @@ Now we will run the pipeline on a single participant, see the {doc}`main tutoria
 
 ```console
 $ datalad run -m "process single participant/session" \
-    nipoppy process \
-        --pipeline mriqc \
+    nipoppy process mriqc \
         --pipeline-version 23.1.0 \
         --participant-id 09114 \
         --session-id 1pre
@@ -68,9 +67,8 @@ Next we will record the tracking status from the {doc}`main tutorial Step 5 <../
 
 ```console
 $ datalad run -m "Track processing status" \
-    nipoppy track-processing \
+    nipoppy track-processing mriqc \
         --study nipoppy_study \
-        --pipeline mriqc \
         --pipeline-version 23.1.0
 ```
 
@@ -92,7 +90,7 @@ Date:   Fri Jul 11 12:43:47 2025 -0500
     === Do not change lines below ===
     {
      "chain": [],
-     "cmd": "nipoppy track-processing --study nipoppy_study --pipeline mriqc --pipeline-version 23.1.0",
+     "cmd": "nipoppy track-processing mriqc --study nipoppy_study --pipeline-version 23.1.0",
      "dsid": "880521ec-8d70-4fdf-85db-b9cafe4fec2f",
      "exit": 0,
      "extra_inputs": [],
@@ -111,7 +109,7 @@ Date:   Fri Jul 11 12:42:33 2025 -0500
     === Do not change lines below ===
     {
      "chain": [],
-     "cmd": "nipoppy process --pipeline mriqc --pipeline-version 23.1.0 --participant-id 09114 --session-id 1pre",
+     "cmd": "nipoppy process mriqc --pipeline-version 23.1.0 --participant-id 09114 --session-id 1pre",
      "dsid": "880521ec-8d70-4fdf-85db-b9cafe4fec2f",
      "exit": 0,
      "extra_inputs": [],

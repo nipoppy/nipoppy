@@ -348,9 +348,8 @@ def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: di
             [
                 PROGRAM_NAME,
                 "test",
+                "test_pipeline",
                 "--study",
-                "test",
-                "--pipeline",
                 "test",
                 "--participant-id",
                 "P01",
@@ -368,9 +367,8 @@ def test_hpc_runner_submit_error_no_dir(hpc_runner: HPCRunner, submit_kwargs: di
             [
                 PROGRAM_NAME,
                 "test",
+                "test_pipeline",
                 "--study",
-                "test",
-                "--pipeline",
                 "test",
                 "--participant-id",
                 "P01",
@@ -390,6 +388,7 @@ def test_hpc_runner_generate_cli_command(
     hpc_runner: HPCRunner, kwargs: dict, expected_command: list[str]
 ) -> None:
     """Test HPCRunner.generate_cli_command produces correct CLI tokens."""
+    hpc_runner.pipeline_name = "test_pipeline"
     assert hpc_runner.generate_cli_command(**kwargs) == expected_command
 
 

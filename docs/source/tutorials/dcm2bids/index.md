@@ -254,7 +254,7 @@ dcm2bids is a multi-step pipeline in Nipoppy. The steps are detailed in {{dpath_
 **4.1.** We run
 
 ```console
-nipoppy bidsify --study nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step prepare
+nipoppy bidsify dcm2bids --study nipoppy_study --pipeline-version 3.2.0 --pipeline-step prepare
 ```
 
 In our scratch directory we should see something like this now:
@@ -317,7 +317,7 @@ In our case, the `dcm2bids_config.json` can look like this:
 **5.1.** We are now ready to run the "convert" step
 
 ```console
-nipoppy bidsify --study nipoppy_study --pipeline dcm2bids --pipeline-version 3.2.0 --pipeline-step convert
+nipoppy bidsify dcm2bids --study nipoppy_study --pipeline-version 3.2.0 --pipeline-step convert
 ```
 
 After successful conversion, the output of `nipoppy status` should tell us that we have all our participants `in_bids`:

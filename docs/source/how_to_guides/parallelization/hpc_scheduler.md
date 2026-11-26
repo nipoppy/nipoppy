@@ -96,9 +96,8 @@ Set/leave as empty string if the field is not needed.
 To run a pipeline on an HPC, use the `--hpc` option to specify the HPC job scheduler when running the [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`nipoppy process`](<project:../../reference/cli_reference/process.rst>), or [`nipoppy extract`](<project:../../reference/cli_reference/extract.rst>) commands:
 
 ```console
-$ nipoppy <SUBCOMMAND> \
+$ nipoppy <SUBCOMMAND> <PIPELINE_NAME> \
     --study <NIPOPPY_STUDY_ROOT> \
-    --pipeline <PIPELINE_NAME> \
     --hpc slurm
     # other desired options
     # ...

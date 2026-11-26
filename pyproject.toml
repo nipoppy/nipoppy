@@ -28,7 +28,7 @@ dependencies = [
     "pysqa[sge]>=0.2.4",
     "python-dotenv",
     "rich",
-    "rich-click",
+    "rich-click>=1.9",
     "typing-extensions",
 ]
 description = "Standardized organization and processing of neuroimaging-clinical datasets"

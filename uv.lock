@@ -1120,7 +1120,7 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'tests'" },
     { name = "python-dotenv" },
     { name = "rich" },
-    { name = "rich-click" },
+    { name = "rich-click", specifier = ">=1.9" },
     { name = "sphinx", marker = "extra == 'dev'" },
     { name = "sphinx", marker = "extra == 'doc'" },
     { name = "sphinx-autoapi", marker = "extra == 'dev'" },

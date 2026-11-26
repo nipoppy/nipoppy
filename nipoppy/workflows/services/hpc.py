@@ -107,10 +107,9 @@ class HPCRunner:
         command: list[str] = [
             PROGRAM_NAME,
             self.subcommand,
+            self.pipeline_name,
             "--study",
             str(self.dpath_root),
-            "--pipeline",
-            self.pipeline_name,
         ]
         default_options: dict[str, Any] = {
             "--pipeline-version": self.pipeline_version,
