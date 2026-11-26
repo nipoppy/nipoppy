@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import signal
 import threading
 
@@ -15,6 +16,7 @@ from opentelemetry.sdk.metrics.export import (
 )
 
 from nipoppy.env import (
+    TELEMETRY_ENV_VAR,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
 )
 from nipoppy.exceptions import ReturnCode
@@ -23,6 +25,8 @@ from nipoppy.workflows.services.telemetry import (
     _get_user_country,
     _TelemetryHandler,
     get_telemetry_handler,
+    get_telemetry_preference,
+    prompt_for_telemetry_preference,
 )
 
 
@@ -390,3 +394,64 @@ class TestGetTelemetryHandler:
         """Later calls do not set up telemetry again."""
         provider = get_telemetry_handler().provider
         assert get_telemetry_handler().provider is provider
+
+
+class _FakeTTY(io.StringIO):
+    def isatty(self) -> bool:
+        return True
+
+
+class TestGetTelemetryPreference:
+    def test_unset_is_none(self, monkeypatch):
+        """No recorded preference is distinguishable from an opt-out."""
+        monkeypatch.delenv(TELEMETRY_ENV_VAR)
+        assert get_telemetry_preference() is None
+
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("1", True),
+            ("true", True),
+            (" True ", True),
+            ("0", False),
+            ("false", False),
+            ("", False),
+            ("garbage", False),
+        ],
+    )
+    def test_values(self, monkeypatch, value, expected):
+        """Only 1 and true (any case) opt in."""
+        monkeypatch.setenv(TELEMETRY_ENV_VAR, value)
+        assert get_telemetry_preference() is expected
+
+
+class TestPromptForTelemetryPreference:
+    def test_no_prompt_without_a_terminal(self, monkeypatch, mocker):
+        """Non-interactive runs are never blocked waiting for input."""
+        monkeypatch.setattr("sys.stdin", io.StringIO("y\n"))
+        mocked_select = mocker.patch.object(telemetry_module.select, "select")
+
+        assert prompt_for_telemetry_preference() is False
+        mocked_select.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "answer,expected",
+        [("y\n", True), ("YES\n", True), ("n\n", False), ("\n", False)],
+    )
+    def test_answer(self, monkeypatch, answer, expected):
+        """Only an explicit yes opts in."""
+        monkeypatch.setattr("sys.stdin", _FakeTTY(answer))
+        monkeypatch.setattr(
+            telemetry_module.select, "select", lambda r, w, x, t: (r, [], [])
+        )
+        assert prompt_for_telemetry_preference() is expected
+
+    def test_timeout_means_no(self, monkeypatch, mocker):
+        """No answer within the timeout opts out."""
+        monkeypatch.setattr("sys.stdin", _FakeTTY("y\n"))
+        mocked_select = mocker.patch.object(
+            telemetry_module.select, "select", return_value=([], [], [])
+        )
+
+        assert prompt_for_telemetry_preference(timeout=3) is False
+        assert mocked_select.call_args.args[3] == 3

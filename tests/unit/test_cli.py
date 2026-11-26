@@ -6,6 +6,7 @@ import importlib
 import inspect
 import json
 import logging
+import os
 import shlex
 from pathlib import Path
 
@@ -22,6 +23,7 @@ from nipoppy.cli import (
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
 from nipoppy.cli.options import dataset_option
+from nipoppy.env import TELEMETRY_ENV_VAR
 from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
@@ -361,6 +363,29 @@ def test_cli_command(
     if workflow:
         mocker.patch(f"{workflow}.run")
     _assert_command_success(command)
+
+
+@pytest.mark.parametrize(
+    "recorded,flag,expected",
+    [("1", "--notrack", "0"), ("0", "--telemetry", "1"), ("1", None, "1")],
+)
+def test_cli_telemetry_flag(
+    recorded: str,
+    flag: str | None,
+    expected: str,
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: pytest_mock.MockerFixture,
+    tmp_path: Path,
+):
+    monkeypatch.setenv(TELEMETRY_ENV_VAR, recorded)
+    mocker.patch("nipoppy.workflows.dataset_status.StatusWorkflow.run")
+    args = ["status", "--dataset", str(tmp_path)]
+    if flag is not None:
+        args.append(flag)
+
+    _assert_command_success(args)
+
+    assert os.environ[TELEMETRY_ENV_VAR] == expected
 
 
 def test_context_manager_no_exception(mocker):

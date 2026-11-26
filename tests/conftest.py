@@ -18,6 +18,7 @@ from nipoppy.config.main import Config
 from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import (
     NIPOPPY_DIR_NAME,
+    TELEMETRY_ENV_VAR,
     ConfigType,
     PipelineTypeEnum,
     StrOrPathLike,
@@ -98,6 +99,13 @@ def datetime_fixture(
     mocked_datetime.datetime.now.return_value = MOCKED_DATETIME
     mocked_datetime.datetime.today.return_value = MOCKED_DATETIME
     yield mocked_datetime
+
+
+@pytest.fixture(autouse=True)
+def disable_telemetry(monkeypatch: pytest.MonkeyPatch):
+    """Record an opt-out so tests never prompt or send telemetry."""
+    # setenv also undoes any change the code under test makes to this variable
+    monkeypatch.setenv(TELEMETRY_ENV_VAR, "0")
 
 
 @pytest.fixture()

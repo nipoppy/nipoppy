@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from nipoppy.env import TELEMETRY_ENV_VAR
 from nipoppy.workflows.base import BaseWorkflow, LogPrefix, _log_command, _run_command
 
 
@@ -102,3 +103,28 @@ def test_run_command_quiet(caplog: pytest.LogCaptureFixture):
     _run_command(["echo", message], quiet=True)
     assert LogPrefix.RUN not in caplog.text
     assert message in caplog.text
+
+
+@pytest.mark.parametrize(
+    "preference,expect_telemetry",
+    [("1", True), ("0", False), (None, False)],
+)
+def test_run_setup_respects_telemetry_preference(
+    workflow: BaseWorkflow,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    preference,
+    expect_telemetry,
+):
+    if preference is None:
+        monkeypatch.delenv(TELEMETRY_ENV_VAR)
+    else:
+        monkeypatch.setenv(TELEMETRY_ENV_VAR, preference)
+    monkeypatch.setattr(
+        "nipoppy.workflows.base.get_telemetry_handler", lambda: "handler"
+    )
+
+    workflow.run_setup()
+
+    assert (workflow._telemetry is not None) is expect_telemetry
+    assert f"Telemetry enabled: {expect_telemetry}" in caplog.text

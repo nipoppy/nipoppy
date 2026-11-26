@@ -63,6 +63,8 @@ TELEMETRY_ENDPOINT = "https://telemetry.nipoppy.org"  # need https:// for TLS
 TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS = 1000
 # Short timeout so an unreachable collector cannot stall shutdown
 TELEMETRY_EXPORT_TIMEOUT_SECONDS = 1
+TELEMETRY_ENV_VAR = "NIPOPPY_TELEMETRY_ENABLED"
+TELEMETRY_PROMPT_TIMEOUT_SECONDS = 10
 
 # dotenv files
 # from highest to lowest priority

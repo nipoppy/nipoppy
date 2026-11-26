@@ -5,6 +5,8 @@ from __future__ import annotations
 # Shutdown pattern reference:
 # https://oneuptime.com/blog/post/2026-02-06-otel-sdk-shutdown-python-atexit-sigterm/view
 import atexit
+import os
+import select
 import signal
 import sys
 import threading
@@ -22,12 +24,15 @@ from opentelemetry.sdk.metrics.export import (
 )
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import (
     PROGRAM_NAME,
     PROGRAM_VERSION,
     TELEMETRY_ENDPOINT,
+    TELEMETRY_ENV_VAR,
     TELEMETRY_EXPORT_TIMEOUT_SECONDS,
     TELEMETRY_MAX_EXPORT_INTERVAL_MILLIS,
+    TELEMETRY_PROMPT_TIMEOUT_SECONDS,
 )
 from nipoppy.exceptions import ReturnCode
 from nipoppy.logger import get_logger
@@ -253,6 +258,38 @@ class _TelemetryHandler:
         self.provider = None
         self.metrics = None
         self._initialized = False
+
+
+def get_telemetry_preference() -> bool | None:
+    """Return the recorded telemetry preference, or None if there is none."""
+    value = os.getenv(TELEMETRY_ENV_VAR)
+    if value is None:
+        return None
+    return value.strip().lower() in ("1", "true")
+
+
+def prompt_for_telemetry_preference(
+    timeout: float = TELEMETRY_PROMPT_TIMEOUT_SECONDS,
+) -> bool:
+    """Ask whether to enable telemetry, defaulting to No.
+
+    Returns False without asking when there is no terminal to prompt on, and when
+    the user does not answer within ``timeout`` seconds.
+    """
+    if not sys.stdin.isatty():
+        return False
+
+    CONSOLE_STDOUT.print(
+        f"{PROGRAM_NAME} can send anonymous usage statistics (command name, "
+        "success/failure, version, and country looked up from your IP address) "
+        "to help guide development.\n"
+        f"Enable telemetry for this dataset? [y/N] (No after {timeout:g}s)",
+        markup=False,
+    )
+    ready, _, _ = select.select([sys.stdin], [], [], timeout)
+    if not ready:
+        return False
+    return sys.stdin.readline().strip().lower() in ("y", "yes")
 
 
 _telemetry_handler: _TelemetryHandler | None = None
