@@ -110,7 +110,7 @@ max-complexity = 12
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["D104", "F401"]
-"**/test_*.py" = ["D100", "D101", "D103"]
+"**/test_*.py" = ["D100", "D101", "D102", "D103"]
 "docs/source/conf.py" = ["E501"]
 "tests/unit/workflows/test_*.py" = ["E501"]
 
