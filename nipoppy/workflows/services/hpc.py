@@ -119,8 +119,7 @@ class HPCRunner:
         """
         Submit a job to the HPC scheduler.
 
-        If the queue limit applies, only the first N commands (in order) are
-        submitted, where N is the number of available queue slots, and N is returned.
+        If the number of commands provided exceeds the queue capacity or `queue_limit`, only the first N commands (in order) are submitted, where N is the number of available queue slots, and N is returned.
 
         Parameters
         ----------

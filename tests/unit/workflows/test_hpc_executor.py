@@ -98,6 +98,7 @@ def test_load_hpc_config(
 
 
 def test_load_hpc_config_no_file(executor: HPCExecutor):
+    # HPC config file name in executor is None
     assert executor._load_hpc_config() == HpcConfig()
 
 
@@ -134,11 +135,6 @@ def _expected_base_command(workflow: SimpleNamespace) -> list[str]:
         ),
         (
             {"participant_id": "P01", "session_id": "1"},
-            [],
-            ["--participant-id", "P01", "--session-id", "1"],
-        ),
-        (
-            {"participant_id": "P01", "session_id": "1"},
             ["--flag1", "--flag2"],
             ["--participant-id", "P01", "--session-id", "1", "--flag1", "--flag2"],
         ),
@@ -162,9 +158,7 @@ def test_generate_cli_command(
     )
 
 
-def test_generate_cli_command_keep_workdir(
-    workflow: SimpleNamespace,
-):
+def test_generate_cli_command_keep_workdir(workflow: SimpleNamespace):
     workflow.keep_workdir = True
     executor = HPCExecutor(workflow, hpc_cluster="slurm")
     command = executor.generate_cli_command(participant_id="P01", session_id="1")
@@ -250,14 +244,14 @@ def test_execute(
 @pytest.mark.parametrize(
     "n_submitted,expected_return_code,expected_level,expected_message",
     [
-        (3, ReturnCode.SUCCESS, "SUCCESS", "Successfully submitted 3 HPC job(s)"),
+        (3, ReturnCode.SUCCESS, "INFO", "Successfully submitted 3 HPC job(s)"),
         (
             2,
             ReturnCode.PARTIAL_SUCCESS,
             "WARNING",
             "Submitted 2 out of 3 HPC job(s); the HPC queue limit was reached",
         ),
-        (0, ReturnCode.FAILURE, "FAILURE", "Failed to submit HPC jobs"),
+        (0, ReturnCode.FAILURE, "ERROR", "Failed to submit HPC jobs"),
     ],
 )
 @pytest.mark.no_xdist
@@ -278,12 +272,10 @@ def test_execute_return_code(
     assert result.return_code == expected_return_code
     assert result.succeeded == items[:n_submitted]
     assert result.failed == items[n_submitted:]
-    assert expected_message in caplog.text
-    if expected_level == "WARNING":
-        assert any(
-            record.levelname == "WARNING" and expected_message in record.message
-            for record in caplog.records
-        )
+    assert any(
+        record.levelname == expected_level and expected_message in record.message
+        for record in caplog.records
+    )
 
 
 def test_execute_empty(executor: HPCExecutor, mocked_hpc_runner):

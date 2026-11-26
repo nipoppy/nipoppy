@@ -164,7 +164,7 @@ class ProcessingRunner(Runner):
 
     @property
     def extra_cli_flags(self) -> list[str]:
-        """Forward --tar so remote runs also archive results."""
+        """Forward --tar so HPC runs also archive results."""
         return ["--tar"] if self.tar else []
 
     def run_setup(self):

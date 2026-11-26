@@ -177,7 +177,6 @@ class HPCExecutor(Executor[None]):
         workflow = self.workflow
 
         if not items:
-            # the workflow logs the "no participants or sessions" warning
             return ExecutionResult(
                 ReturnCode.NO_PARTICIPANTS_OR_SESSIONS_TO_RUN, [], []
             )
@@ -209,7 +208,6 @@ class HPCExecutor(Executor[None]):
             participant_ids=participant_ids,
             session_ids=session_ids,
             dpath_work=workflow.dpath_pipeline_work,
-            # HPC job logs go in <logs>/hpc
             dpath_hpc_logs=workflow.study.layout.dpath_logs / "hpc",
             pipeline_name=workflow.pipeline_name,
             pipeline_version=workflow.pipeline_version,
@@ -217,8 +215,7 @@ class HPCExecutor(Executor[None]):
             dry_run=workflow.dry_run,
         )
 
-        # HPCRunner.submit submits only the first N commands (in order) when the
-        # queue limit applies and returns N; see its docstring for the contract.
+        # Not all jobs have necessarily been submitted.
         successful = items[:n_submitted]
         failed = items[n_submitted:]
 
