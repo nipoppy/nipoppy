@@ -56,17 +56,6 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def create_descriptor(self, descriptor_path: Path, /) -> None:
-        """Create an example descriptor.
-
-        Parameters
-        ----------
-        descriptor_path : Path
-            Path where the descriptor should be written.
-        """
-        ...
-
-    @abstractmethod
     def generate_example_invocation(self, descriptor_path: Path, /) -> str:
         """Generate an example invocation for a descriptor.
 
@@ -114,9 +103,6 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
                 f"Invocation {invocation} is invalid: {str(exception)}"
             ) from exception
 
-    def create_descriptor(self, descriptor_path: Path, /) -> None:  # noqa: D102
-        boutiques.create(str(descriptor_path))
-
     def generate_example_invocation(  # noqa: D102
         self, descriptor_path: Path, /
     ) -> str:
@@ -134,11 +120,6 @@ class BoutiquesNextAPI(BoutiquesAPI):
     def validate_invocation(  # noqa: D102
         self, invocation: StrOrPathLike, *, descriptor: StrOrPathLike
     ) -> None:
-        raise NotImplementedError(
-            f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
-        )
-
-    def create_descriptor(self, descriptor_path: Path, /) -> None:  # noqa: D102
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )

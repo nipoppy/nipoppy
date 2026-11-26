@@ -86,14 +86,6 @@ def test_validate_invocation_error(descriptor_str: str):
         )
 
 
-def test_create_descriptor(tmp_path: Path):
-    output_path = tmp_path / "descriptor.json"
-
-    boutiques_api.create_descriptor(output_path)
-
-    boutiques_api.validate_descriptor(output_path.read_text())
-
-
 def test_generate_example_invocation(descriptor_str: str, tmp_path: Path):
     descriptor_path = tmp_path / "descriptor.json"
     descriptor_path.write_text(descriptor_str)
