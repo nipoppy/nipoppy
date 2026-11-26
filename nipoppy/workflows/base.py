@@ -31,6 +31,7 @@ from nipoppy.utils.utils import (
 from nipoppy.workflows.services.telemetry import (
     _TelemetryHandler,
     get_telemetry_handler,
+    get_telemetry_preference,
 )
 
 logger = get_logger()
@@ -192,8 +193,9 @@ class BaseWorkflow(Base, ABC):
         logger.debug(self)
         if self.dry_run:
             logger.info("Doing a dry run")
-        else:
+        elif get_telemetry_preference():
             self._telemetry = get_telemetry_handler()
+        logger.debug(f"Telemetry enabled: {self._telemetry is not None}")
 
     @abstractmethod
     def run_main(self):

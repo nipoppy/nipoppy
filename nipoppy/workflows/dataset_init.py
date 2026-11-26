@@ -1,5 +1,6 @@
 """Workflow for init command."""
 
+import os
 import warnings
 from pathlib import Path
 
@@ -13,6 +14,7 @@ from nipoppy.env import (
     FPATH_USER_CONFIG,
     NIPOPPY_DIR_NAME,
     PROGRAM_VERSION,
+    TELEMETRY_ENV_VAR,
     PipelineTypeEnum,
     StrOrPathLike,
 )
@@ -33,6 +35,10 @@ from nipoppy.utils.utils import (
     FPATH_SAMPLE_MANIFEST,
 )
 from nipoppy.workflows.base import BaseDatasetWorkflow
+from nipoppy.workflows.services.telemetry import (
+    get_telemetry_preference,
+    prompt_for_telemetry_preference,
+)
 
 logger = get_logger()
 
@@ -68,6 +74,14 @@ class InitWorkflow(BaseDatasetWorkflow):
         self.force = force
         self.container_store = container_store
         self.default_config = default_config
+        self._telemetry_choice: bool | None = None
+
+    def run_setup(self):
+        """Ask for a telemetry preference if none is recorded."""
+        if not self.dry_run and get_telemetry_preference() is None:
+            self._telemetry_choice = prompt_for_telemetry_preference()
+            os.environ[TELEMETRY_ENV_VAR] = "1" if self._telemetry_choice else "0"
+        super().run_setup()
 
     def run_main(self):
         """Create dataset directory structure.
@@ -151,7 +165,21 @@ class InitWorkflow(BaseDatasetWorkflow):
             dry_run=self.dry_run,
         )
 
+        if self._telemetry_choice is not None:
+            self._save_telemetry_choice()
+
         logger.success(f"Successfully initialized a dataset at {self.dpath_root}!")
+
+    def _save_telemetry_choice(self) -> None:
+        # written after _validate_study_root, which rejects a non-empty root
+        line = f"{TELEMETRY_ENV_VAR}={int(self._telemetry_choice)}"
+        with (self.dpath_root / ".env").open("a") as file:
+            file.write(f"{line}\n")
+        logger.info(
+            f"Telemetry preference saved to {self.dpath_root / '.env'}. "
+            "To apply it to all your datasets, run:\n"
+            f"    mkdir -p ~/.nipoppy && echo '{line}' >> ~/.nipoppy/.env"
+        )
 
     def _validate_study_root(self) -> None:
         if not self.dpath_root.exists():

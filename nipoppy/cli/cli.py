@@ -77,6 +77,7 @@ click.rich_click.OPTION_GROUPS = {
             "options": [
                 "--verbose",
                 "--dry-run",
+                "--telemetry",
                 "--simulate",
                 "--keep-workdir",
             ],

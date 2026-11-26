@@ -11,7 +11,7 @@ import pytest
 import pytest_mock
 from fids import fids
 
-from nipoppy.env import FAKE_SESSION_ID, PROGRAM_VERSION
+from nipoppy.env import FAKE_SESSION_ID, PROGRAM_VERSION, TELEMETRY_ENV_VAR
 from nipoppy.exceptions import FileOperationError
 from nipoppy.tabular.manifest import Manifest
 from nipoppy.utils import fileops
@@ -564,3 +564,53 @@ def test_manifest_from_bids_dataset_no_sessions(
     _assert_manifest_creation(
         workflow, participant_ids=["01"], session_ids=[FAKE_SESSION_ID]
     )
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize("answer", [True, False])
+def test_run_saves_telemetry_choice(
+    workflow: InitWorkflow,
+    answer: bool,
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: pytest_mock.MockerFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    monkeypatch.delenv(TELEMETRY_ENV_VAR)
+    mocker.patch(
+        "nipoppy.workflows.dataset_init.prompt_for_telemetry_preference",
+        return_value=answer,
+    )
+    mocked_get_handler = mocker.patch("nipoppy.workflows.base.get_telemetry_handler")
+
+    workflow.run()
+
+    _assert_layout_creation(workflow)
+    line = f"{TELEMETRY_ENV_VAR}={int(answer)}"
+    assert (workflow.dpath_root / ".env").read_text() == f"{line}\n"
+    assert os.environ[TELEMETRY_ENV_VAR] == str(int(answer))
+    assert mocked_get_handler.called is answer
+    assert f"mkdir -p ~/.nipoppy && echo '{line}' >> ~/.nipoppy/.env" in caplog.text
+
+
+@pytest.mark.parametrize("dry_run,preference", [(False, "1"), (True, None)])
+def test_run_does_not_ask_for_telemetry(
+    workflow: InitWorkflow,
+    dry_run: bool,
+    preference: str | None,
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: pytest_mock.MockerFixture,
+):
+    if preference is None:
+        monkeypatch.delenv(TELEMETRY_ENV_VAR)
+    else:
+        monkeypatch.setenv(TELEMETRY_ENV_VAR, preference)
+    mocked_prompt = mocker.patch(
+        "nipoppy.workflows.dataset_init.prompt_for_telemetry_preference"
+    )
+    mocker.patch("nipoppy.workflows.base.get_telemetry_handler")
+    workflow.dry_run = dry_run
+
+    workflow.run()
+
+    mocked_prompt.assert_not_called()
+    assert not (workflow.dpath_root / ".env").exists()
