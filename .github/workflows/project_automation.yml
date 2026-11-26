@@ -54,6 +54,16 @@ jobs:
           resource_node_id: ${{ github.event.issue.node_id }}
           status_value: ${{ env.assigned }} # Target status
 
+      - name: Move issue to ${{ env.done }}
+        if: github.event_name == 'issues' && github.event.action == 'closed' && github.event.issue.state_reason == 'completed'
+        uses: leonsteinhaeuser/project-beta-automations@v2.2.1
+        with:
+          gh_token: ${{ steps.generate-token.outputs.token }}
+          organization: ${{ env.organization }}
+          project_id: ${{ env.project_id }}
+          resource_node_id: ${{ github.event.issue.node_id }}
+          status_value: ${{ env.done }} # Target status
+
       - name: Move issue to ${{ env.cancelled }}
         if: github.event_name == 'issues' && github.event.action == 'closed' && (github.event.issue.state_reason == 'not_planned' || github.event.issue.state_reason == 'duplicate')
         uses: leonsteinhaeuser/project-beta-automations@v2.2.1
