@@ -36,7 +36,6 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Command-specific",
             "options": [
-                "--study",
                 "--pipeline",
                 "--pipeline-version",
                 "--pipeline-step",
@@ -87,6 +86,7 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Miscellaneous",
             "options": [
+                "--study",
                 "--force",
                 "--assume-yes",
                 "--layout",
