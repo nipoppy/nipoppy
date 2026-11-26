@@ -50,11 +50,12 @@ def test_log_command(command, caplog: pytest.LogCaptureFixture):
     assert command in record.message
 
 
-class MyCustomException(NipoppyError):
-    code = 999
-
-
 class TestRun:
+    class MyCustomException(NipoppyError):
+        """Custom exception with its own return code."""
+
+        code = 999
+
     def test_run(self, workflow: BaseWorkflow):
         """Test that run() completes without error."""
         assert workflow.run() is None
@@ -63,10 +64,10 @@ class TestRun:
         self, workflow: BaseWorkflow, mocker: pytest_mock.MockerFixture
     ):
         """Test that return code of a failed run does not carry over to the next."""
-        mocker.patch.object(workflow, "run_main", side_effect=MyCustomException)
-        with pytest.raises(MyCustomException):
+        mocker.patch.object(workflow, "run_main", side_effect=self.MyCustomException)
+        with pytest.raises(self.MyCustomException):
             workflow.run()
-        assert workflow.return_code == MyCustomException.code
+        assert workflow.return_code == self.MyCustomException.code
 
         mocker.patch.object(workflow, "run_main", side_effect=None)
         workflow.run()
@@ -220,13 +221,13 @@ class TestRun:
     def test_run_exception(
         self, workflow: BaseWorkflow, method: str, mocker: pytest_mock.MockerFixture
     ):
-        """Test that an exception raised during the workflow sets the return code."""
-        mocker.patch.object(workflow, method, side_effect=MyCustomException)
+        """Test that an exception raised in any workflow step sets the return code."""
+        mocker.patch.object(workflow, method, side_effect=self.MyCustomException)
 
-        with pytest.raises(MyCustomException):
+        with pytest.raises(self.MyCustomException):
             workflow.run()
 
-        assert workflow.return_code == MyCustomException.code
+        assert workflow.return_code == self.MyCustomException.code
 
 
 class TestRunAndExit:
