@@ -233,18 +233,3 @@ def test_get_participants_sessions_to_run(
             participant_id=participant_id, session_id=session_id
         )
     ] == expected
-
-
-def test_generate_cli_command_for_hpc(
-    workflow: BIDSificationRunner,
-    mocker: pytest_mock.MockFixture,
-):
-    mocked_generate_cli_command = mocker.patch.object(
-        workflow.hpc_runner,
-        "generate_cli_command",
-    )
-    workflow._generate_cli_command_for_hpc("p01", "s01")
-    mocked_generate_cli_command.assert_called_once_with(
-        participant_id="p01",
-        session_id="s01",
-    )

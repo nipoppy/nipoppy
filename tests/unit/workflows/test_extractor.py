@@ -295,18 +295,3 @@ def test_pipeline_config(extractor: ExtractionRunner):
 
 def test_pipeline_step_config(extractor: ExtractionRunner):
     assert isinstance(extractor.pipeline_step_config, ExtractionPipelineStepConfig)
-
-
-def test_generate_cli_command_for_hpc(
-    extractor: ExtractionRunner,
-    mocker: pytest_mock.MockFixture,
-):
-    mocked_generate_cli_command = mocker.patch.object(
-        extractor.hpc_runner,
-        "generate_cli_command",
-    )
-    extractor._generate_cli_command_for_hpc("p01", "s01")
-    mocked_generate_cli_command.assert_called_once_with(
-        participant_id="p01",
-        session_id="s01",
-    )

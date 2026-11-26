@@ -162,15 +162,16 @@ class ProcessingRunner(Runner):
             if participant_session not in participants_sessions_completed:
                 yield participant_session
 
-    def _generate_cli_command_for_hpc(
-        self, participant_id: str | None = None, session_id: str | None = None
+    def generate_cli_command(
+        self, participant_id: str | None, session_id: str | None
     ) -> list[str]:
-        """Generate the CLI command to be run on the HPC cluster."""
-        return self.hpc_runner.generate_cli_command(
-            participant_id=participant_id,
-            session_id=session_id,
-            extra_flags=["--tar"] if self.tar else None,
+        """Generate the CLI command, forwarding --tar if archiving is requested."""
+        command = super().generate_cli_command(
+            participant_id=participant_id, session_id=session_id
         )
+        if self.tar:
+            command.append("--tar")
+        return command
 
     def run_setup(self):
         """Run pipeline runner setup."""
