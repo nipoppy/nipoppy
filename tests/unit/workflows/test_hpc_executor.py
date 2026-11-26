@@ -13,13 +13,12 @@ from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import ReturnCode
 from nipoppy.utils.utils import get_pipeline_tag
 from nipoppy.workflows.executor import Executor, WorkItem
-from nipoppy.workflows.hpc_executor import HPCExecutor, HPCWorkflowContext
-from nipoppy.workflows.runner import Runner
+from nipoppy.workflows.hpc_executor import HPCExecutor
 
 
 @pytest.fixture(scope="function")
 def workflow(tmp_path: Path) -> SimpleNamespace:
-    """Fake workflow that satisfies HPCWorkflowContext."""
+    """Fake workflow with the attributes that HPCExecutor reads."""
     return SimpleNamespace(
         subcommand="process",
         dpath_root=tmp_path / "study",
@@ -65,13 +64,6 @@ def test_work_item_frozen_and_hashable():
 
 def test_is_executor(executor: HPCExecutor):
     assert isinstance(executor, Executor)
-
-
-def test_runner_satisfies_workflow_context(runner: Runner):
-    ctx: HPCWorkflowContext = runner  # noqa: F841 (static type check)
-    names = list(HPCWorkflowContext.__annotations__) + ["process_template_json"]
-    for name in names:
-        assert hasattr(runner, name), f"Runner is missing {name}"
 
 
 @pytest.mark.parametrize("hpc_config_data", [{}, {"CORES": "8", "MEMORY": "32G"}])

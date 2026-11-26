@@ -3,87 +3,35 @@
 from __future__ import annotations
 
 import shlex
-from pathlib import Path
-from typing import Any, Protocol
+from typing import Any
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.config.pipeline_step import ProcPipelineStepConfig
-from nipoppy.env import PROGRAM_NAME, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import ReturnCode
 from nipoppy.logger import get_logger
-from nipoppy.study import Study
 from nipoppy.utils.utils import get_pipeline_tag, load_json
 from nipoppy.workflows.executor import ExecutionResult, Executor, WorkItem
+from nipoppy.workflows.runner import Runner
 from nipoppy.workflows.services.hpc import HPCRunner
 
 logger = get_logger()
 
 
-class HPCWorkflowContext(Protocol):
-    """The narrow view of a pipeline workflow that is needed to submit HPC jobs.
-
-    The members are read only inside ``HPCExecutor.execute()`` (and
-    ``generate_cli_command()``), and are valid only after the workflow's
-    ``run_setup``.
-
-    This is a two-way object reference (the workflow holds the executor, and the
-    executor holds this narrow view of the workflow), not an import cycle. It
-    mirrors the ``work_fn=self.run_single`` callback of ``LocalExecutor`` in
-    nipoppy/nipoppy#1224.
-
-    All HPC-specific knowledge stays in this module:
-    ``pipeline_step_config.HPC_CONFIG_FILE``, ``study.layout.dpath_hpc`` and
-    ``dpath_logs``, and ``study.config.HPC_PREAMBLE`` and ``HPC_QUEUE_LIMIT``.
-    """
-
-    subcommand: str
-    dpath_root: Path
-    fpath_layout: StrOrPathLike | None
-    pipeline_name: str
-    pipeline_version: str | None
-    pipeline_step: str | None
-    pipeline_step_config: ProcPipelineStepConfig
-    dpath_pipeline_bundle: Path
-    dpath_pipeline_work: Path
-    participant_id: str | None
-    session_id: str | None
-    keep_workdir: bool
-    verbose: bool
-    dry_run: bool
-    study: Study
-
-    @property
-    def extra_cli_flags(self) -> list[str]:
-        """Workflow-specific CLI flags to reproduce the run."""
-        ...
-
-    def process_template_json(
-        self,
-        template_json: dict,
-        participant_id: str | None = None,
-        session_id: str | None = None,
-        bids_participant_id: str | None = None,
-        bids_session_id: str | None = None,
-        objs: list | None = None,
-        return_str: bool = False,
-        with_substitutions: bool = True,
-        **kwargs,
-    ):
-        """Replace template strings in a JSON object."""
-        ...
-
-
 class HPCExecutor(Executor[None]):
     """Submit work items as an array job to an HPC cluster.
 
-    Nothing is read from the workflow until ``execute()`` or
-    ``generate_cli_command()`` is called, since the executor is created before the
-    workflow's setup phase.
+    The workflow's attributes are read lazily in ``execute()``, so they are only
+    valid after the workflow's ``run_setup``. The executor reads the pipeline
+    config, bundle path, Boutiques template processing, CLI options and
+    ``extra_cli_flags`` from the workflow.
+
+    The workflow's ``__init__`` rejects the combination of an HPC executor with
+    ``write_subcohort``, so the executor is never used when a subcohort is written.
     """
 
     def __init__(
         self,
-        workflow: HPCWorkflowContext,
+        workflow: Runner,
         hpc_cluster: str,
     ):
         self.workflow = workflow
