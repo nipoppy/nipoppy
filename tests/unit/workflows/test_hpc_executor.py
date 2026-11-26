@@ -9,7 +9,6 @@ import pytest
 import pytest_mock
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import ReturnCode
 from nipoppy.utils.utils import get_pipeline_tag
 from nipoppy.workflows.executor import Executor, WorkItem
@@ -44,7 +43,14 @@ def workflow(tmp_path: Path) -> SimpleNamespace:
                 HPC_PREAMBLE=["module load x"], HPC_QUEUE_LIMIT=None
             ),
         ),
-        extra_cli_flags=[],
+        generate_cli_command=lambda participant_id, session_id: [
+            "nipoppy",
+            "process",
+            "--participant-id",
+            str(participant_id),
+            "--session-id",
+            str(session_id),
+        ],
         process_template_json=lambda template_json, **kwargs: template_json,
     )
 
@@ -102,83 +108,6 @@ def test_build_hpc_runner(executor: HPCExecutor, workflow: SimpleNamespace):
     assert hpc_runner.preamble == ["module load x"]
 
 
-def _expected_base_command(workflow: SimpleNamespace) -> list[str]:
-    return [
-        PROGRAM_NAME,
-        workflow.subcommand,
-        "--study",
-        str(workflow.dpath_root),
-        "--pipeline",
-        workflow.pipeline_name,
-        "--pipeline-version",
-        workflow.pipeline_version,
-        "--pipeline-step",
-        workflow.pipeline_step,
-    ]
-
-
-@pytest.mark.parametrize(
-    "kwargs,extra_cli_flags,expected_suffix",
-    [
-        (
-            {"participant_id": "P01", "session_id": "1"},
-            [],
-            ["--participant-id", "P01", "--session-id", "1"],
-        ),
-        (
-            {"participant_id": "P01", "session_id": "1"},
-            ["--flag1", "--flag2"],
-            ["--participant-id", "P01", "--session-id", "1", "--flag1", "--flag2"],
-        ),
-        (
-            {"participant_id": None, "session_id": "1"},
-            ["--tar"],
-            ["--session-id", "1", "--tar"],
-        ),
-    ],
-)
-def test_generate_cli_command(
-    kwargs: dict,
-    extra_cli_flags: list[str],
-    expected_suffix: list[str],
-    workflow: SimpleNamespace,
-):
-    workflow.extra_cli_flags = extra_cli_flags
-    executor = HPCExecutor(workflow, hpc_cluster="slurm")
-    assert executor.generate_cli_command(**kwargs) == (
-        _expected_base_command(workflow) + expected_suffix
-    )
-
-
-def test_generate_cli_command_keep_workdir(workflow: SimpleNamespace):
-    workflow.keep_workdir = True
-    executor = HPCExecutor(workflow, hpc_cluster="slurm")
-    command = executor.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--keep-workdir" in command
-
-
-def test_generate_cli_command_verbose(workflow: SimpleNamespace):
-    workflow.verbose = True
-    executor = HPCExecutor(workflow, hpc_cluster="slurm")
-    command = executor.generate_cli_command(participant_id="P01", session_id="1")
-    assert "--verbose" in command
-
-
-def test_generate_cli_command_layout(workflow: SimpleNamespace):
-    workflow.fpath_layout = "layout.json"
-    executor = HPCExecutor(workflow, hpc_cluster="slurm")
-    command = executor.generate_cli_command(participant_id="P01", session_id="1")
-    assert command[command.index("--layout") + 1] == "layout.json"
-
-
-def test_generate_cli_command_fails_duplicate_flags(workflow: SimpleNamespace):
-    workflow.keep_workdir = True  # this sets --keep-workdir
-    workflow.extra_cli_flags = ["--keep-workdir"]
-    executor = HPCExecutor(workflow, hpc_cluster="slurm")
-    with pytest.raises(ValueError, match="Flag .* is already in the command"):
-        executor.generate_cli_command(participant_id="P01", session_id="1")
-
-
 @pytest.fixture(scope="function")
 def mocked_hpc_runner(mocker: pytest_mock.MockFixture):
     """Patch the HPCRunner class used by the executor."""
@@ -191,16 +120,6 @@ def test_execute(
     mocked_hpc_runner,
     mocker: pytest_mock.MockFixture,
 ):
-    mocker.patch.object(
-        executor,
-        "generate_cli_command",
-        side_effect=(
-            lambda participant_id, session_id: [
-                "echo",
-                f"{participant_id}, {session_id}",
-            ]
-        ),
-    )
     mocked_hpc_runner.submit.return_value = 2
 
     items = [WorkItem("participant1", "session1"), WorkItem("participant2", "session2")]
@@ -215,8 +134,8 @@ def test_execute(
             workflow.session_id,
         ),
         job_array_commands=[
-            "echo 'participant1, session1'",
-            "echo 'participant2, session2'",
+            "nipoppy process --participant-id participant1 --session-id session1",
+            "nipoppy process --participant-id participant2 --session-id session2",
         ],
         participant_ids=["participant1", "participant2"],
         session_ids=["session1", "session2"],

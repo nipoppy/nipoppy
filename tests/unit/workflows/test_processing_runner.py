@@ -710,7 +710,11 @@ def test_run_main_write_subcohort(
     mocked_write_subcohort_to_file.assert_called_once()
 
 
-@pytest.mark.parametrize("tar,expected", [(True, ["--tar"]), (False, [])])
-def test_extra_cli_flags(tar: bool, expected: list[str], runner: ProcessingRunner):
+@pytest.mark.parametrize("tar", [True, False])
+def test_generate_cli_command_tar(tar: bool, runner: ProcessingRunner):
     runner.tar = tar
-    assert runner.extra_cli_flags == expected
+    command = runner.generate_cli_command("01", "1")
+    if tar:
+        assert command[-1] == "--tar"
+    else:
+        assert "--tar" not in command

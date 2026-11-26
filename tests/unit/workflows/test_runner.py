@@ -12,7 +12,7 @@ from nipoppy.container import (
     DockerHandler,
     SingularityHandler,
 )
-from nipoppy.env import ContainerCommandEnum
+from nipoppy.env import PROGRAM_NAME, ContainerCommandEnum
 from nipoppy.exceptions import ConfigError
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.workflows.runner import Runner
@@ -294,3 +294,59 @@ def test_process_container_config_no_bind_cwd(
 def test_process_container_config_no_bindpaths(runner: Runner):
     # smoke test for no bind paths
     runner.process_container_config(participant_id="01", session_id="BL")
+
+
+def _expected_base_command(runner: Runner) -> list[str]:
+    return [
+        PROGRAM_NAME,
+        runner.subcommand,
+        "--study",
+        str(runner.dpath_root),
+        "--pipeline",
+        runner.pipeline_name,
+        "--pipeline-version",
+        runner.pipeline_version,
+    ]
+
+
+@pytest.mark.parametrize(
+    "kwargs,expected_suffix",
+    [
+        (
+            {"participant_id": "P01", "session_id": "1"},
+            ["--participant-id", "P01", "--session-id", "1"],
+        ),
+        (
+            {"participant_id": None, "session_id": "1"},
+            ["--session-id", "1"],
+        ),
+    ],
+)
+def test_generate_cli_command(kwargs: dict, expected_suffix: list[str], runner: Runner):
+    assert runner.generate_cli_command(**kwargs) == (
+        _expected_base_command(runner) + expected_suffix
+    )
+
+
+def test_generate_cli_command_pipeline_step(runner: Runner):
+    runner.pipeline_step = "step1"
+    command = runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert command[command.index("--pipeline-step") + 1] == "step1"
+
+
+def test_generate_cli_command_keep_workdir(runner: Runner):
+    runner.keep_workdir = True
+    command = runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert "--keep-workdir" in command
+
+
+def test_generate_cli_command_verbose(runner: Runner):
+    runner.verbose = True
+    command = runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert "--verbose" in command
+
+
+def test_generate_cli_command_layout(runner: Runner):
+    runner.fpath_layout = "layout.json"
+    command = runner.generate_cli_command(participant_id="P01", session_id="1")
+    assert command[command.index("--layout") + 1] == "layout.json"

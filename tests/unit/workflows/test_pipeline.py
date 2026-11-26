@@ -1361,10 +1361,6 @@ def test_executor_default(workflow: PipelineWorkflow):
     assert workflow.executor is None
 
 
-def test_extra_cli_flags_default(workflow: PipelineWorkflow):
-    assert workflow.extra_cli_flags == []
-
-
 def test_handle_execution_strategy_executor(
     workflow: PipelineWorkflow, mocker: pytest_mock.MockFixture
 ):

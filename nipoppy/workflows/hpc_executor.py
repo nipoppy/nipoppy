@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import shlex
-from typing import Any
 
 from nipoppy.config.hpc import HpcConfig
-from nipoppy.env import PROGRAM_NAME
 from nipoppy.exceptions import ReturnCode
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import get_pipeline_tag, load_json
@@ -22,8 +20,8 @@ class HPCExecutor(Executor[None]):
 
     The workflow's attributes are read lazily in ``execute()``, so they are only
     valid after the workflow's ``run_setup``. The executor reads the pipeline
-    config, bundle path, Boutiques template processing, CLI options and
-    ``extra_cli_flags`` from the workflow.
+    config, bundle path, Boutiques template processing and the CLI command
+    (``generate_cli_command``) from the workflow.
 
     The workflow's ``__init__`` rejects the combination of an HPC executor with
     ``write_subcohort``, so the executor is never used when a subcohort is written.
@@ -63,63 +61,6 @@ class HPCExecutor(Executor[None]):
             queue_limit=workflow.study.config.HPC_QUEUE_LIMIT,
         )
 
-    def generate_cli_command(
-        self,
-        participant_id: str | None,
-        session_id: str | None,
-    ) -> list[str]:
-        """Generate the CLI command for a participant-session combination.
-
-        Skips the --simulate, --hpc, --write-subcohort and --dry-run options.
-        Appends the workflow's ``extra_cli_flags`` to the command.
-
-        Parameters
-        ----------
-        participant_id : str, optional
-            Participant ID to run on.
-        session_id : str, optional
-            Session ID to run on.
-
-        Returns
-        -------
-        list[str]
-            The CLI command as a list of string tokens.
-        """
-        workflow = self.workflow
-        command: list[str] = [
-            PROGRAM_NAME,
-            workflow.subcommand,
-            "--study",
-            str(workflow.dpath_root),
-            "--pipeline",
-            workflow.pipeline_name,
-        ]
-        default_options: dict[str, Any] = {
-            "--pipeline-version": workflow.pipeline_version,
-            "--pipeline-step": workflow.pipeline_step,
-            "--layout": workflow.fpath_layout,
-            "--participant-id": participant_id,
-            "--session-id": session_id,
-        }
-        for option, value in default_options.items():
-            if value is not None:
-                command.extend([option, str(value)])
-
-        if workflow.keep_workdir:
-            command.append("--keep-workdir")
-        if workflow.verbose:
-            command.append("--verbose")
-
-        for flag in workflow.extra_cli_flags:
-            if flag in command:
-                raise ValueError(
-                    f"Flag {flag} is already in the command and cannot be overridden "
-                    "via extra_cli_flags."
-                )
-            command.append(flag)
-
-        return [str(c) for c in command]
-
     def execute(self, items: list[WorkItem]) -> ExecutionResult[None]:
         """Submit the work items to the HPC cluster."""
         workflow = self.workflow
@@ -134,7 +75,7 @@ class HPCExecutor(Executor[None]):
         participant_ids = []
         session_ids = []
         for item in items:
-            command = self.generate_cli_command(
+            command = workflow.generate_cli_command(
                 participant_id=item.participant_id, session_id=item.session_id
             )
             job_array_commands.append(shlex.join(command))

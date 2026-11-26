@@ -6,13 +6,14 @@ import shlex
 from abc import ABC
 from functools import cached_property
 from pathlib import Path
+from typing import Any
 
 from boutiques import bosh
 
 from nipoppy.config.boutiques import BoutiquesConfig
 from nipoppy.config.container import ContainerConfig
 from nipoppy.container import ContainerHandler, get_container_handler
-from nipoppy.env import ContainerCommandEnum, StrOrPathLike
+from nipoppy.env import PROGRAM_NAME, ContainerCommandEnum, StrOrPathLike
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import check_pipeline_bundle
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN
@@ -50,6 +51,51 @@ class Runner(BasePipelineWorkflow, ABC):
         to_return = super().run_setup()
         check_pipeline_bundle(self.dpath_pipeline_bundle, strict=False)
         return to_return
+
+    def generate_cli_command(
+        self, participant_id: str | None, session_id: str | None
+    ) -> list[str]:
+        """Generate the CLI command reproducing this run for a participant-session pair.
+
+        Skips the --simulate, --hpc, --write-subcohort and --dry-run options.
+
+        Parameters
+        ----------
+        participant_id : str, optional
+            Participant ID to run on.
+        session_id : str, optional
+            Session ID to run on.
+
+        Returns
+        -------
+        list[str]
+            The CLI command as a list of string tokens.
+        """
+        command: list[str] = [
+            PROGRAM_NAME,
+            self.subcommand,
+            "--study",
+            str(self.dpath_root),
+            "--pipeline",
+            self.pipeline_name,
+        ]
+        default_options: dict[str, Any] = {
+            "--pipeline-version": self.pipeline_version,
+            "--pipeline-step": self.pipeline_step,
+            "--layout": self.fpath_layout,
+            "--participant-id": participant_id,
+            "--session-id": session_id,
+        }
+        for option, value in default_options.items():
+            if value is not None:
+                command.extend([option, str(value)])
+
+        if self.keep_workdir:
+            command.append("--keep-workdir")
+        if self.verbose:
+            command.append("--verbose")
+
+        return [str(c) for c in command]
 
     @cached_property
     def bosh_runner(self) -> BoshRunnerCallable:

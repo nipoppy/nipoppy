@@ -211,11 +211,6 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
 
             self.executor = HPCExecutor(self, hpc_cluster=hpc)
 
-    @property
-    def extra_cli_flags(self) -> list[str]:
-        """Workflow-specific CLI flags needed to reproduce this run from the CLI."""
-        return []
-
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
         """Directory paths to create if needed during the setup phase."""
