@@ -1,4 +1,5 @@
 ---
+# NOTE: .github/workflows/auto_assign_reviewer.yml depends on this workflow's name and filename.
 name: Run tests
 
 on:

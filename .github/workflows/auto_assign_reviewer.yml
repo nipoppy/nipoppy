@@ -1,0 +1,327 @@
+---
+# Automatically request a reviewer once a PR is ready for review (non-draft,
+# non-WIP) and the "Run tests" workflow (.github/workflows/run_tests.yml) has
+# passed for the PR's head commit. Intentionally gates only on Run tests
+# (not external link checks or pre-commit.ci) so transient external failures do
+# not block review assignment. Uses a narrowly scoped NIPOPPY_BOT token solely
+# for requesting reviewers so the resulting review_requested event triggers
+# project_automation.yml.
+name: Auto-assign reviewer
+
+on:
+  workflow_run:
+    # Must match the workflow name in .github/workflows/run_tests.yml
+    workflows: ["Run tests"]
+    types: [completed]
+  pull_request_target:
+    types: [ready_for_review, edited]
+
+permissions:
+  actions: read
+  issues: read
+  pull-requests: read
+
+env:
+  # Comma-separated list of GitHub usernames eligible for automatic review assignment
+  REVIEWERS: ${{ vars.AUTO_ASSIGN_REVIEWERS || 'michellewang,mathdugre' }}
+  # Number of reviewers to assign per PR
+  NUMBER_OF_REVIEWERS: "1"
+  # Workflow file whose pull_request run must succeed before assigning a reviewer
+  TEST_WORKFLOW_FILE: "run_tests.yml"
+
+jobs:
+  assign_reviewer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: >-
+      github.repository == 'nipoppy/nipoppy' && (
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.path == '.github/workflows/run_tests.yml' &&
+          github.event.workflow_run.event == 'pull_request' &&
+          github.event.workflow_run.conclusion == 'success'
+        ) || (
+          github.event_name == 'pull_request_target' &&
+          github.event.pull_request.state == 'open' &&
+          github.event.pull_request.draft == false &&
+          (
+            github.event.action == 'ready_for_review' ||
+            (
+              github.event.action == 'edited' &&
+              github.event.changes.title != null &&
+              contains(github.event.changes.title.from, 'wip')
+            )
+          )
+        )
+      )
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Generate a token
+        id: generate-token
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.NIPOPPY_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.NIPOPPY_BOT_PRIVATE_KEY }}
+          permission-pull-requests: write
+
+      - name: Assign reviewer when PR is ready and tests pass
+        uses: actions/github-script@v9
+        env:
+          APP_TOKEN: ${{ steps.generate-token.outputs.token }}
+        with:
+          script: |
+            const { randomInt } = require('node:crypto');
+
+            const { owner, repo } = context.repo;
+            const testWorkflowFile = process.env.TEST_WORKFLOW_FILE;
+            const MAINTAINER_ASSOCIATIONS = new Set([
+              'OWNER',
+              'MEMBER',
+              'COLLABORATOR',
+            ]);
+
+            if (
+              context.eventName === 'pull_request_target' &&
+              context.payload.action === 'edited' &&
+              !/\bWIP\b/i.test(context.payload.changes?.title?.from ?? '')
+            ) {
+              core.info('PR title edit did not remove a WIP marker; skipping.');
+              return;
+            }
+
+            const configuredReviewerLogins = new Set();
+            const configuredReviewers = (process.env.REVIEWERS ?? '')
+              .split(',')
+              .map((name) => name.trim())
+              .filter((name) => {
+                if (!name) return false;
+                const key = name.toLowerCase();
+                if (configuredReviewerLogins.has(key)) return false;
+                configuredReviewerLogins.add(key);
+                return true;
+              });
+
+            const rawCount = (process.env.NUMBER_OF_REVIEWERS ?? '1').trim();
+            if (!/^[1-9]\d*$/.test(rawCount)) {
+              core.setFailed(
+                `Invalid NUMBER_OF_REVIEWERS: "${rawCount}" (expected a positive integer).`
+              );
+              return;
+            }
+            const numberOfReviewers = Number.parseInt(rawCount, 10);
+
+            if (configuredReviewers.length === 0) {
+              core.info('No reviewers configured; skipping.');
+              return;
+            }
+
+            const appOctokit = getOctokit(process.env.APP_TOKEN);
+
+            function pickReviewers(candidates, count) {
+              const pool = [...candidates];
+              for (let i = pool.length - 1; i > 0; i -= 1) {
+                const j = randomInt(i + 1);
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+              }
+              return pool.slice(0, count);
+            }
+
+            async function haveTestsPassed(headSha) {
+              const runs = await github.paginate(
+                github.rest.actions.listWorkflowRuns,
+                {
+                  owner,
+                  repo,
+                  workflow_id: testWorkflowFile,
+                  head_sha: headSha,
+                  event: 'pull_request',
+                  per_page: 100,
+                }
+              );
+              if (runs.length === 0) {
+                core.info(`No "${testWorkflowFile}" pull_request run found for ${headSha}.`);
+                return false;
+              }
+              const latestRun = runs.sort((a, b) => b.id - a.id)[0];
+              if (
+                latestRun.status !== 'completed' ||
+                latestRun.conclusion !== 'success'
+              ) {
+                core.info(
+                  `Latest "${testWorkflowFile}" run (#${latestRun.id}) for ${headSha} has status="${latestRun.status}", conclusion="${latestRun.conclusion}".`
+                );
+                return false;
+              }
+              return true;
+            }
+
+            async function resolveCandidatePrNumbers() {
+              if (context.eventName === 'pull_request_target') {
+                return [context.payload.pull_request.number];
+              }
+
+              const run = context.payload.workflow_run;
+              const repoUrl = context.payload.repository?.url;
+              if (run.pull_requests && run.pull_requests.length > 0) {
+                const sameRepoPrs = run.pull_requests.filter(
+                  (pr) => !repoUrl || !pr.base?.repo?.url || pr.base.repo.url === repoUrl
+                );
+                if (sameRepoPrs.length > 0) {
+                  return [...new Set(sameRepoPrs.map((pr) => pr.number))];
+                }
+              }
+
+              // GitHub leaves workflow_run.pull_requests empty for fork PRs.
+              const headOwner = run.head_repository?.owner?.login;
+              const headBranch = run.head_branch;
+              if (!headOwner || !headBranch) {
+                core.info(
+                  `Workflow run #${run.id} has no associated PRs and missing head repository/branch info; skipping.`
+                );
+                return [];
+              }
+
+              const openPrs = await github.paginate(github.rest.pulls.list, {
+                owner,
+                repo,
+                state: 'open',
+                head: `${headOwner}:${headBranch}`,
+                per_page: 100,
+              });
+              return openPrs
+                .filter((pr) => pr.head.sha === run.head_sha)
+                .map((pr) => pr.number);
+            }
+
+            async function assignReviewerForPr(pullNumber) {
+              const { data: pr } = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: pullNumber,
+              });
+
+              if (pr.state !== 'open') {
+                core.info(`PR #${pr.number} is not open (state="${pr.state}"); skipping.`);
+                return;
+              }
+
+              if (
+                context.eventName === 'workflow_run' &&
+                pr.head.sha !== context.payload.workflow_run.head_sha
+              ) {
+                core.info(
+                  `PR #${pr.number} head SHA (${pr.head.sha}) does not match workflow run head SHA (${context.payload.workflow_run.head_sha}); skipping.`
+                );
+                return;
+              }
+
+              if (pr.draft) {
+                core.info(`PR #${pr.number} is a draft; skipping.`);
+                return;
+              }
+
+              if (/\bWIP\b/i.test(pr.title)) {
+                core.info(`PR #${pr.number} title contains WIP; skipping.`);
+                return;
+              }
+
+              const hasHumanRequestedReviewer =
+                (pr.requested_reviewers ?? []).some((reviewer) => reviewer.type !== 'Bot') ||
+                (pr.requested_teams ?? []).length > 0;
+              if (hasHumanRequestedReviewer) {
+                core.info(`PR #${pr.number} already has requested reviewer(s); skipping.`);
+                return;
+              }
+
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                owner,
+                repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+              const authorLogin = pr.user?.login?.toLowerCase();
+              const hasMaintainerReview = reviews.some((review) => {
+                if (!review.user || review.user.type === 'Bot') return false;
+                const reviewerLogin = review.user.login.toLowerCase();
+                if (reviewerLogin === authorLogin) return false;
+                return (
+                  configuredReviewerLogins.has(reviewerLogin) ||
+                  MAINTAINER_ASSOCIATIONS.has(review.author_association)
+                );
+              });
+              if (hasMaintainerReview) {
+                core.info(`PR #${pr.number} already has review(s); skipping.`);
+                return;
+              }
+
+              const issueEvents = await github.paginate(
+                github.rest.issues.listEvents,
+                {
+                  owner,
+                  repo,
+                  issue_number: pr.number,
+                  per_page: 100,
+                }
+              );
+              const hadReviewerRemoved = issueEvents.some(
+                (event) =>
+                  event.event === 'review_request_removed' &&
+                  (Boolean(event.requested_team) ||
+                    (event.requested_reviewer &&
+                      event.requested_reviewer.type !== 'Bot'))
+              );
+              if (hadReviewerRemoved) {
+                core.info(
+                  `PR #${pr.number} previously had a reviewer removed; skipping.`
+                );
+                return;
+              }
+
+              if (context.eventName === 'pull_request_target') {
+                const passed = await haveTestsPassed(pr.head.sha);
+                if (!passed) {
+                  core.info(`PR #${pr.number} tests have not passed for ${pr.head.sha}; skipping.`);
+                  return;
+                }
+              }
+
+              const eligible = configuredReviewers.filter(
+                (reviewer) => reviewer.toLowerCase() !== authorLogin
+              );
+              if (eligible.length === 0) {
+                core.info(`No eligible reviewers for PR #${pr.number}; skipping.`);
+                return;
+              }
+
+              const selected = pickReviewers(eligible, numberOfReviewers);
+              try {
+                await appOctokit.rest.pulls.requestReviewers({
+                  owner,
+                  repo,
+                  pull_number: pr.number,
+                  reviewers: selected,
+                });
+                core.info(`Requested reviewer(s) for PR #${pr.number}: ${selected.join(', ')}`);
+              } catch (error) {
+                if (error && error.status === 422) {
+                  core.warning(
+                    `Could not request reviewer(s) [${selected.join(', ')}] for PR #${pr.number}: ${error.message}`
+                  );
+                  return;
+                }
+                throw error;
+              }
+            }
+
+            const prNumbers = await resolveCandidatePrNumbers();
+            if (prNumbers.length === 0) {
+              core.info('No matching open pull requests found.');
+              return;
+            }
+
+            for (const pullNumber of prNumbers) {
+              await assignReviewerForPr(pullNumber);
+            }
