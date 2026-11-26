@@ -1,5 +1,9 @@
 """Workflow for pipeline info command."""
 
+from pathlib import Path
+
+from typing_extensions import override
+
 from nipoppy.logger import emphasize, get_logger
 from nipoppy.workflows.pipeline import BasePipelineWorkflow
 
@@ -38,8 +42,16 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
                 break
         super().run_setup()
 
+    @override
     def _check_pipeline_variables(self):
         """Allow unset variables, since this command does not run the pipeline."""
+
+    def _shorten_path(self, fpath: Path) -> Path:
+        """Make a path relative to the working directory, if possible."""
+        cwd = Path.cwd()
+        if cwd in fpath.parents:
+            return fpath.relative_to(cwd)
+        return fpath
 
     def run_main(self):
         """Show configuration details for a pipeline."""
@@ -50,7 +62,8 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
             )
         )
         fname_config = self.study.layout.fname_pipeline_config
-        logger.info(f"Config: {self.dpath_pipeline_bundle / fname_config}")
+        fpath_config = self._shorten_path(self.dpath_pipeline_bundle / fname_config)
+        logger.info(f"Config: {fpath_config}")
         for step in self.pipeline_config.STEPS:
             logger.info(f"Step: {emphasize(step.NAME)}")
             for label, field in (
@@ -62,7 +75,8 @@ class PipelineInfoWorkflow(BasePipelineWorkflow):
             ):
                 fpath = getattr(step, field, None)
                 if fpath is not None:
-                    logger.info(f"- {label}: {self.dpath_pipeline_bundle / fpath}")
+                    full_path = self._shorten_path(self.dpath_pipeline_bundle / fpath)
+                    logger.info(f"- {label}: {full_path}")
 
     def get_participants_sessions_to_run(self, participant_id, session_id):
         """Not used."""
