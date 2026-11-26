@@ -123,7 +123,7 @@ By default, this file does not contain any pipeline-specific information, since 
 
   ```json
   "SUBSTITUTIONS": {
-      "_comment": "Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware",
+      // Self-references like NIPOPPY_DPATH_CONTAINERS are resolved from the layout at runtime, making them layout-aware
       "[[NIPOPPY_DPATH_CONTAINERS]]": "<PATH_TO_SHARED_DIRECTORY>",
       "[[HPC_ACCOUNT_NAME]]": ""
   },

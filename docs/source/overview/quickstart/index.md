@@ -59,7 +59,7 @@ language: json
 **Fields that may need to be modified depending on your setup:**
 
 - If you are on a system that uses Singularity instead of Apptainer, you need to change `CONTAINER_CONFIG` -> `COMMAND` to `"singularity"` instead of `"apptainer"`
-- If your group uses a shared directory for storing container image files, you can replace `"[[NIPOPPY_DPATH_ROOT]]/containers"` by the full path to that shared directory. Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted).
+- If your group uses a shared directory for storing container image files, you can replace the value of `"[[NIPOPPY_DPATH_CONTAINERS]]"` by the full path to that shared directory. Alternatively, you can create a symlink from {{dpath_containers}} to that directory (then this line in the configuration can be deleted).
 
 ### [Customizing the manifest.tsv file](../../how_to_guides/manifest/index.md)
 
@@ -153,11 +153,11 @@ Please see the [dcm2bids](https://unfmontreal.github.io/Dcm2Bids/3.2.0/tutorial/
 Usually you would start with running `nipoppy bidsify` with the first `--pipeline-step` (e.g. `prepare`). For `dcm2bids` this step would run the `dcm2bids_helper` in order to extract information from the dicom headers to create a `dcm2bids_config.json`. We already provided you with a `dcm2bids_config.json`, so we will skip this step here.
 ```
 
-**1.** Replace the placeholder for `"DCM2BIDS_CONFIG_FILE"` in the `global_config,json` with the path to your code directory:
+**1.** Replace the placeholder for `"DCM2BIDS_CONFIG_FILE"` in the `global_config.json` with the path to your code directory:
 
-```yaml
+```json
 {
-    # ...
+    // ...
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
             "dcm2bids": {
@@ -165,9 +165,11 @@ Usually you would start with running `nipoppy bidsify` with the first `--pipelin
                     "DCM2BIDS_CONFIG_FILE": "[[NIPOPPY_DPATH_ROOT]]/code/dcm2bids_config.json"
                 }
             }
-        }
-    }
-    # ...
+        },
+        "PROCESSING": {},
+        "EXTRACTION": {}
+    },
+    // ...
 }
 ```
 
@@ -235,9 +237,9 @@ $ mkdir templateflow
 
 **4.** Replace the placeholders (here: the templateflow path) in the `global_config.json`:
 
-```yaml
+```json
 {
-    # ...
+    // ...
     "PIPELINE_VARIABLES": {
         "BIDSIFICATION": {
             "dcm2bids": {
@@ -254,8 +256,8 @@ $ mkdir templateflow
             }
         },
         "EXTRACTION": {}
-    }
-    # ...
+    },
+    // ...
 }
 ```
 
