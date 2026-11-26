@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import json
 import logging
 import shlex
 from pathlib import Path
@@ -13,17 +12,12 @@ import pytest
 import pytest_mock
 import rich_click as click
 from click.testing import CliRunner
+from rich_click import UsageError
 
-from nipoppy.cli import (
-    BUG_REPORT_URL,
-    DISCORD_URL,
-    exception_handler,
-)
 from nipoppy.cli.cli import cli
 from nipoppy.cli.groups import OrderedAliasedGroupWithDotenv
-from nipoppy.cli.options import study_option
-from nipoppy.exceptions import JSONError, NipoppyError, ReturnCode
-from nipoppy.zenodo_api import ZenodoAPIError
+from nipoppy.cli.options import check_at_most_one_flag_specified, study_option
+from nipoppy.exceptions import ReturnCode
 from tests.conftest import PASSWORD_FILE, list_cli_commands
 
 runner = CliRunner()
@@ -153,19 +147,109 @@ def test_dep_params(
 @pytest.mark.no_xdist
 def test_study_and_dataset_mutually_exclusive(
     tmp_path: Path,
-    caplog: pytest.LogCaptureFixture,
 ):
     """Test that providing both --study and --dataset raises an error."""
-    result = runner.invoke(
-        cli,
-        ["init", "--study", f"{tmp_path}/study1", "--dataset", f"{tmp_path}/study2"],
-        catch_exceptions=False,
-    )
-    assert result.exit_code != ReturnCode.SUCCESS
-    assert not any(
-        "Cannot specify both --study and --dataset" in record.message
-        for record in caplog.records
-    )
+    with pytest.raises(
+        UsageError, match="Cannot specify more than one of: --study, --dataset."
+    ):
+        runner.invoke(
+            cli,
+            [
+                "init",
+                "--study",
+                f"{tmp_path}/study1",
+                "--dataset",
+                f"{tmp_path}/study2",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
+
+
+@pytest.mark.parametrize(
+    ("cli_args", "expected_match"),
+    [
+        (
+            ["--flag1", "1", "--flag2", "2"],
+            "Cannot specify more than one of: --flag1, --flag2.",
+        ),
+        (
+            ["--flag1", "1", "--flag2", "2", "--flag3", "3"],
+            "Cannot specify more than one of: --flag1, --flag2, --flag3.",
+        ),
+    ],
+)
+def test_check_at_most_one_flag_specified(cli_args: list[str], expected_match: str):
+    """Test that an error is raised when more than one flag is specified."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2", "renamed")
+    @click.option("--flag3")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--flag2", "--flag3")
+
+    with pytest.raises(UsageError, match=expected_match):
+        runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+
+
+@pytest.mark.parametrize(
+    "cli_args",
+    [[], ["--flag1", "1"], ["--flag2", "2"]],
+)
+def test_check_at_most_one_flag_specified_no_error(cli_args: list[str]):
+    """Test that no error is raised when at most one flag is specified."""
+
+    @click.command()
+    @click.option("--flag1")
+    @click.option("--flag2", "renamed")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--flag2")
+
+    result = runner.invoke(cmd, cli_args, catch_exceptions=False, standalone_mode=False)
+    assert result.exception is None
+
+
+def test_check_at_most_one_flag_specified_undeclared_flag():
+    """Test that an error is raised when a flag is not declared by the command."""
+
+    @click.command()
+    @click.option("--flag1")
+    def cmd(**kwargs):
+        check_at_most_one_flag_specified("--flag1", "--undeclared")
+
+    with pytest.raises(
+        ValueError, match="Flag '--undeclared' not declared by command 'cmd'."
+    ):
+        runner.invoke(cmd, [], catch_exceptions=False, standalone_mode=False)
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize("command", ["bidsify", "process", "extract"])
+def test_write_subcohort_and_write_list_mutually_exclusive(
+    command: str, tmp_path: Path
+):
+    """Test that providing both --write-subcohort and --write-list raises an error."""
+    with pytest.raises(
+        UsageError,
+        match="Cannot specify more than one of: --write-subcohort, --write-list.",
+    ):
+        runner.invoke(
+            cli,
+            [
+                command,
+                "--study",
+                str(tmp_path),
+                "--pipeline",
+                "fake_pipeline",
+                "--write-subcohort",
+                f"{tmp_path}/subcohort.tsv",
+                "--write-list",
+                f"{tmp_path}/list.tsv",
+            ],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
 
 
 @pytest.mark.no_xdist
@@ -397,191 +481,6 @@ def test_cli_command(
     _assert_command_success(command)
 
 
-def test_context_manager_no_exception(mocker):
-    """Test that the context manager exits with SUCCESS when no exception occurs."""
-    workflow = mocker.Mock()
-    workflow.return_code = ReturnCode.SUCCESS
-    mock_exit = mocker.patch("sys.exit")
-
-    with exception_handler(workflow):
-        pass
-
-    mock_exit.assert_called_once_with(ReturnCode.SUCCESS)
-
-
-@pytest.mark.parametrize(
-    "return_code, expected_return_code",
-    [
-        (None, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.UNKNOWN_FAILURE, ReturnCode.UNKNOWN_FAILURE),
-        (ReturnCode.INVALID_ARGUMENT, ReturnCode.INVALID_ARGUMENT),
-    ],
-)
-def test_context_manager_system_exit_exception(
-    mocker: pytest_mock.MockerFixture, return_code, expected_return_code, caplog
-):
-    """Test that the context manager handles exceptions correctly.
-
-    SystemExit should set the workflow return code to the
-    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        if return_code is None:
-            raise SystemExit
-        else:
-            raise SystemExit(return_code)
-
-    assert workflow.return_code == expected_return_code
-    mock_exit.assert_called_once_with(expected_return_code)
-
-
-class MyCustomException(NipoppyError):
-    code = 999
-
-
-@pytest.mark.parametrize(
-    "exception,return_code",
-    [
-        (NipoppyError, NipoppyError.code),
-        (ZenodoAPIError, ReturnCode.KNOWN_FAILURE),
-        (MyCustomException, MyCustomException.code),
-    ],
-)
-def test_context_manager_nipoppy_exception(
-    mocker: pytest_mock.MockerFixture, exception: Exception, return_code: int
-):
-    """Test that the context manager handles exceptions correctly.
-
-    NipoppyError and its subclasses should set the workflow return code to the
-    exception's code. Other exceptions should set it to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        raise exception
-
-    assert workflow.return_code == return_code
-    mock_exit.assert_called_once_with(return_code)
-
-
-@pytest.mark.parametrize("hint", ["", "This is a hint."])
-def test_context_manager_nipoppy_exception_logs_custom_hint(
-    hint, mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Known NipoppyError should emit custom hint when provided."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        raise NipoppyError("Invalid project config", hint=hint)
-
-    assert any(
-        "Troubleshooting:" in record.message and hint in record.message
-        for record in caplog.records
-    )
-
-
-def test_context_manager_nipoppy_exception_logs_default_hint(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Known NipoppyError should emit default hint when none provided."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    default_hint = "This is a default hint."
-    with exception_handler(workflow):
-        e = NipoppyError("Invalid project config", hint=None)
-        e.default_hint = default_hint
-        raise e
-
-    assert any(
-        f"Troubleshooting: {default_hint}" in record.message
-        for record in caplog.records
-    )
-
-
-def test_context_manager_json_error(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Test that JSONError includes the file path in the error message."""
-    mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    fpath = "invalid.json"
-    with exception_handler(workflow):
-        raise JSONError(
-            json.JSONDecodeError("Invalid JSON", "{}", 10),
-            fpath=Path(fpath),
-        )
-    assert any(
-        f"Invalid JSON: {fpath}: line 1 column 11 (char 10)" in record.message
-        for record in caplog.records
-    )
-
-
-@pytest.mark.parametrize(
-    "return_code", [(None), (ReturnCode.UNKNOWN_FAILURE), (ReturnCode.INVALID_ARGUMENT)]
-)
-@pytest.mark.parametrize("exception", [Exception, RuntimeError])
-def test_context_manager_unknown_exception(
-    mocker: pytest_mock.MockerFixture,
-    exception,
-    return_code,
-    caplog: pytest.LogCaptureFixture,
-):
-    """Test that the context manager handles exceptions correctly.
-
-    Unknown exception (Exception) should always set the return code to UNKNOWN_FAILURE.
-    """
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-    with exception_handler(workflow):
-        if return_code is None:
-            raise exception
-        else:
-            raise exception(code=return_code)
-
-    # Exit code is always set to UNKNOWN_FAILURE for unknown exceptions
-    assert workflow.return_code == ReturnCode.UNKNOWN_FAILURE
-    mock_exit.assert_called_once_with(ReturnCode.UNKNOWN_FAILURE)
-    assert any(BUG_REPORT_URL in record.message for record in caplog.records)
-    assert any(DISCORD_URL in record.message for record in caplog.records)
-
-
-def test_context_manager_pydantic_failed_validation(
-    mocker: pytest_mock.MockerFixture, caplog: pytest.LogCaptureFixture
-):
-    """Test that the context manager handles pydantic ValidationError correctly."""
-    from pydantic import BaseModel
-
-    # Prevent sys.exit from actually exiting the test runner
-    mock_exit = mocker.patch("sys.exit")
-
-    workflow = mocker.Mock()
-
-    class MockedModel(BaseModel):
-        field: int
-
-    with exception_handler(workflow):
-        MockedModel(field="invalid")  # will raise ValidationError
-
-    assert workflow.return_code == ReturnCode.INVALID_CONFIG
-    mock_exit.assert_called_once_with(ReturnCode.INVALID_CONFIG)
-    assert any(
-        "Troubleshooting:" in record.message
-        and "Review your configuration fields and value types" in record.message
-        for record in caplog.records
-    )
-
-
 @pytest.mark.parametrize("command", list_cli_commands(cli))
 def test_no_duplicated_flag(
     command: str,
@@ -769,4 +668,28 @@ def test_cli_show_envvar(command_name: str):
                 f"Parameter '{param.name}' in subcommand '{command_name}' has envvar "
                 f"'{param.envvar}' but show_envvar is False. Set show_envvar to True "
                 f"to display the env var in the help message."
+            )
+
+
+@pytest.mark.parametrize(
+    "command_name",
+    list_cli_commands(cli, include_hidden=False, include_group=False),
+)
+def test_cli_all_options_grouped(command_name: str):
+    """Test that all non-hidden CLI options are assigned to an option group."""
+    grouped_options = {
+        opt
+        for group in click.rich_click.OPTION_GROUPS["nipoppy *"]
+        for opt in group["options"]
+    }
+
+    # get Click Command object
+    command = cli
+    for command_component in command_name.split(" "):
+        command = command.get_command(None, command_component)
+
+    for param in command.params:
+        if isinstance(param, click.Option) and not param.hidden:
+            assert any(opt in grouped_options for opt in param.opts), (
+                f"Option {param.opts} of '{command_name}' is not in any option group."
             )

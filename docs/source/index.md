@@ -4,14 +4,13 @@ Nipoppy is a lightweight framework for standardized organization and processing 
 
 <img alt="Nipoppy protocol" src="_static/img/nipoppy_protocol.jpg" width=850px>
 
-
 The framework includes three components:
 
 1. A **protocol** for data _wrangling_ to standardize generation of analysis-ready datasets
 
-2. A **specification** for study organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/)
+1. A **specification** for study organization that extends the [Brain Imaging Data Structure (BIDS) standard](https://bids.neuroimaging.io/)
 
-3. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
+1. A **command-line interface** and **Python package** that provide user-friendly tools for applying the framework
 
 ## Next steps
 
@@ -26,7 +25,6 @@ Instructions to set up Nipoppy package
 A user guide to get started
 :::
 ::::
-
 
 ```{toctree}
 ---
@@ -86,7 +84,6 @@ how_to_guides/pipeline_create/index
 Configuring studies <how_to_guides/configuration/index>
 ```
 
-
 ```{toctree}
 ---
 hidden:
@@ -111,5 +108,6 @@ caption: Other
 other/changelog
 other/team
 other/contributing
+other/cite_us
 other/glossary
 ```

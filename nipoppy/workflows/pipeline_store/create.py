@@ -94,7 +94,10 @@ class PipelineCreateWorkflow(BaseWorkflow):
                 pipeline_config_updates.append((["CONTAINER_INFO", "URI"], uri))
 
         else:
-            boutiques_api.create_descriptor(descriptor_path)
+            fileops.copy(
+                TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.DESCRIPTOR_FILE),
+                descriptor_path,
+            )
 
         substitutions = {"version": PROGRAM_VERSION}
 
