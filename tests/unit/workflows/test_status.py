@@ -90,7 +90,7 @@ def make_mixed_datatype_status_tables():
     "datatypes,expected",
     [
         (
-            None,
+            (),
             {
                 "in_manifest": {"BL": 3, "M12": 2},
                 "in_pre_reorg": {"BL": 2, "M12": 1},
@@ -297,7 +297,7 @@ def test_build_status_df_does_not_mutate_source_tables(dpath_root: Path):
     )
 
 
-@pytest.mark.parametrize("datatype,expected", [(None, 2), (("anat",), 1)])
+@pytest.mark.parametrize("datatype,expected", [((), 2), (("anat",), 1)])
 def test_manifest_row_without_datatype(dpath_root: Path, datatype, expected):
     """Test that rows with no datatype are only counted if no datatype filter is specified."""
     manifest = Manifest(
@@ -326,7 +326,7 @@ def test_manifest_row_without_datatype(dpath_root: Path, datatype, expected):
     "datatype,expected",
     [
         (
-            None,
+            (),
             [
                 CHECKPOINT_MANIFEST,
                 CurationStatusTable.col_in_pre_reorg,
