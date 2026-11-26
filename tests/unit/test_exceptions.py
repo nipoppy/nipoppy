@@ -1,6 +1,9 @@
 """Tests for custom exceptions."""
 
-from nipoppy.exceptions import NipoppyError
+import json
+from pathlib import Path
+
+from nipoppy.exceptions import JSONError, NipoppyError
 
 
 def test_troubleshooting_hint_none_without_default():
@@ -26,3 +29,10 @@ def test_troubleshooting_hint_subclass_default():
     err = SubclassError("test message")
     assert err.hint is None
     assert err.troubleshooting_hint == err.default_hint
+
+
+def test_json_error_message_includes_fpath():
+    """JSONError should include the file path in its error message."""
+    fpath = "invalid.json"
+    err = JSONError(json.JSONDecodeError("Invalid JSON", "{}", 10), fpath=Path(fpath))
+    assert str(err) == f"Invalid JSON: {fpath}: line 1 column 11 (char 10)"
