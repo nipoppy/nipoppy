@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 import re
-import sys
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from functools import cached_property
@@ -200,12 +199,10 @@ class BasePipelineWorkflow(BaseDatasetWorkflow, ABC):
         self.run_single_results = None
 
         if not JOBLIB_INSTALLED and self.n_jobs not in (None, 1):
-            logger.error(
+            raise WorkflowError(
                 "An additional dependency is required to enable local parallelization "
-                "with --n-jobs. Install it with: pip install nipoppy[parallel]",
-                extra={"markup": False},
+                "with --n-jobs. Install it with: pip install nipoppy[parallel]"
             )
-            sys.exit(ReturnCode.MISSING_DEPENDENCY)
 
     @cached_property
     def dpaths_to_check(self) -> list[Path]:
