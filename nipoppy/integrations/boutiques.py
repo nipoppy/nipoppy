@@ -139,7 +139,9 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
             )
         self.validate_descriptor(descriptor)
         try:
-            boutiques.invocation("--invocation", str(invocation), str(descriptor))
+            boutiques.invocation(
+                "--invocation", invocation.resolved_content, str(descriptor)
+            )
         except (
             boutiques.InvocationValidationError,
             LoadError,

@@ -18,6 +18,8 @@ from nipoppy.integrations.boutiques import (
     _create_boutiques_api,
     boutiques_api,
 )
+from nipoppy.utils.utils import load_json
+from tests.conftest import DPATH_TEST_DATA
 
 
 class TestBoutiquesFile:
@@ -121,32 +123,21 @@ class TestInvocationFile:
 
 
 class TestBoutiquesAPI:
-    @pytest.fixture
-    def descriptor_file(self) -> DescriptorFile:
-        return DescriptorFile(
+    descriptor_files: list[DescriptorFile] = [
+        DescriptorFile(path=DPATH_TEST_DATA / "descriptor-valid.json"),
+        DescriptorFile(content=(DPATH_TEST_DATA / "descriptor-valid.json").read_text()),
+    ]
+
+    invocation_files: list[InvocationFile] = [
+        InvocationFile(path=DPATH_TEST_DATA / "invocation-valid.json5"),
+        InvocationFile(
             content=json.dumps(
-                {
-                    "name": "test_app",
-                    "description": "Test application",
-                    "schema-version": "0.5",
-                    "tool-version": "1.0.0",
-                    "command-line": "test_app [INPUT]",
-                    "inputs": [
-                        {
-                            "id": "input_file",
-                            "name": "Input File",
-                            "type": "File",
-                            "value-key": "[INPUT]",
-                        }
-                    ],
-                }
+                load_json(DPATH_TEST_DATA / "invocation-valid.json5", allow_json5=True)
             )
-        )
+        ),
+    ]
 
-    @pytest.fixture
-    def invocation_file(self) -> InvocationFile:
-        return InvocationFile(content=json.dumps({"input_file": "/path/to/input.txt"}))
-
+    @pytest.mark.parametrize("descriptor_file", descriptor_files)
     def test_validate_descriptor(self, descriptor_file: DescriptorFile):
         assert boutiques_api.validate_descriptor(descriptor_file) is descriptor_file
 
@@ -171,6 +162,8 @@ class TestBoutiquesAPI:
         with pytest.raises(exception_class, match=error_message):
             boutiques_api.validate_descriptor(descriptor_file)
 
+    @pytest.mark.parametrize("invocation_file", invocation_files)
+    @pytest.mark.parametrize("descriptor_file", descriptor_files)
     def test_validate_invocation(
         self, invocation_file: InvocationFile, descriptor_file: DescriptorFile
     ):
@@ -202,13 +195,13 @@ class TestBoutiquesAPI:
         invocation_file: InvocationFile,
         exception_class: type[Exception],
         error_message: str,
-        descriptor_file: DescriptorFile,
     ):
         with pytest.raises(exception_class, match=error_message):
             boutiques_api.validate_invocation(
-                invocation_file, descriptor=descriptor_file
+                invocation_file, descriptor=self.descriptor_files[0]
             )
 
+    @pytest.mark.parametrize("descriptor_file", descriptor_files)
     def test_generate_example_invocation(self, descriptor_file: DescriptorFile):
         invocation_file = boutiques_api.generate_example_invocation(descriptor_file)
         assert (
