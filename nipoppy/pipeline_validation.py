@@ -1,6 +1,5 @@
 """Pipeline store functions."""
 
-import json
 import logging
 from pathlib import Path
 
@@ -18,7 +17,7 @@ from nipoppy.config.schema import ensure_schema_version_exists
 from nipoppy.config.tracker import TrackerConfig
 from nipoppy.env import ConfigType, PipelineTypeEnum, StrOrPathLike
 from nipoppy.exceptions import ConfigError, FileOperationError
-from nipoppy.integrations.boutiques import boutiques_api
+from nipoppy.integrations.boutiques import DescriptorFile, InvocationFile, boutiques_api
 from nipoppy.layout import DatasetLayout, LayoutError
 from nipoppy.logger import get_logger
 from nipoppy.utils.utils import TEMPLATE_REPLACE_PATTERN, load_json
@@ -63,23 +62,13 @@ def _load_pipeline_config_file(
 
 
 def _check_descriptor_file(
-    fpath_descriptor: StrOrPathLike, strict: bool = False
-) -> str:
+    fpath_descriptor: Path, strict: bool = False
+) -> DescriptorFile:
     """Validate a Boutiques descriptor file."""
-    fpath_descriptor: Path = Path(fpath_descriptor)
+    descriptor = DescriptorFile(path=fpath_descriptor)
+    boutiques_api.validate_descriptor(descriptor)
 
-    if not fpath_descriptor.exists():
-        raise FileOperationError(f"Descriptor file not found: {fpath_descriptor}")
-
-    descriptor_str = json.dumps(load_json(fpath_descriptor, allow_json5=False))
-    try:
-        boutiques_api.validate_descriptor(descriptor_str)
-    except ConfigError as exception:
-        raise ConfigError(
-            f"Descriptor file {fpath_descriptor} is invalid: {str(exception)}"
-        ) from exception
-
-    if TEMPLATE_REPLACE_PATTERN.search(descriptor_str) is not None:
+    if TEMPLATE_REPLACE_PATTERN.search(descriptor.resolved_content) is not None:
         error_message = f"Descriptor file {fpath_descriptor} contains Nipoppy-specific template variables. "  # noqa E501
         if strict:
             raise ConfigError(
@@ -93,23 +82,16 @@ def _check_descriptor_file(
                 + "This will be deprecated in the future: you should update this file following steps listed in https://nipoppy.readthedocs.io/en/0.4.1/changelog.html#release-0-4-1."  # noqa E501
             )
 
-    return descriptor_str
+    return descriptor
 
 
-def _check_invocation_file(fpath_invocation: Path, descriptor_str: str) -> None:
+def _check_invocation_file(
+    fpath_invocation: Path, descriptor: DescriptorFile
+) -> InvocationFile:
     """Validate a Boutiques invocation file."""
-    fpath_invocation: Path = Path(fpath_invocation)
-    if not fpath_invocation.exists():
-        raise FileOperationError(f"Invocation file not found: {fpath_invocation}")
-
-    invocation_str = json.dumps(load_json(fpath_invocation, allow_json5=True))
-
-    try:
-        boutiques_api.validate_invocation(invocation_str, descriptor=descriptor_str)
-    except ConfigError as exception:
-        raise ConfigError(
-            f"Invocation file {fpath_invocation} is invalid: {str(exception)}"
-        ) from exception
+    invocation = InvocationFile(path=fpath_invocation)
+    boutiques_api.validate_invocation(invocation, descriptor=descriptor)
+    return invocation
 
 
 def _check_hpc_config_file(fpath_hpc_config: Path) -> None:
