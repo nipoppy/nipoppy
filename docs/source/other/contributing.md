@@ -52,12 +52,18 @@ If you would like to contribute but are not sure where to start, we recommend lo
 
 First, [fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) the [repository](https://github.com/nipoppy/nipoppy) on GitHub.
 
-Then, in a Terminal window, clone the repository and **install it with `dev` dependencies**:
+Then, in a Terminal window, clone the repository and **install it with `dev` dependencies** (requires `pip >= 25.1`):
 
 ```{code-block} console
 $ git clone https://github.com/nipoppy/nipoppy.git
 $ cd nipoppy
-$ pip install -e ".[dev]"
+$ pip install -e . --group dev
+```
+
+Alternatively, if using [`uv`](https://docs.astral.sh/uv/), `uv sync` creates a virtual environment and installs the package along with the `dev` dependency group automatically:
+
+```{code-block} console
+$ uv sync
 ```
 
 Set up [`prek`](https://prek.j178.dev/) (a faster drop-in replacement for [`pre-commit`](https://pre-commit.com/)) to apply automatic formatting/linting/etc. when making a new commit:
