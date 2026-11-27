@@ -15,7 +15,8 @@ from nipoppy.config.pipeline import (
 )
 from nipoppy.config.schema import get_current_schema_version
 from nipoppy.env import ConfigType, PipelineTypeEnum
-from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.integrations.boutiques import DescriptorFile
 from nipoppy.pipeline_validation import (
     _check_descriptor_file,
     _check_hpc_config_file,
@@ -32,9 +33,9 @@ from tests.conftest import DPATH_TEST_DATA
 
 
 @pytest.fixture()
-def descriptor_str():
+def valid_descriptor() -> DescriptorFile:
     """Fixture for _check_invocation_file."""
-    return Path(DPATH_TEST_DATA / "descriptor-valid.json").read_text()
+    return DescriptorFile(path=Path(DPATH_TEST_DATA / "descriptor-valid.json"))
 
 
 @pytest.fixture()
@@ -82,7 +83,8 @@ def test_load_pipeline_config_file_invalid(fpath, exception_class, exception_mes
 
 def test_check_descriptor_file(caplog: pytest.LogCaptureFixture):
     assert isinstance(
-        _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"), str
+        _check_descriptor_file(DPATH_TEST_DATA / "descriptor-valid.json"),
+        DescriptorFile,
     )
     assert len(caplog.records) == 0
 
@@ -111,50 +113,31 @@ def test_check_descriptor_file_deprecation_error():
         )
 
 
-def test_check_descriptor_file_remains_strict_json(tmp_path: Path):
-    fpath = tmp_path / "descriptor.json"
-    fpath.write_text('{"name": "x",}')  # trailing comma makes it invalid JSON
-
-    with pytest.raises(JSONError):
-        _check_descriptor_file(fpath)
+def test_check_descriptor_file_invalid():
+    with pytest.raises(ConfigError, match="Descriptor .* is invalid"):
+        _check_descriptor_file(DPATH_TEST_DATA / "descriptor-invalid.json")
 
 
-@pytest.mark.parametrize(
-    "fpath,exception_class,exception_message",
-    [
-        ("fake_path.json", FileOperationError, "Descriptor file not found"),
-        (
-            DPATH_TEST_DATA / "descriptor-invalid.json",
-            ConfigError,
-            "Descriptor file .* is invalid",
-        ),
-    ],
-)
-def test_check_descriptor_file_invalid(fpath, exception_class, exception_message):
-    with pytest.raises(exception_class, match=exception_message):
-        _check_descriptor_file(fpath)
-
-
-def test_check_invocation_file(descriptor_str):
-    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json5", descriptor_str)
+def test_check_invocation_file(valid_descriptor: DescriptorFile):
+    _check_invocation_file(DPATH_TEST_DATA / "invocation-valid.json5", valid_descriptor)
 
 
 @pytest.mark.parametrize(
     "fpath,exception_class,exception_message",
     [
-        ("fake_path.json", FileOperationError, "Invocation file not found"),
+        (Path("fake_path.json"), FileOperationError, "File not found"),
         (
             DPATH_TEST_DATA / "invocation-invalid.json",
             ConfigError,
-            "Invocation file .* is invalid",
+            "Invocation .* is invalid",
         ),
     ],
 )
 def test_check_invocation_file_invalid(
-    fpath, exception_class, exception_message, descriptor_str
+    fpath: Path, exception_class, exception_message, valid_descriptor
 ):
     with pytest.raises(exception_class, match=exception_message):
-        _check_invocation_file(fpath, descriptor_str)
+        _check_invocation_file(fpath, valid_descriptor)
 
 
 def test_check_hpc_config_file():

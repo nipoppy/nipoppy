@@ -16,11 +16,12 @@ classifiers = [
     "Topic :: Software Development",
 ]
 dependencies = [
-    "boutiques>=0.5.31",
+    "boutiques>=0.5.31, < 0.6.0",
     "click",
     "httpx",
     "jinja2",
     "json5",
+    "packaging",
     "pandas",
     "pybids!=0.18.0",
     "pydantic",
@@ -67,7 +68,6 @@ test = [
     "bids-validator-deno",
     "fids>=0.1.0",
     "nipoppy[gui,parallel]",
-    "packaging",
     "pytest-cov",
     "pytest-httpx",
     "pytest-mock",
@@ -116,7 +116,7 @@ max-complexity = 12
 
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["D104", "F401"]
-"**/test_*.py" = ["D100", "D101", "D103"]
+"**/test_*.py" = ["D100", "D101", "D102", "D103"]
 "docs/source/conf.py" = ["E501"]
 "tests/unit/workflows/test_*.py" = ["E501"]
 

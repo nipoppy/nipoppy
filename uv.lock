@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.11, <3.16"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -982,6 +982,7 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "json5" },
+    { name = "packaging" },
     { name = "pandas" },
     { name = "pybids" },
     { name = "pydantic" },
@@ -1012,7 +1013,6 @@ dev = [
     { name = "mdit-py-plugins" },
     { name = "myst-parser" },
     { name = "nipoppy", extra = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1051,7 +1051,6 @@ test = [
     { name = "bids-validator-deno" },
     { name = "fids" },
     { name = "nipoppy", extra = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
@@ -1062,7 +1061,6 @@ tests = [
     { name = "bids-validator-deno" },
     { name = "fids" },
     { name = "nipoppy", extra = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
@@ -1072,12 +1070,13 @@ tests = [
 
 [package.metadata]
 requires-dist = [
-    { name = "boutiques", specifier = ">=0.5.31" },
+    { name = "boutiques", specifier = ">=0.5.31,<0.6.0" },
     { name = "click" },
     { name = "httpx" },
     { name = "jinja2" },
     { name = "joblib", marker = "extra == 'parallel'" },
     { name = "json5" },
+    { name = "packaging" },
     { name = "pandas" },
     { name = "pybids", specifier = "!=0.18.0" },
     { name = "pydantic" },
@@ -1100,7 +1099,6 @@ dev = [
     { name = "mdit-py-plugins" },
     { name = "myst-parser", specifier = ">=5.1.0" },
     { name = "nipoppy", extras = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "prek" },
     { name = "pytest", specifier = ">=6.0.0" },
     { name = "pytest-cov" },
@@ -1135,7 +1133,6 @@ test = [
     { name = "bids-validator-deno" },
     { name = "fids", specifier = ">=0.1.0" },
     { name = "nipoppy", extras = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "pytest", specifier = ">=6.0.0" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
@@ -1146,7 +1143,6 @@ tests = [
     { name = "bids-validator-deno" },
     { name = "fids", specifier = ">=0.1.0" },
     { name = "nipoppy", extras = ["gui", "parallel"] },
-    { name = "packaging" },
     { name = "pytest", specifier = ">=6.0.0" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },

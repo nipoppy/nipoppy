@@ -1,18 +1,18 @@
 """Workflow for pipeline validate command."""
 
+import json
 import warnings
 from pathlib import Path
 
-import boutiques
-
 from nipoppy.env import PROGRAM_VERSION, PipelineTypeEnum
-from nipoppy.exceptions import FileOperationError, WorkflowError
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.integrations.boutiques import DescriptorFile, boutiques_api
 from nipoppy.layout import DatasetLayout
 from nipoppy.logger import get_logger
 from nipoppy.pipeline_validation import _load_pipeline_config_file
 from nipoppy.utils import fileops
 from nipoppy.utils.json5 import update_json5_file
-from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH, load_json
+from nipoppy.utils.utils import TEMPLATE_PIPELINE_PATH
 from nipoppy.workflows.base import BaseWorkflow
 
 logger = get_logger()
@@ -65,24 +65,42 @@ class PipelineCreateWorkflow(BaseWorkflow):
         ).get_step_config()
 
         descriptor_path = target.joinpath(pipeline_step_config.DESCRIPTOR_FILE)
+        pipeline_config_updates = []
         if source_descriptor is not None:
+            descriptor = DescriptorFile(path=source_descriptor)
+            descriptor_dict = json.loads(descriptor.resolved_content)
             try:
-                boutiques.validate(str(source_descriptor))
-            except boutiques.DescriptorValidationError as exception:
-                raise WorkflowError(
-                    f"Descriptor file {source_descriptor} is invalid:\n{exception}"
-                )
-            except ValueError as exception:  # catches simplejson.errors.JSONDecodeError
-                raise WorkflowError(
-                    "Error validating the descriptor file "
-                    f"{source_descriptor}:\n{exception}"
-                )
+                boutiques_api.validate_descriptor(descriptor)
+            except ConfigError as exception:
+                raise ConfigError(
+                    f"Descriptor file {source_descriptor} is invalid: {str(exception)}"
+                ) from exception
             fileops.copy(source_descriptor, descriptor_path, dry_run=self.dry_run)
+
+            pipeline_config_updates.extend(
+                [
+                    (["NAME"], descriptor_dict["name"]),
+                    (["VERSION"], descriptor_dict["tool-version"]),
+                ]
+            )
+
+            if "container-image" in descriptor_dict:
+                uri = f"docker://{descriptor_dict['container-image']['image']}"
+
+                # replace the pipeline name/version with placeholders
+                # to avoid users forgetting to update them when copy-pasting
+                uri = uri.replace(descriptor_dict["name"], "[[PIPELINE_NAME]]")
+                uri = uri.replace(
+                    descriptor_dict["tool-version"], "[[PIPELINE_VERSION]]"
+                )
+                pipeline_config_updates.append((["CONTAINER_INFO", "URI"], uri))
+
         else:
             fileops.copy(
                 TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.DESCRIPTOR_FILE),
                 descriptor_path,
             )
+            descriptor = DescriptorFile(path=descriptor_path)
 
         substitutions = {"version": PROGRAM_VERSION}
 
@@ -95,8 +113,9 @@ class PipelineCreateWorkflow(BaseWorkflow):
             dry_run=self.dry_run,
         )
         # then append the actual example invocation
+        invocation = boutiques_api.generate_example_invocation(descriptor)
         with invocation_path.open("a") as file_invocation:
-            file_invocation.write(boutiques.example(str(descriptor_path)))
+            file_invocation.write(invocation.resolved_content)
 
         fileops.copy_template(
             TEMPLATE_PIPELINE_PATH.joinpath(pipeline_step_config.HPC_CONFIG_FILE),
@@ -114,24 +133,8 @@ class PipelineCreateWorkflow(BaseWorkflow):
         )
 
         # Populate the config.json using descriptor information
-        if source_descriptor is not None:
-            descriptor = load_json(source_descriptor)
-            updates = [
-                (["NAME"], descriptor["name"]),
-                (["VERSION"], descriptor["tool-version"]),
-            ]
-
-            if "container-image" in descriptor:
-                uri = f"docker://{descriptor['container-image']['image']}"
-
-                # replace the pipeline name/version with placeholders
-                # to avoid users forgetting to update them when copy-pasting
-                uri = uri.replace(descriptor["name"], "[[PIPELINE_NAME]]")
-                uri = uri.replace(descriptor["tool-version"], "[[PIPELINE_VERSION]]")
-                updates.append((["CONTAINER_INFO", "URI"], uri))
-
-            if not self.dry_run:
-                update_json5_file(dest_pipeline_config_path, updates)
+        if not self.dry_run:
+            update_json5_file(dest_pipeline_config_path, pipeline_config_updates)
 
         # Only PROCESSING pipelines have a tracker.json file
         if self.type_ == PipelineTypeEnum.PROCESSING:
