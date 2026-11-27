@@ -19,6 +19,7 @@ jobs:
     - uses: astral-sh/setup-uv@v10.3.3
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        activate-environment: true
 
     - name: Install package with doc dependencies
       run: |
@@ -26,12 +27,12 @@ jobs:
 
     - name: Generate JSON schemas for docs
       run: |
-        uv run --no-sync python docs/scripts/pydantic_to_jsonschema.py
-        uv run --no-sync python docs/scripts/process_template_json5_configs.py
+        python docs/scripts/pydantic_to_jsonschema.py
+        python docs/scripts/process_template_json5_configs.py
 
     - name: Run linkcheck
       run: |
-        uv run --no-sync python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
+        python -m sphinx -b linkcheck -D linkcheck_timeout=30 docs/source/ docs/build/linkcheck
 
   pytest:
     runs-on: ubuntu-latest
@@ -42,6 +43,7 @@ jobs:
     - uses: astral-sh/setup-uv@v10.3.3
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        activate-environment: true
 
     - name: Install package with test dependencies
       run: |
@@ -49,4 +51,4 @@ jobs:
 
     - name: Run pytest linkcheck tests
       run: |
-        uv run --no-sync python -m pytest -m linkcheck
+        python -m pytest -m linkcheck
