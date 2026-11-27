@@ -371,6 +371,16 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
                 "status",
                 "--study",
                 "[mocked_dir]",
+                "--datatype",
+                "anat",
+            ],
+            "nipoppy.workflows.dataset_status.StatusWorkflow",
+        ),
+        (
+            [
+                "status",
+                "--dataset",
+                "[mocked_dir]",
             ],
             "nipoppy.workflows.dataset_status.StatusWorkflow",
         ),
