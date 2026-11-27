@@ -4,8 +4,12 @@ import tarfile
 from collections.abc import Iterable
 from pathlib import Path
 
+from rich import box
+from rich.table import Table
+
 from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.config.tracker import TrackerConfig
+from nipoppy.console import CONSOLE_STDOUT
 from nipoppy.env import EXT_TAR, StrOrPathLike
 from nipoppy.exceptions import NipoppyError
 from nipoppy.logger import get_logger
@@ -168,6 +172,13 @@ class PipelineTracker(BasePipelineWorkflow):
 
     def _update_status_file(self):
         """Update the processing status file."""
+        # count before updating since add_or_update_records modifies the table
+        change_counts = self.processing_status_table.get_status_changes(
+            self.run_single_results,
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
         self.processing_status_table = (
             self.processing_status_table.add_or_update_records(self.run_single_results)
         )
@@ -179,6 +190,39 @@ class PipelineTracker(BasePipelineWorkflow):
             self.study.layout.fpath_processing_status,
             dry_run=self.dry_run,
         )
+        if self.dry_run:
+            return
+
+        status_counts = self.processing_status_table.get_status_counts(
+            pipeline_name=self.pipeline_name,
+            pipeline_version=self.pipeline_version,
+            pipeline_step=self.pipeline_step,
+        )
+        if status_counts:
+            summary_table = Table(
+                title="Processing status summary", box=box.MINIMAL_DOUBLE_HEAD
+            )
+            summary_table.add_column("Status")
+            summary_table.add_column("Total", justify="right")
+            summary_table.add_column("New", justify="right")
+            for status in sorted(status_counts):
+                summary_table.add_row(
+                    status,
+                    str(status_counts[status]),
+                    str(change_counts[(None, status)]),
+                )
+            CONSOLE_STDOUT.print(summary_table)
+
+        n_lost_success = sum(
+            count
+            for (old_status, _), count in change_counts.items()
+            if old_status == ProcessingStatusTable.status_success
+        )
+        if n_lost_success > 0:
+            logger.warning(
+                f"{n_lost_success} participant-session(s) changed from "
+                f"{ProcessingStatusTable.status_success} to another status"
+            )
 
     def run_main(self):
         """Run the tracker workflow."""

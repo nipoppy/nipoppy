@@ -1,5 +1,6 @@
 """Class for the processing status file."""
 
+from collections import Counter
 from typing import Any
 
 from pydantic import Field, field_validator, model_validator
@@ -177,3 +178,55 @@ class ProcessingStatusTable(BaseTabular):
         yield from subset[[self.col_participant_id, self.col_session_id]].itertuples(
             index=False
         )
+
+    def _get_pipeline_subset_helper(
+        self, pipeline_name: str, pipeline_version: str, pipeline_step: str
+    ):
+        """Get the rows for a specific pipeline step."""
+        return self.loc[
+            (self[self.col_pipeline_name] == pipeline_name)
+            & (self[self.col_pipeline_version] == pipeline_version)
+            & (self[self.col_pipeline_step] == pipeline_step)
+        ]
+
+    def get_status_counts(
+        self, pipeline_name: str, pipeline_version: str, pipeline_step: str
+    ) -> Counter:
+        """Count the participant-sessions with each status for a pipeline step."""
+        pipeline_subset = self._get_pipeline_subset_helper(
+            pipeline_name, pipeline_version, pipeline_step
+        )
+        return Counter(pipeline_subset[self.col_status])
+
+    def get_status_changes(
+        self,
+        records: list[dict],
+        pipeline_name: str,
+        pipeline_version: str,
+        pipeline_step: str,
+    ) -> Counter:
+        """
+        Count how the statuses in new records differ from the ones in this table.
+
+        Keys are (old status, new status) pairs. The old status is None for records
+        that are not in the table. Records with an unchanged status are not counted.
+        """
+        pipeline_subset = self._get_pipeline_subset_helper(
+            pipeline_name, pipeline_version, pipeline_step
+        )
+        old_statuses = {
+            (participant_id, session_id): status
+            for participant_id, session_id, status in pipeline_subset[
+                [self.col_participant_id, self.col_session_id, self.col_status]
+            ].itertuples(index=False)
+        }
+
+        change_counts = Counter()
+        for record in records:
+            old_status = old_statuses.get(
+                (record[self.col_participant_id], record[self.col_session_id])
+            )
+            new_status = record[self.col_status]
+            if old_status != new_status:
+                change_counts[(old_status, new_status)] += 1
+        return change_counts

@@ -12,7 +12,11 @@ from nipoppy.config.pipeline_step import AnalysisLevelType
 from nipoppy.env import DEFAULT_PIPELINE_STEP_NAME
 from nipoppy.tabular.curation_status import CurationStatusTable
 from nipoppy.tabular.manifest import Manifest
-from nipoppy.tabular.processing_status import ProcessingStatusTable
+from nipoppy.tabular.processing_status import (
+    STATUS_FAIL,
+    STATUS_SUCCESS,
+    ProcessingStatusTable,
+)
 from nipoppy.workflows.processing_runner import ProcessingRunner
 from nipoppy.workflows.tracker import PipelineTracker
 from tests.conftest import (
@@ -350,6 +354,80 @@ def test_update_status_file(
     assert ProcessingStatusTable.load(
         tracker.study.layout.fpath_processing_status
     ).equals(expected_processing_status_table)
+
+
+def _make_record(participant_id: str, session_id: str, status: str) -> dict:
+    return {
+        ProcessingStatusTable.col_participant_id: participant_id,
+        ProcessingStatusTable.col_session_id: session_id,
+        ProcessingStatusTable.col_pipeline_name: "test_pipeline",
+        ProcessingStatusTable.col_pipeline_version: "0.1.0",
+        ProcessingStatusTable.col_pipeline_step: DEFAULT_PIPELINE_STEP_NAME,
+        ProcessingStatusTable.col_status: status,
+    }
+
+
+def test_update_status_file_prints_summary(
+    tracker: PipelineTracker, mocker: pytest_mock.MockFixture
+):
+    mocked_print = mocker.patch("nipoppy.workflows.tracker.CONSOLE_STDOUT").print
+    tracker.processing_status_table = ProcessingStatusTable().add_or_update_records(
+        [_make_record("01", "1", STATUS_SUCCESS)]
+    )
+    tracker.run_single_results = [
+        _make_record("01", "1", STATUS_SUCCESS),
+        _make_record("01", "2", STATUS_SUCCESS),
+        _make_record("02", "1", STATUS_FAIL),
+    ]
+    tracker._update_status_file()
+
+    table = mocked_print.call_args.args[0]
+    rows = list(zip(*[column.cells for column in table.columns]))
+    assert rows == [(STATUS_FAIL, "1", "1"), (STATUS_SUCCESS, "2", "1")]
+
+
+@pytest.mark.parametrize(
+    "dry_run,records",
+    [
+        (True, [_make_record("01", "1", STATUS_SUCCESS)]),
+        (False, []),
+    ],
+)
+def test_update_status_file_no_summary(
+    tracker: PipelineTracker,
+    dry_run: bool,
+    records: list[dict],
+    mocker: pytest_mock.MockFixture,
+):
+    mocked_print = mocker.patch("nipoppy.workflows.tracker.CONSOLE_STDOUT").print
+    tracker.dry_run = dry_run
+    tracker.run_single_results = records
+    tracker._update_status_file()
+
+    mocked_print.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "old_status,new_status,expect_warning",
+    [
+        (STATUS_SUCCESS, STATUS_FAIL, True),
+        (STATUS_FAIL, STATUS_SUCCESS, False),
+    ],
+)
+def test_update_status_file_warns_if_success_lost(
+    tracker: PipelineTracker,
+    old_status: str,
+    new_status: str,
+    expect_warning: bool,
+    caplog: pytest.LogCaptureFixture,
+):
+    tracker.processing_status_table = ProcessingStatusTable().add_or_update_records(
+        [_make_record("01", "1", old_status)]
+    )
+    tracker.run_single_results = [_make_record("01", "1", new_status)]
+    tracker._update_status_file()
+
+    assert ("changed from SUCCESS" in caplog.text) == expect_warning
 
 
 def test_run_main(tracker: PipelineTracker, mocker: pytest_mock.MockFixture):
