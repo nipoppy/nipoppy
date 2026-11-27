@@ -16,7 +16,13 @@ from nipoppy.env import (
     NIPOPPY_DIR_NAME,
     StrOrPathLike,
 )
-from nipoppy.exceptions import ConfigError, JSON5Error, JSONError, NipoppyError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    JSON5Error,
+    JSONError,
+    NipoppyError,
+)
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -97,9 +103,21 @@ def load_json(
     -------
     dict | list
         The JSON object.
+
+    Raises
+    ------
+    FileOperationError
+        If the file does not exist.
+    JSON5Error
+        If ``allow_json5`` is True and the file cannot be parsed as JSON5.
+    JSONError
+        If ``allow_json5`` is False and the file cannot be parsed as JSON.
     """
     fpath = Path(fpath)
-    json_text = fpath.read_text()
+    try:
+        json_text = fpath.read_text()
+    except FileNotFoundError as e:
+        raise FileOperationError(f"File not found: {fpath}") from e
     if allow_json5:
         try:
             return json5.loads(json_text, **kwargs)

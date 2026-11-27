@@ -6,7 +6,12 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from nipoppy.exceptions import ConfigError, JSONError, NipoppyError
+from nipoppy.exceptions import (
+    ConfigError,
+    FileOperationError,
+    JSONError,
+    NipoppyError,
+)
 from nipoppy.layout import DatasetLayout
 from nipoppy.utils.utils import (
     add_path_suffix,
@@ -57,6 +62,26 @@ def test_load_json_invalid(tmp_path: Path):
     fpath_invalid.write_text("invalid")
     with pytest.raises(JSONError):
         load_json(fpath_invalid)
+
+
+@pytest.mark.parametrize("allow_json5", [False, True])
+@pytest.mark.parametrize("as_str", [False, True])
+def test_load_json_not_found(tmp_path: Path, allow_json5: bool, as_str: bool):
+    fpath_missing = tmp_path / "missing.json"
+    fpath = str(fpath_missing) if as_str else fpath_missing
+    with pytest.raises(FileOperationError) as exc_info:
+        load_json(fpath, allow_json5=allow_json5)
+    assert str(exc_info.value) == f"File not found: {fpath_missing}"
+    assert isinstance(exc_info.value.__cause__, FileNotFoundError)
+
+
+def test_load_json_broken_symlink(tmp_path: Path):
+    fpath_symlink = tmp_path / "broken.json"
+    fpath_symlink.symlink_to(tmp_path / "non_existent.json")
+    with pytest.raises(FileOperationError) as exc_info:
+        load_json(fpath_symlink)
+    assert str(exc_info.value) == f"File not found: {fpath_symlink}"
+    assert isinstance(exc_info.value.__cause__, FileNotFoundError)
 
 
 def test_save_json(tmp_path: Path):
