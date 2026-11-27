@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import importlib.metadata
+import json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
+from typing import ClassVar
 
 import boutiques
 from boutiques.util.utils import LoadError
 from packaging.version import Version
 
-from nipoppy.exceptions import ConfigError
+from nipoppy.exceptions import ConfigError, FileOperationError
+from nipoppy.utils.utils import load_json
 
 BOUTIQUES_NEXT_VERSION = Version("0.6.0")
 
@@ -23,6 +26,7 @@ class BoutiquesFile:
 
     path: Path | None = None
     content: str | None = None
+    allow_json5: ClassVar[bool] = False
 
     def __post_init__(self) -> None:
 
@@ -38,9 +42,10 @@ class BoutiquesFile:
         """The resolved content of the descriptor or invocation."""
         if self.path is not None:
             if not self.path.exists():
-                raise FileNotFoundError(f"File not found: {self.path}")
-            return self.path.read_text()
-        return self.content
+                raise FileOperationError(f"File not found: {self.path}")
+            return json.dumps(load_json(self.path, allow_json5=self.allow_json5))
+        else:
+            return self.content
 
     def __str__(self) -> str:
         if self.path is not None:
@@ -48,11 +53,25 @@ class BoutiquesFile:
         return self.resolved_content
 
 
+@dataclass(frozen=True)
+class DescriptorFile(BoutiquesFile):
+    """Representation of a Boutiques descriptor file."""
+
+    allow_json5: ClassVar[bool] = False
+
+
+@dataclass(frozen=True)
+class InvocationFile(BoutiquesFile):
+    """Representation of a Boutiques invocation file."""
+
+    allow_json5: ClassVar[bool] = True
+
+
 class BoutiquesAPI(ABC):
     """Interface for the Boutiques Python API."""
 
     @abstractmethod
-    def validate_descriptor(self, descriptor: BoutiquesFile, /) -> None:
+    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:
         """Validate a descriptor.
 
         Raises
@@ -64,7 +83,7 @@ class BoutiquesAPI(ABC):
 
     @abstractmethod
     def validate_invocation(
-        self, invocation: BoutiquesFile, *, descriptor: BoutiquesFile
+        self, invocation: InvocationFile, *, descriptor: DescriptorFile
     ) -> None:
         """Validate an invocation against a descriptor.
 
@@ -76,7 +95,7 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def generate_example_invocation(self, descriptor: BoutiquesFile, /) -> str:
+    def generate_example_invocation(self, descriptor: DescriptorFile, /) -> str:
         """Generate an example invocation for a descriptor.
 
         Parameters
@@ -95,7 +114,7 @@ class BoutiquesAPI(ABC):
 class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
-    def validate_descriptor(self, descriptor: BoutiquesFile, /) -> None:  # noqa: D102
+    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:  # noqa: D102
         try:
             boutiques.validate(str(descriptor))
         except (
@@ -107,7 +126,7 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
             ) from exception
 
     def validate_invocation(  # noqa: D102
-        self, invocation: BoutiquesFile, *, descriptor: BoutiquesFile
+        self, invocation: InvocationFile, *, descriptor: DescriptorFile
     ) -> None:
         self.validate_descriptor(descriptor)
         try:
@@ -120,7 +139,9 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
                 f"Invocation {invocation} is invalid: {str(exception)}"
             ) from exception
 
-    def generate_example_invocation(self, descriptor: BoutiquesFile, /) -> str:  # noqa: D102
+    def generate_example_invocation(  # noqa: D102
+        self, descriptor: DescriptorFile, /
+    ) -> str:
         self.validate_descriptor(descriptor)
         return boutiques.example(str(descriptor))
 
@@ -128,19 +149,21 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
 class BoutiquesNextAPI(BoutiquesAPI):
     """Boutiques API for versions >= 0.6.0."""
 
-    def validate_descriptor(self, descriptor: BoutiquesFile, /) -> None:  # noqa: D102
+    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:  # noqa: D102
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )
 
     def validate_invocation(  # noqa: D102
-        self, invocation: BoutiquesFile, *, descriptor: BoutiquesFile
+        self, invocation: InvocationFile, *, descriptor: DescriptorFile
     ) -> None:
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )
 
-    def generate_example_invocation(self, descriptor: BoutiquesFile, /) -> str:  # noqa: D102
+    def generate_example_invocation(  # noqa: D102
+        self, descriptor: DescriptorFile, /
+    ) -> str:
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )

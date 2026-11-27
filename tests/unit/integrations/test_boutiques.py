@@ -7,12 +7,14 @@ from pathlib import Path
 import pytest
 import pytest_mock
 
-from nipoppy.exceptions import ConfigError
+from nipoppy.exceptions import ConfigError, FileOperationError, JSONError
 from nipoppy.integrations.boutiques import (
     BoutiquesAPI,
     BoutiquesFile,
     BoutiquesLegacyAPI,
     BoutiquesNextAPI,
+    DescriptorFile,
+    InvocationFile,
     _create_boutiques_api,
     boutiques_api,
 )
@@ -67,12 +69,12 @@ class TestBoutiquesFile:
     )
     def test_resolved_content_from_path(self, relative_path: Path, tmp_path: Path):
         path = tmp_path / relative_path
-        path.parent.mkdir(parents=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
         content = '{"name": "test_app"}'
         path.write_text(content)
 
-        boutiques_file = BoutiquesFile(path=relative_path)
+        boutiques_file = BoutiquesFile(path=path)
         assert boutiques_file.resolved_content == content
 
     @pytest.mark.parametrize(
@@ -82,7 +84,7 @@ class TestBoutiquesFile:
             '{"inputs": [{"id": "input_file", "type": "File"}]}',
         ],
     )
-    def test_resolved_content_from_content(self, content: str):
+    def test_resolved_content_from_str_content(self, content: str):
         boutiques_file = BoutiquesFile(content=content)
         assert boutiques_file.resolved_content == content
 
@@ -92,29 +94,57 @@ class TestBoutiquesFile:
 
         boutiques_file = BoutiquesFile(path=path)
 
-        with pytest.raises(FileNotFoundError, match=f"File not found: {path}"):
+        with pytest.raises(FileOperationError, match=f"File not found: {path}"):
             boutiques_file.resolved_content
 
     @pytest.mark.parametrize(
-        ("relative_path", "content", "expected_str"),
+        ("relative_path", "content", "expected_fstr"),
         [
-            ("descriptor.json", None, "descriptor.json"),
-            (None, '{"name": "test_app"}', '{"name": "test_app"}'),
+            (Path("descriptor.json"), None, "{tmp_path}/descriptor.json"),
+            (None, '{"name": "test_app"}', '{{"name": "test_app"}}'),
         ],
     )
     def test_str(
         self,
         relative_path: Path | None,
         content: str | None,
-        expected_str: str,
+        expected_fstr: str,
         tmp_path: Path,
     ):
         if relative_path is not None:
             path = tmp_path / relative_path
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("{}")
         else:
             path = None
         boutiques_file_from_path = BoutiquesFile(path=path, content=content)
-        assert str(boutiques_file_from_path) == expected_str
+        assert str(boutiques_file_from_path) == expected_fstr.format(tmp_path=tmp_path)
+
+
+class TestDescriptorFile:
+    def test_resolved_content_from_path_errors_with_json5(self, tmp_path: Path):
+        path = tmp_path / "descriptor.json"
+        content = "{name: 'test_app'}"  # Invalid JSON, valid JSON5 (single quotes)
+        path.write_text(content)
+
+        boutiques_file = DescriptorFile(path=path)
+
+        with pytest.raises(
+            JSONError,
+            match=f"Expecting property name enclosed in double quotes: {path}",
+        ):
+            boutiques_file.resolved_content
+
+
+class TestInvocationFile:
+    def test_resolved_content_from_path_allows_json5(self, tmp_path: Path):
+        path = tmp_path / "descriptor.json"
+        content = "{name: 'test_app'}"  # Invalid JSON, valid JSON5 (single quotes)
+        path.write_text(content)
+
+        boutiques_file = InvocationFile(path=path)
+
+        assert boutiques_file.resolved_content == '{"name": "test_app"}'
 
 
 class TestBoutiquesAPI:
