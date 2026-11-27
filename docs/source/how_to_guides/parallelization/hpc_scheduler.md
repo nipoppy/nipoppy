@@ -76,7 +76,7 @@ You will also need to add an `"HPC_CONFIG_FILE"` field for each step in pipeline
 ---
 linenos: True
 language: json
-lines: 14-21
+lines: 15-22
 emphasize-lines: 6
 ---
 ```
