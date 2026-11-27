@@ -995,13 +995,24 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+gui = [
+    { name = "trogon" },
+]
+parallel = [
+    { name = "joblib" },
+]
+tui = [
+    { name = "trogon" },
+]
+
+[package.dev-dependencies]
 dev = [
     { name = "bids-validator-deno" },
     { name = "fids" },
     { name = "furo" },
-    { name = "joblib" },
     { name = "mdit-py-plugins" },
     { name = "myst-parser" },
+    { name = "nipoppy", extra = ["gui", "parallel"] },
     { name = "prek" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1019,7 +1030,6 @@ dev = [
     { name = "sphinx-jsonschema" },
     { name = "sphinx-substitution-extensions" },
     { name = "sphinx-togglebutton" },
-    { name = "trogon" },
 ]
 doc = [
     { name = "furo" },
@@ -1037,112 +1047,108 @@ doc = [
     { name = "sphinx-substitution-extensions" },
     { name = "sphinx-togglebutton" },
 ]
-gui = [
-    { name = "trogon" },
-]
-parallel = [
-    { name = "joblib" },
-]
 test = [
     { name = "bids-validator-deno" },
     { name = "fids" },
-    { name = "joblib" },
+    { name = "nipoppy", extra = ["gui", "parallel"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
     { name = "pytest-mock" },
     { name = "pytest-xdist" },
-    { name = "trogon" },
 ]
 tests = [
     { name = "bids-validator-deno" },
     { name = "fids" },
-    { name = "joblib" },
+    { name = "nipoppy", extra = ["gui", "parallel"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "pytest-httpx" },
     { name = "pytest-mock" },
     { name = "pytest-xdist" },
-    { name = "trogon" },
-]
-tui = [
-    { name = "trogon" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "bids-validator-deno", marker = "extra == 'dev'" },
-    { name = "bids-validator-deno", marker = "extra == 'test'" },
-    { name = "bids-validator-deno", marker = "extra == 'tests'" },
     { name = "boutiques", specifier = ">=0.5.31,<0.6.0" },
     { name = "click" },
-    { name = "fids", marker = "extra == 'dev'", specifier = ">=0.1.0" },
-    { name = "fids", marker = "extra == 'test'", specifier = ">=0.1.0" },
-    { name = "fids", marker = "extra == 'tests'", specifier = ">=0.1.0" },
-    { name = "furo", marker = "extra == 'dev'" },
-    { name = "furo", marker = "extra == 'doc'" },
     { name = "httpx" },
     { name = "jinja2" },
-    { name = "joblib", marker = "extra == 'dev'" },
     { name = "joblib", marker = "extra == 'parallel'" },
-    { name = "joblib", marker = "extra == 'test'" },
-    { name = "joblib", marker = "extra == 'tests'" },
     { name = "json5" },
-    { name = "mdit-py-plugins", marker = "extra == 'dev'" },
-    { name = "mdit-py-plugins", marker = "extra == 'doc'" },
-    { name = "myst-parser", marker = "extra == 'dev'", specifier = ">=5.1.0" },
-    { name = "myst-parser", marker = "extra == 'doc'", specifier = ">=5.1.0" },
     { name = "packaging" },
     { name = "pandas" },
-    { name = "prek", marker = "extra == 'dev'" },
     { name = "pybids", specifier = "!=0.18.0" },
     { name = "pydantic" },
     { name = "pydicom", specifier = "!=3.0.0" },
     { name = "pysqa", extras = ["sge"], specifier = ">=0.2.4" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=6.0.0" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=6.0.0" },
-    { name = "pytest", marker = "extra == 'tests'", specifier = ">=6.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'" },
-    { name = "pytest-cov", marker = "extra == 'test'" },
-    { name = "pytest-cov", marker = "extra == 'tests'" },
-    { name = "pytest-httpx", marker = "extra == 'dev'" },
-    { name = "pytest-httpx", marker = "extra == 'test'" },
-    { name = "pytest-httpx", marker = "extra == 'tests'" },
-    { name = "pytest-mock", marker = "extra == 'dev'" },
-    { name = "pytest-mock", marker = "extra == 'test'" },
-    { name = "pytest-mock", marker = "extra == 'tests'" },
-    { name = "pytest-xdist", marker = "extra == 'dev'" },
-    { name = "pytest-xdist", marker = "extra == 'test'" },
-    { name = "pytest-xdist", marker = "extra == 'tests'" },
     { name = "python-dotenv" },
     { name = "rich" },
     { name = "rich-click" },
-    { name = "sphinx", marker = "extra == 'dev'" },
-    { name = "sphinx", marker = "extra == 'doc'" },
-    { name = "sphinx-autoapi", marker = "extra == 'dev'" },
-    { name = "sphinx-autoapi", marker = "extra == 'doc'" },
-    { name = "sphinx-click", marker = "extra == 'dev'" },
-    { name = "sphinx-click", marker = "extra == 'doc'" },
-    { name = "sphinx-copybutton", marker = "extra == 'dev'" },
-    { name = "sphinx-copybutton", marker = "extra == 'doc'" },
-    { name = "sphinx-design", marker = "extra == 'dev'" },
-    { name = "sphinx-design", marker = "extra == 'doc'" },
-    { name = "sphinx-github-changelog", marker = "extra == 'dev'" },
-    { name = "sphinx-github-changelog", marker = "extra == 'doc'" },
-    { name = "sphinx-jsonschema", marker = "extra == 'dev'" },
-    { name = "sphinx-jsonschema", marker = "extra == 'doc'" },
-    { name = "sphinx-substitution-extensions", marker = "extra == 'dev'" },
-    { name = "sphinx-substitution-extensions", marker = "extra == 'doc'" },
-    { name = "sphinx-togglebutton", marker = "extra == 'dev'" },
-    { name = "sphinx-togglebutton", marker = "extra == 'doc'" },
-    { name = "trogon", marker = "extra == 'dev'" },
     { name = "trogon", marker = "extra == 'gui'" },
-    { name = "trogon", marker = "extra == 'test'" },
-    { name = "trogon", marker = "extra == 'tests'" },
     { name = "trogon", marker = "extra == 'tui'" },
     { name = "typing-extensions" },
 ]
-provides-extras = ["dev", "doc", "gui", "parallel", "test", "tests", "tui"]
+provides-extras = ["gui", "parallel", "tui"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "bids-validator-deno" },
+    { name = "fids", specifier = ">=0.1.0" },
+    { name = "furo" },
+    { name = "mdit-py-plugins" },
+    { name = "myst-parser", specifier = ">=5.1.0" },
+    { name = "nipoppy", extras = ["gui", "parallel"] },
+    { name = "prek" },
+    { name = "pytest", specifier = ">=6.0.0" },
+    { name = "pytest-cov" },
+    { name = "pytest-httpx" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+    { name = "sphinx" },
+    { name = "sphinx-autoapi" },
+    { name = "sphinx-click" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design" },
+    { name = "sphinx-github-changelog" },
+    { name = "sphinx-jsonschema" },
+    { name = "sphinx-substitution-extensions" },
+    { name = "sphinx-togglebutton" },
+]
+doc = [
+    { name = "furo" },
+    { name = "mdit-py-plugins" },
+    { name = "myst-parser", specifier = ">=5.1.0" },
+    { name = "sphinx" },
+    { name = "sphinx-autoapi" },
+    { name = "sphinx-click" },
+    { name = "sphinx-copybutton" },
+    { name = "sphinx-design" },
+    { name = "sphinx-github-changelog" },
+    { name = "sphinx-jsonschema" },
+    { name = "sphinx-substitution-extensions" },
+    { name = "sphinx-togglebutton" },
+]
+test = [
+    { name = "bids-validator-deno" },
+    { name = "fids", specifier = ">=0.1.0" },
+    { name = "nipoppy", extras = ["gui", "parallel"] },
+    { name = "pytest", specifier = ">=6.0.0" },
+    { name = "pytest-cov" },
+    { name = "pytest-httpx" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+]
+tests = [
+    { name = "bids-validator-deno" },
+    { name = "fids", specifier = ">=0.1.0" },
+    { name = "nipoppy", extras = ["gui", "parallel"] },
+    { name = "pytest", specifier = ">=6.0.0" },
+    { name = "pytest-cov" },
+    { name = "pytest-httpx" },
+    { name = "pytest-mock" },
+    { name = "pytest-xdist" },
+]
 
 [[package]]
 name = "num2words"
