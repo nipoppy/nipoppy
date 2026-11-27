@@ -71,7 +71,7 @@ class BoutiquesAPI(ABC):
     """Interface for the Boutiques Python API."""
 
     @abstractmethod
-    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:
+    def validate_descriptor(self, descriptor: DescriptorFile, /) -> DescriptorFile:
         """Validate a descriptor.
 
         Raises
@@ -84,7 +84,7 @@ class BoutiquesAPI(ABC):
     @abstractmethod
     def validate_invocation(
         self, invocation: InvocationFile, *, descriptor: DescriptorFile
-    ) -> None:
+    ) -> InvocationFile:
         """Validate an invocation against a descriptor.
 
         Raises
@@ -95,18 +95,15 @@ class BoutiquesAPI(ABC):
         ...
 
     @abstractmethod
-    def generate_example_invocation(self, descriptor: DescriptorFile, /) -> str:
+    def generate_example_invocation(
+        self, descriptor: DescriptorFile, /
+    ) -> InvocationFile:
         """Generate an example invocation for a descriptor.
 
         Parameters
         ----------
         descriptor_path : Path
             Path to the descriptor file.
-
-        Returns
-        -------
-        str
-            The example invocation as a JSON string.
         """
         ...
 
@@ -114,7 +111,13 @@ class BoutiquesAPI(ABC):
 class BoutiquesLegacyAPI(BoutiquesAPI):
     """Boutiques API for versions < 0.6.0."""
 
-    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:  # noqa: D102
+    def validate_descriptor(  # noqa: D102
+        self, descriptor: DescriptorFile, /
+    ) -> DescriptorFile:
+        if not isinstance(descriptor, DescriptorFile):
+            raise TypeError(
+                f"Expected a DescriptorFile, got {descriptor} ({type(descriptor).__name__})."  # noqa: E501
+            )
         try:
             boutiques.validate(str(descriptor))
         except (
@@ -125,9 +128,15 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
                 f"Descriptor {descriptor} is invalid: run `bosh validate` for more details"  # noqa: E501
             ) from exception
 
+        return descriptor
+
     def validate_invocation(  # noqa: D102
         self, invocation: InvocationFile, *, descriptor: DescriptorFile
-    ) -> None:
+    ) -> InvocationFile:
+        if not isinstance(invocation, InvocationFile):
+            raise TypeError(
+                f"Expected an InvocationFile, got {invocation} ({type(invocation).__name__})."  # noqa: E501
+            )
         self.validate_descriptor(descriptor)
         try:
             boutiques.invocation("--invocation", str(invocation), str(descriptor))
@@ -139,31 +148,35 @@ class BoutiquesLegacyAPI(BoutiquesAPI):
                 f"Invocation {invocation} is invalid: {str(exception)}"
             ) from exception
 
+        return invocation
+
     def generate_example_invocation(  # noqa: D102
         self, descriptor: DescriptorFile, /
-    ) -> str:
+    ) -> InvocationFile:
         self.validate_descriptor(descriptor)
-        return boutiques.example(str(descriptor))
+        return InvocationFile(content=boutiques.example(str(descriptor)))
 
 
 class BoutiquesNextAPI(BoutiquesAPI):
     """Boutiques API for versions >= 0.6.0."""
 
-    def validate_descriptor(self, descriptor: DescriptorFile, /) -> None:  # noqa: D102
+    def validate_descriptor(  # noqa: D102
+        self, descriptor: DescriptorFile, /
+    ) -> DescriptorFile:
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )
 
     def validate_invocation(  # noqa: D102
         self, invocation: InvocationFile, *, descriptor: DescriptorFile
-    ) -> None:
+    ) -> InvocationFile:
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )
 
     def generate_example_invocation(  # noqa: D102
         self, descriptor: DescriptorFile, /
-    ) -> str:
+    ) -> InvocationFile:
         raise NotImplementedError(
             f"boutiques >= {BOUTIQUES_NEXT_VERSION} is not supported yet"
         )

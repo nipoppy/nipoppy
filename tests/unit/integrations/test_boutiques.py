@@ -20,34 +20,6 @@ from nipoppy.integrations.boutiques import (
 )
 
 
-@pytest.fixture
-def descriptor_str() -> str:
-    """Return a valid Boutiques descriptor as a JSON string."""
-    return json.dumps(
-        {
-            "name": "test_app",
-            "description": "Test application",
-            "schema-version": "0.5",
-            "tool-version": "1.0.0",
-            "command-line": "test_app [INPUT]",
-            "inputs": [
-                {
-                    "id": "input_file",
-                    "name": "Input File",
-                    "type": "File",
-                    "value-key": "[INPUT]",
-                }
-            ],
-        }
-    )
-
-
-@pytest.fixture
-def invocation_str() -> str:
-    """Return a valid Boutiques invocation as a JSON string."""
-    return json.dumps({"input_file": "/path/to/input.txt"})
-
-
 class TestBoutiquesFile:
     def test_init_none_specified(self):
         with pytest.raises(ValueError, match="Either path or content must be provided"):
@@ -144,37 +116,107 @@ class TestInvocationFile:
 
         boutiques_file = InvocationFile(path=path)
 
+        # valid
         assert boutiques_file.resolved_content == '{"name": "test_app"}'
 
 
 class TestBoutiquesAPI:
-    def test_validate_descriptor(self, descriptor_str: str):
-        boutiques_api.validate_descriptor(descriptor_str)
+    @pytest.fixture
+    def descriptor_file(self) -> DescriptorFile:
+        return DescriptorFile(
+            content=json.dumps(
+                {
+                    "name": "test_app",
+                    "description": "Test application",
+                    "schema-version": "0.5",
+                    "tool-version": "1.0.0",
+                    "command-line": "test_app [INPUT]",
+                    "inputs": [
+                        {
+                            "id": "input_file",
+                            "name": "Input File",
+                            "type": "File",
+                            "value-key": "[INPUT]",
+                        }
+                    ],
+                }
+            )
+        )
 
-    def test_validate_descriptor_error(self):
-        invalid_descriptor_str = json.dumps({"name": "test_app"})
+    @pytest.fixture
+    def invocation_file(self) -> InvocationFile:
+        return InvocationFile(content=json.dumps({"input_file": "/path/to/input.txt"}))
 
-        with pytest.raises(ConfigError, match="Descriptor .* is invalid"):
-            boutiques_api.validate_descriptor(invalid_descriptor_str)
+    def test_validate_descriptor(self, descriptor_file: DescriptorFile):
+        assert boutiques_api.validate_descriptor(descriptor_file) is descriptor_file
 
-    def test_validate_invocation(self, descriptor_str: str, invocation_str: str):
-        boutiques_api.validate_invocation(invocation_str, descriptor=descriptor_str)
+    @pytest.mark.parametrize(
+        ("descriptor_file", "exception_class", "error_message"),
+        [
+            ("{}", TypeError, "Expected a DescriptorFile, got ."),
+            (
+                "descriptor.json",
+                TypeError,
+                "Expected a DescriptorFile, got .",
+            ),
+            (DescriptorFile(content="{}"), ConfigError, "Descriptor .* is invalid"),
+        ],
+    )
+    def test_validate_descriptor_error(
+        self,
+        descriptor_file: DescriptorFile,
+        exception_class: type[Exception],
+        error_message: str,
+    ):
+        with pytest.raises(exception_class, match=error_message):
+            boutiques_api.validate_descriptor(descriptor_file)
 
-    def test_validate_invocation_error(self, descriptor_str: str):
-        invalid_invocation_str = json.dumps({"invalid_key": "value"})
-
-        with pytest.raises(ConfigError, match="Invocation .* is invalid"):
+    def test_validate_invocation(
+        self, invocation_file: InvocationFile, descriptor_file: DescriptorFile
+    ):
+        assert (
             boutiques_api.validate_invocation(
-                invalid_invocation_str, descriptor=descriptor_str
+                invocation_file, descriptor=descriptor_file
+            )
+            is invocation_file
+        )
+
+    @pytest.mark.parametrize(
+        ("invocation_file", "exception_class", "error_message"),
+        [
+            ("{}", TypeError, "Expected an InvocationFile, got ."),
+            (
+                "invocation.json",
+                TypeError,
+                "Expected an InvocationFile, got .",
+            ),
+            (
+                InvocationFile(content='{"invalid_key": "value"}'),
+                ConfigError,
+                "Invocation .* is invalid",
+            ),
+        ],
+    )
+    def test_validate_invocation_error(
+        self,
+        invocation_file: InvocationFile,
+        exception_class: type[Exception],
+        error_message: str,
+        descriptor_file: DescriptorFile,
+    ):
+        with pytest.raises(exception_class, match=error_message):
+            boutiques_api.validate_invocation(
+                invocation_file, descriptor=descriptor_file
             )
 
-    def test_generate_example_invocation(self, descriptor_str: str, tmp_path: Path):
-        descriptor_path = tmp_path / "descriptor.json"
-        descriptor_path.write_text(descriptor_str)
-
-        invocation_str = boutiques_api.generate_example_invocation(descriptor_path)
-
-        boutiques_api.validate_invocation(invocation_str, descriptor=descriptor_str)
+    def test_generate_example_invocation(self, descriptor_file: DescriptorFile):
+        invocation_file = boutiques_api.generate_example_invocation(descriptor_file)
+        assert (
+            boutiques_api.validate_invocation(
+                invocation_file, descriptor=descriptor_file
+            )
+            is invocation_file
+        )
 
 
 class TestCreateBoutiquesAPI:
