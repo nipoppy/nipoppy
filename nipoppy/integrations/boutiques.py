@@ -36,6 +36,14 @@ class BoutiquesFile:
             raise ValueError(
                 f"Only one of path or content can be provided, got {self.path=} and {self.content=}."  # noqa: E501
             )
+        if self.path is not None and not isinstance(self.path, Path):
+            raise TypeError(
+                f"Expected a Path, got {self.path} ({type(self.path).__name__})."
+            )
+        if self.content is not None and not isinstance(self.content, str):
+            raise TypeError(
+                f"Expected a string, got {self.content} ({type(self.content).__name__})."  # noqa: E501
+            )
 
     @cached_property
     def resolved_content(self) -> str:

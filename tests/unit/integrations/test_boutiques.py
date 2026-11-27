@@ -23,16 +23,29 @@ from tests.conftest import DPATH_TEST_DATA
 
 
 class TestBoutiquesFile:
-    def test_init_none_specified(self):
-        with pytest.raises(ValueError, match="Either path or content must be provided"):
-            BoutiquesFile()
-
-    def test_init_both_specified(self):
-        with pytest.raises(
-            ValueError,
-            match="Only one of path or content can be provided, got",
-        ):
-            BoutiquesFile(path=Path("descriptor.json"), content="{}")
+    @pytest.mark.parametrize(
+        ("path", "content", "exception_class", "error_message"),
+        [
+            (None, None, ValueError, "Either path or content must be provided"),
+            (
+                Path("descriptor.json"),
+                "{}",
+                ValueError,
+                "Only one of path or content can be provided",
+            ),
+            ("descriptor.json", None, TypeError, "Expected a Path, got"),
+            (None, {}, TypeError, "Expected a string, got"),
+        ],
+    )
+    def test_init_invalid_args(
+        self,
+        path: Path,
+        content: str,
+        exception_class: type[Exception],
+        error_message: str,
+    ):
+        with pytest.raises(exception_class, match=error_message):
+            BoutiquesFile(path=path, content=content)
 
     @pytest.mark.parametrize(
         "relative_path",
