@@ -101,6 +101,13 @@ def test_create(
         pipeline_config_file_path,
         TEMPLATE_PIPELINE_PATH.joinpath(f"config-{type_.value}.json5"),
     )
+    assert load_json(pipeline_config_file_path, allow_json5=True)[
+        "CONTAINER_CONFIG"
+    ] == {
+        "ENV_VARS": {},
+        "BIND_PATHS": [],
+        "ARGS": [],
+    }
     assert _has_correct_JSON5_comment(pipeline_config_file_path)
 
     if type_ == PipelineTypeEnum.PROCESSING:
