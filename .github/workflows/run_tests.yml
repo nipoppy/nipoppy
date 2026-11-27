@@ -6,20 +6,23 @@ on:
     branches: ['*']
   pull_request:
     branches: ['*']
+  merge_group:
+    types: [checks_requested]
   schedule:
     - cron: '0 11 * * *' # Every day at 11:00 UTC
   workflow_dispatch:
 
-# cancel previous runs if new one is triggered
+# cancel previous runs if new one is triggered (except merge queue runs)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 
 jobs:
 
   test:
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
 
     strategy:
       matrix:
@@ -50,6 +53,7 @@ jobs:
         uv run python -m pytest -m "not api and not linkcheck and not no_xdist" --cov=nipoppy --cov-report=xml --cov-append
 
     - name: Upload coverage to Codecov
+      if: github.event_name != 'merge_group'
       uses: codecov/codecov-action@v7
       with:
         files: ./coverage.xml
