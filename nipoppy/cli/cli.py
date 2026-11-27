@@ -35,7 +35,6 @@ click.rich_click.OPTION_GROUPS = {
         {
             "name": "Command-specific",
             "options": [
-                "--pipeline",
                 "--pipeline-version",
                 "--pipeline-step",
                 "--bids-source",

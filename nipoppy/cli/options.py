@@ -121,6 +121,31 @@ def layout_option(func):
     return func
 
 
+class _PipelineNameArgument(click.RichArgument):
+    """Required argument that falls back to the deprecated --pipeline option."""
+
+    def handle_parse_result(self, ctx, opts, args):
+        """Resolve pipeline_name from positional arg or deprecated --pipeline option."""
+        if "pipeline" in opts and not ctx.resilient_parsing:
+            _, source = self.consume_value(ctx, opts)
+            if source == click.core.ParameterSource.COMMANDLINE:
+                raise click.UsageError(
+                    "Cannot specify both the PIPELINE_NAME positional argument "
+                    "and --pipeline.",
+                    ctx=ctx,
+                )
+            logger.warning(
+                "The --pipeline option is deprecated and will be removed in a "
+                "future version. Pass the pipeline name as a positional argument "
+                "instead."
+            )
+            value = self.process_value(ctx, opts["pipeline"])
+            ctx.set_parameter_source(self.name, click.core.ParameterSource.COMMANDLINE)
+            ctx.params[self.name] = value
+            return value, args
+        return super().handle_parse_result(ctx, opts, args)
+
+
 def pipeline_options(func):
     """Define pipeline options for the CLI."""
     func = click.option(
@@ -149,12 +174,21 @@ def pipeline_options(func):
             "(default: latest out of the installed versions)."
         ),
     )(func)
-    func = click.option(
-        "--pipeline",
+    func = click.argument(
         "pipeline_name",
         type=str,
         required=True,
+        cls=_PipelineNameArgument,
         help="Pipeline name, as specified in the config file.",
+    )(func)
+    # alias: to be deprecated
+    func = click.option(
+        "--pipeline",
+        type=str,
+        required=False,
+        default=None,
+        hidden=True,
+        expose_value=False,
     )(func)
     return func
 

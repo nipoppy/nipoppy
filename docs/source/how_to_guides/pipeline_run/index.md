@@ -35,9 +35,8 @@ The command to run a pipeline depends on the **pipeline type**:
 The minimal command to run any of these commands is:
 
 ```console
-$ nipoppy <SUBCOMMAND> \
-    --study <NIPOPPY_STUDY_ROOT> \
-    --pipeline <PIPELINE_NAME>
+$ nipoppy <SUBCOMMAND> <PIPELINE_NAME> \
+    --study <NIPOPPY_STUDY_ROOT>
 ```
 
 Where `<SUBCOMMAND>` is either `bidsify`, `process`, or `extract`.
@@ -49,9 +48,8 @@ Similarly, if `--pipeline-step` is not specified, the first step defined in the 
 The above command will run the pipeline on all participants and/or sessions who have not already completed the pipeline (according to the {term}`curation status <curation status file>` and {term}`processing status <processing status file>` files). It is also possible to restrict the run to a single participant and/or session, which can be useful for testing pipelines/configurations:
 
 ```console
-$ nipoppy <SUBCOMMAND> \
+$ nipoppy <SUBCOMMAND> <PIPELINE_NAME> \
     --study <NIPOPPY_STUDY_ROOT> \
-    --pipeline <PIPELINE_NAME> \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID>
 ```
@@ -61,9 +59,8 @@ $ nipoppy <SUBCOMMAND> \
 We recommend always testing a new pipeline **in simulate mode** with a single participant and session and double-checking the generated command. This can be done with the `--simulate` flag. For example, to test the fMRIPrep 24.1.1 pipeline this way, run:
 
 ```console
-$ nipoppy process \
+$ nipoppy process fmriprep \
     --study <NIPOPPY_STUDY_ROOT> \
-    --pipeline fmriprep \
     --pipeline-version 24.1.1 \
     --participant-id <PARTICIPANT_ID> \
     --session-id <SESSION_ID> \

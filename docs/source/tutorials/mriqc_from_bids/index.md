@@ -186,9 +186,8 @@ In general, we recommend using a shared directory within your research group for
 Use `nipoppy process` to run MRIQC on a single participant and session. This could take around 15 minutes to complete.
 
 ```console
-$ nipoppy process \
+$ nipoppy process mriqc \
     --study nipoppy_study \
-    --pipeline mriqc \
     --pipeline-version 23.1.0 \
     --participant-id 09114 \
     --session-id 1pre
@@ -218,9 +217,8 @@ Log files can be found in `nipoppy_study/logs/process/mriqc-23.1.0`.
 Run `nipoppy track-processing` to determine the MRIQC processing status for each subject and session:
 
 ```console
-$ nipoppy track-processing \
+$ nipoppy track-processing mriqc \
     --study nipoppy_study \
-    --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
 
@@ -272,18 +270,16 @@ Finally, this file can be used directly as input to the [Neurobagel CLI](https:/
 Use `nipoppy process` without the participant and session flags to process the rest of the study (in a loop). This will skip the participant-session that has previously been run successfully.
 
 ```console
-$ nipoppy process \
+$ nipoppy process mriqc \
     --study nipoppy_study \
-    --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
 
 Then, run the tracking command again to update the {term}`processing status file`:
 
 ```console
-$ nipoppy track-processing \
+$ nipoppy track-processing mriqc \
     --study nipoppy_study \
-    --pipeline mriqc \
     --pipeline-version 23.1.0
 ```
 

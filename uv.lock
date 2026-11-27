@@ -1085,7 +1085,7 @@ requires-dist = [
     { name = "pysqa", extras = ["sge"], specifier = ">=0.2.4" },
     { name = "python-dotenv" },
     { name = "rich" },
-    { name = "rich-click" },
+    { name = "rich-click", specifier = ">=1.9" },
     { name = "trogon", marker = "extra == 'gui'" },
     { name = "trogon", marker = "extra == 'tui'" },
     { name = "typing-extensions" },

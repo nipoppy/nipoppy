@@ -8,9 +8,8 @@ The [`nipoppy bidsify`](<project:../../reference/cli_reference/bidsify.rst>), [`
 If this option is specified, instead of launching the pipeline, the command will write a TSV file of participant and session IDs that need to be run.
 
 ```console
-$ nipoppy <SUBCOMMAND> \
+$ nipoppy <SUBCOMMAND> <PIPELINE_NAME> \
     --study <NIPOPPY_STUDY_ROOT> \
-    --pipeline <PIPELINE_NAME> \
     --write-subcohort <PATH_TO_TSV_FILE>
 ```
 
@@ -23,9 +22,8 @@ On Linux systems, this can be done using the [`parallel`](https://www.gnu.org/so
 $ parallel \
     --colsep '\t' \
     --jobs <N_MAX_JOBS> \
-    nipoppy <SUBCOMMAND> \
+    nipoppy <SUBCOMMAND> <PIPELINE_NAME> \
         --study <NIPOPPY_STUDY_ROOT> \
-        --pipeline <PIPELINE_NAME> \
         # other desired options \
         # ... \
         --participant-id {1} \

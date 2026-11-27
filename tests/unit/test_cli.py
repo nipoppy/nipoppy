@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib
 import inspect
 import logging
+import re
 import shlex
 from pathlib import Path
 
@@ -107,10 +108,9 @@ def _assert_command_success(args):
         (
             [
                 "process",
+                "fake_pipeline",
                 "--study",
                 "[tmp_path]/nipoppy_study",
-                "--pipeline",
-                "fake_pipeline",
                 "--write-list",
                 "[tmp_path]/subcohort.txt",
             ],
@@ -118,6 +118,62 @@ def _assert_command_success(args):
             (
                 "The --write-list option is deprecated and will be removed in a future "
                 "version. Use --write-subcohort instead."
+            ),
+        ),
+        (
+            [
+                "bidsify",
+                "--study",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+            ],
+            "nipoppy.workflows.bids_conversion.BIDSificationRunner",
+            (
+                "The --pipeline option is deprecated and will be removed in a future "
+                "version. Pass the pipeline name as a positional argument instead."
+            ),
+        ),
+        (
+            [
+                "process",
+                "--study",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+            ],
+            "nipoppy.workflows.processing_runner.ProcessingRunner",
+            (
+                "The --pipeline option is deprecated and will be removed in a future "
+                "version. Pass the pipeline name as a positional argument instead."
+            ),
+        ),
+        (
+            [
+                "track-processing",
+                "--study",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+            ],
+            "nipoppy.workflows.tracker.PipelineTracker",
+            (
+                "The --pipeline option is deprecated and will be removed in a future "
+                "version. Pass the pipeline name as a positional argument instead."
+            ),
+        ),
+        (
+            [
+                "extract",
+                "--study",
+                "[tmp_path]/nipoppy_study",
+                "--pipeline",
+                "fake_pipeline",
+            ],
+            "nipoppy.workflows.extractor.ExtractionRunner",
+            (
+                "The --pipeline option is deprecated and will be removed in a future "
+                "version. Pass the pipeline name as a positional argument instead."
             ),
         ),
     ],
@@ -238,10 +294,9 @@ def test_write_subcohort_and_write_list_mutually_exclusive(
             cli,
             [
                 command,
+                "fake_pipeline",
                 "--study",
                 str(tmp_path),
-                "--pipeline",
-                "fake_pipeline",
                 "--write-subcohort",
                 f"{tmp_path}/subcohort.tsv",
                 "--write-list",
@@ -250,6 +305,128 @@ def test_write_subcohort_and_write_list_mutually_exclusive(
             catch_exceptions=False,
             standalone_mode=False,
         )
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize(
+    "command", ["bidsify", "process", "track-processing", "extract"]
+)
+@pytest.mark.parametrize(
+    "args_template",
+    [
+        ["fake_pipeline", "--study", "[tmp_path]", "--pipeline", "other_pipeline"],
+        ["--study", "[tmp_path]", "--pipeline", "other_pipeline", "fake_pipeline"],
+        ["fake_pipeline", "--study", "[tmp_path]", "--pipeline", ""],
+        ["", "--study", "[tmp_path]", "--pipeline", "other_pipeline"],
+    ],
+)
+def test_pipeline_positional_and_option_mutually_exclusive(
+    command: str, args_template: list[str], tmp_path: Path
+):
+    """Test that providing both positional PIPELINE_NAME and --pipeline raises error."""
+    args = [command] + [
+        arg.replace("[tmp_path]", str(tmp_path)) for arg in args_template
+    ]
+    with pytest.raises(
+        UsageError,
+        match=(
+            "Cannot specify both the PIPELINE_NAME positional argument and --pipeline."
+        ),
+    ):
+        runner.invoke(
+            cli,
+            args,
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize(
+    "command", ["bidsify", "process", "track-processing", "extract"]
+)
+def test_pipeline_missing_raises_error(command: str, tmp_path: Path):
+    """Test that omitting both positional PIPELINE_NAME and --pipeline raises error."""
+    with pytest.raises(click.MissingParameter) as exc_info:
+        runner.invoke(
+            cli,
+            [command, "--study", str(tmp_path)],
+            catch_exceptions=False,
+            standalone_mode=False,
+        )
+    assert exc_info.value.format_message() == "Missing argument 'PIPELINE_NAME'."
+
+
+@pytest.mark.no_xdist
+@pytest.mark.parametrize(
+    "command,workflow_path",
+    [
+        ("bidsify", "nipoppy.workflows.bids_conversion.BIDSificationRunner"),
+        ("process", "nipoppy.workflows.processing_runner.ProcessingRunner"),
+        ("track-processing", "nipoppy.workflows.tracker.PipelineTracker"),
+        ("extract", "nipoppy.workflows.extractor.ExtractionRunner"),
+        ("run", "nipoppy.workflows.processing_runner.ProcessingRunner"),
+        ("track", "nipoppy.workflows.tracker.PipelineTracker"),
+    ],
+)
+@pytest.mark.parametrize(
+    "args_template,expected_pipeline,expect_warning",
+    [
+        (["my_pipeline", "--study", "[tmp_path]"], "my_pipeline", False),
+        (["--study", "[tmp_path]", "my_pipeline"], "my_pipeline", False),
+        (["--study", "[tmp_path]", "--pipeline", "my_pipeline"], "my_pipeline", True),
+        (["--study", "[tmp_path]", "--pipeline", ""], "", True),
+    ],
+)
+def test_pipeline_argument_forwarded_to_workflow(
+    command: str,
+    workflow_path: str,
+    args_template: list[str],
+    expected_pipeline: str,
+    expect_warning: bool,
+    tmp_path: Path,
+    mocker: pytest_mock.MockFixture,
+    caplog: pytest.LogCaptureFixture,
+):
+    """Test that pipeline_name is forwarded from positional arg or --pipeline."""
+    mock_workflow_cls = mocker.patch(workflow_path)
+    mock_workflow_cls.return_value.return_code = ReturnCode.SUCCESS
+    args = [command] + [
+        arg.replace("[tmp_path]", str(tmp_path)) for arg in args_template
+    ]
+    result = runner.invoke(cli, args, catch_exceptions=False)
+
+    assert result.exit_code == ReturnCode.SUCCESS
+    mock_workflow_cls.assert_called_once()
+    assert mock_workflow_cls.call_args.kwargs["pipeline_name"] == expected_pipeline
+    assert "pipeline" not in mock_workflow_cls.call_args.kwargs
+    has_warning = any(
+        record.levelno == logging.WARNING and "--pipeline" in record.message
+        for record in caplog.records
+    )
+    assert has_warning is expect_warning
+
+
+@pytest.mark.parametrize(
+    "command", ["bidsify", "process", "track-processing", "extract"]
+)
+def test_pipeline_help_shows_positional_and_hides_flag(command: str):
+    """Test that --help shows PIPELINE_NAME positional arg and hides --pipeline."""
+    cmd_obj = cli.get_command(None, command)
+    params_by_name = {param.name: param for param in cmd_obj.params}
+    assert isinstance(params_by_name["pipeline_name"], click.Argument)
+    assert params_by_name["pipeline_name"].required is True
+    assert isinstance(params_by_name["pipeline"], click.Option)
+    assert params_by_name["pipeline"].hidden is True
+
+    result = runner.invoke(
+        cli, [command, "--help"], prog_name="nipoppy", catch_exceptions=False
+    )
+    assert result.exit_code == ReturnCode.SUCCESS
+    assert "PIPELINE_NAME" in result.output
+    assert "Pipeline name, as specified in the config file." in result.output
+    # --pipeline-version and --pipeline-step remain visible, but bare --pipeline is not
+    assert re.search(r"--pipeline(?![-\w])", result.output) is None
 
 
 @pytest.mark.no_xdist
@@ -319,10 +496,9 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "bidsify",
+                "my_pipeline",
                 "--study",
                 "[mocked_dir]",
-                "--pipeline",
-                "my_pipeline",
                 "--pipeline-version",
                 "1.0",
                 "--pipeline-step",
@@ -333,10 +509,9 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "process",
+                "my_pipeline",
                 "--study",
                 "[mocked_dir]",
-                "--pipeline",
-                "my_pipeline",
                 "--pipeline-version",
                 "1.0",
             ],
@@ -345,10 +520,9 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "track-processing",
+                "my_pipeline",
                 "--study",
                 "[mocked_dir]",
-                "--pipeline",
-                "my_pipeline",
                 "--pipeline-version",
                 "1.0",
             ],
@@ -357,10 +531,9 @@ def test_cli_gui_visibility(monkeypatch, trogon_installed):
         (
             [
                 "extract",
+                "my_pipeline",
                 "--study",
                 "[mocked_dir]",
-                "--pipeline",
-                "my_pipeline",
                 "--pipeline-version",
                 "1.0",
             ],
@@ -636,8 +809,13 @@ def test_param_source_priority(
 def test_param_source_priority_with_dataset_flag(
     dummy_cli: click.Group,
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    restore_environment,
 ):
     """Test that study-level .env is still loaded when using deprecated --dataset."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("TEST_PARAM", raising=False)
+
     dpath_root = tmp_path / "nipoppy_root"
     fpath_study_dotenv = dpath_root / ".env"
     fpath_study_dotenv.parent.mkdir(parents=True, exist_ok=True)
@@ -646,6 +824,40 @@ def test_param_source_priority_with_dataset_flag(
     results = runner.invoke(
         dummy_cli,
         ["subcommand-with-dataset", "--dataset", str(dpath_root)],
+        catch_exceptions=False,
+    )
+    parsed_param = results.stdout.split()[-1].strip()
+    assert parsed_param == "study_dotenv"
+
+
+def test_param_source_priority_with_positional_arg(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    restore_environment,
+):
+    """Test that study-level .env loads when a positional arg precedes --study."""
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.delenv("TEST_PARAM", raising=False)
+
+    @click.group(cls=OrderedAliasedGroupWithDotenv)
+    def pos_cli():
+        pass
+
+    @pos_cli.command()
+    @click.argument("pipeline_name", type=str)
+    @click.option("--test-param", default=DEFAULT_VALUE_DUMMY_CLI, envvar="TEST_PARAM")
+    @study_option
+    def subcommand(**params):
+        print(params["test_param"])
+
+    dpath_root = tmp_path / "nipoppy_root"
+    fpath_study_dotenv = dpath_root / ".env"
+    fpath_study_dotenv.parent.mkdir(parents=True, exist_ok=True)
+    fpath_study_dotenv.write_text("TEST_PARAM='study_dotenv'")
+
+    results = runner.invoke(
+        pos_cli,
+        ["subcommand", "my_pipeline", "--study", str(dpath_root)],
         catch_exceptions=False,
     )
     parsed_param = results.stdout.split()[-1].strip()

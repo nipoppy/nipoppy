@@ -47,7 +47,7 @@ See {doc}`../reorganize_sourcedata/index` for how to configure the location to c
 The [`nipoppy track-processing`](../../reference/cli_reference/track_processing.rst) command can be used to track the completion status of processing pipelines. The minimal command is:
 
 ```console
-$ nipoppy track-processing --pipeline <PIPELINE_NAME>
+$ nipoppy track-processing <PIPELINE_NAME>
 ```
 
 ```{tip}

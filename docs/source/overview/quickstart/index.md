@@ -174,7 +174,7 @@ Usually you would start with running `nipoppy bidsify` with the first `--pipelin
 **2.** Run bidsification:
 
 ```{code-block} console
-$ nipoppy bidsify --pipeline dcm2bids --pipeline-step convert
+$ nipoppy bidsify dcm2bids --pipeline-step convert
 ```
 
 **3.** Track the curation status:
@@ -266,13 +266,13 @@ You can also point to an already existing shared templateflow directory, if you 
 **5.** Run MRIQC on one participant:
 
 ```{code-block} console
-$ nipoppy process --pipeline mriqc --participant-id ED01
+$ nipoppy process mriqc --participant-id ED01
 ```
 
 **6.** Track the processing status:
 
 ```{code-block} console
-$ nipoppy track-processing --pipeline mriqc
+$ nipoppy track-processing mriqc
 ```
 
 The processing status file can be found at {{fpath_processing_status}}.
