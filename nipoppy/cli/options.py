@@ -85,29 +85,6 @@ def dep_params(**params):
             )
             params["write_subcohort"] = _dep_write_subcohort
 
-    # --pipeline is deprecated by the positional PIPELINE_NAME argument
-    if "pipeline_name" in params:
-        # Check mutual exclusion directly rather than via
-        # check_at_most_one_flag_specified, which only accepts option flags.
-        ctx = click.get_current_context()
-        if (
-            ctx.get_parameter_source("pipeline_name")
-            == click.core.ParameterSource.COMMANDLINE
-            and ctx.get_parameter_source("pipeline")
-            == click.core.ParameterSource.COMMANDLINE
-        ):
-            raise click.UsageError(
-                "Cannot specify both the PIPELINE_NAME positional argument "
-                "and --pipeline."
-            )
-        if (_dep_pipeline := params.pop("pipeline")) is not None:
-            logger.warning(
-                "The --pipeline option is deprecated and will be removed in a "
-                "future version. Pass the pipeline name as a positional argument "
-                "instead."
-            )
-            params["pipeline_name"] = _dep_pipeline
-
     return params
 
 
@@ -145,15 +122,27 @@ def layout_option(func):
 
 
 class _PipelineNameArgument(click.RichArgument):
-    """Required argument that may be omitted when deprecated --pipeline is passed."""
+    """Required argument that falls back to the deprecated --pipeline option."""
 
     def handle_parse_result(self, ctx, opts, args):
-        """Allow omitting the argument when the deprecated --pipeline option is set."""
-        value, _ = self.consume_value(ctx, opts)
-        if "pipeline" in opts and self.value_is_missing(value):
-            ctx.params[self.name] = None
-            ctx.set_parameter_source(self.name, click.core.ParameterSource.DEFAULT)
-            return None, args
+        """Resolve pipeline_name from positional arg or deprecated --pipeline option."""
+        if "pipeline" in opts and not ctx.resilient_parsing:
+            _, source = self.consume_value(ctx, opts)
+            if source == click.core.ParameterSource.COMMANDLINE:
+                raise click.UsageError(
+                    "Cannot specify both the PIPELINE_NAME positional argument "
+                    "and --pipeline.",
+                    ctx=ctx,
+                )
+            logger.warning(
+                "The --pipeline option is deprecated and will be removed in a "
+                "future version. Pass the pipeline name as a positional argument "
+                "instead."
+            )
+            value = self.process_value(ctx, opts["pipeline"])
+            ctx.set_parameter_source(self.name, click.core.ParameterSource.COMMANDLINE)
+            ctx.params[self.name] = value
+            return value, args
         return super().handle_parse_result(ctx, opts, args)
 
 
@@ -199,6 +188,7 @@ def pipeline_options(func):
         required=False,
         default=None,
         hidden=True,
+        expose_value=False,
     )(func)
     return func
 
