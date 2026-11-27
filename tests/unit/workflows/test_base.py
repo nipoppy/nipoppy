@@ -81,10 +81,7 @@ class TestRun:
             (NipoppyError(), NipoppyError.code),
             (ZenodoAPIError(), ReturnCode.KNOWN_FAILURE),
             (MyCustomException(), MyCustomException.code),
-            (
-                ValidationError.from_exception_data("MockedModel", []),
-                ReturnCode.INVALID_CONFIG,
-            ),
+            (ValidationError("Error title", []), ReturnCode.INVALID_CONFIG),
         ],
     )
     def test_handle_known_exception(
@@ -103,6 +100,25 @@ class TestRun:
             workflow.run()
 
         assert workflow.return_code == return_code
+
+    def test_log_validation_error_hint(
+        self,
+        workflow: BaseWorkflow,
+        mocker: pytest_mock.MockerFixture,
+        caplog: pytest.LogCaptureFixture,
+    ):
+        """ValidationError should emit a troubleshooting hint."""
+        mocker.patch.object(
+            workflow, "run_main", side_effect=ValidationError("Error title", [])
+        )
+        with pytest.raises(ValidationError):
+            workflow.run()
+
+        assert any(
+            "Troubleshooting: Review your configuration fields and value types."
+            in record.message
+            for record in caplog.records
+        )
 
     @pytest.mark.parametrize("hint", ["", "This is a hint."])
     def test_log_exception_custom_hint(
@@ -141,31 +157,19 @@ class TestRun:
             "Troubleshooting:" in record.message for record in caplog.records
         )
 
-    @pytest.mark.parametrize(
-        "exception,expected_hint",
-        [
-            (MyCustomException(), MyCustomException.default_hint),
-            (
-                ValidationError.from_exception_data("MockedModel", []),
-                "Review your configuration fields and value types.",
-            ),
-        ],
-    )
     def test_log_exception_default_hint(
         self,
-        exception: Exception,
-        expected_hint: str,
         workflow: BaseWorkflow,
         mocker: pytest_mock.MockerFixture,
         caplog: pytest.LogCaptureFixture,
     ):
-        """Known exception with default hint should emit troubleshooting log."""
-        mocker.patch.object(workflow, "run_main", side_effect=exception)
-        with pytest.raises(type(exception)):
+        """Known NipoppyError should emit default hint when none provided."""
+        mocker.patch.object(workflow, "run_main", side_effect=self.MyCustomException)
+        with pytest.raises(self.MyCustomException):
             workflow.run()
 
         assert any(
-            f"Troubleshooting: {expected_hint}" in record.message
+            f"Troubleshooting: {self.MyCustomException.default_hint}" in record.message
             for record in caplog.records
         )
 
