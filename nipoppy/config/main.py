@@ -314,6 +314,7 @@ class Config(_SchemaWithContainerConfig):
             for key, value in self.PIPELINE_VARIABLES.get_variables(
                 pipeline_type, pipeline_name, pipeline_version
             ).items()
+            if value is not None
         }
         return apply_substitutions_to_json(json_obj, pipeline_variables)
 
